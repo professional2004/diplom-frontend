@@ -31,10 +31,14 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async logout() {
-      await api.post('/api/auth/logout')
-      this.user = null
-      this.isAuthenticated = false
-      router.push('/login')
+      try {
+        await api.post('/api/auth/logout')
+      } catch (e) {
+        console.warn('[Error] Выход из аккаунта на сервере с ошибкой! Logout только на клиенте')
+      } finally {
+        this.$reset()
+        router.push({ name: 'login' })
+      }
     }
     
   }
