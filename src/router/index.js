@@ -5,11 +5,15 @@ import Signup from '@/views/Signup.vue'
 import Main from '@/views/Main.vue'
 import Home from '@/views/Home.vue'
 import Error from '@/views/Error.vue'
+import ForgotPassword from '@/views/ForgotPassword.vue'
+import ResetPassword from '@/views/ResetPassword.vue'
 
 const routes = [
   { path: '/', name: 'main', component: Main },
   { path: '/login', name: 'login', component: Login },
   { path: '/register', name: 'register', component: Signup },
+  { path: '/forgot-password', name: 'forgot-password', component: ForgotPassword },
+  { path: '/reset-password', name: 'reset-password', component: ResetPassword },
   { path: '/app', name: 'app', component: Home, meta: { requiresAuth: true } },
   { path: '/:pathMatch(.*)*', name: 'error', component: Error }
 ]
