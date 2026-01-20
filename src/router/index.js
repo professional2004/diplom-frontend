@@ -4,13 +4,14 @@ import Login from '@/views/Login.vue'
 import Signup from '@/views/Signup.vue'
 import Main from '@/views/Main.vue'
 import Home from '@/views/Home.vue'
+import Error from '@/views/Error.vue'
 
 const routes = [
   { path: '/', name: 'main', component: Main },
   { path: '/login', name: 'login', component: Login },
   { path: '/register', name: 'register', component: Signup },
   { path: '/app', name: 'app', component: Home, meta: { requiresAuth: true } },
-  { path: '/:pathMatch(.*)*', redirect: '/login' }
+  { path: '/:pathMatch(.*)*', name: 'error', component: Error }
 ]
 
 const router = createRouter({

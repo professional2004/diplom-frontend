@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import api from '@/services/api'
 import router from '@/router'
+import { useNotificationStore } from '@/stores/notifications'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -25,16 +26,34 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async login(credentials) {
-      await api.post('/api/auth/login', credentials)
-      await this.fetchUser()
-      router.push({ name: 'app' })
+      const notify = useNotificationStore()
+
+      try {
+        await api.post('/api/auth/login', credentials)
+        await this.fetchUser()
+        notify.show({
+          type: 'success',
+          message: 'Вы успешно вошли в систему'
+        })
+        router.push({ name: 'app' })
+      } catch (e) {
+        notify.show({
+          type: 'error',
+          message: 'Неверный email или пароль'
+        })
+        throw e
+      }
     },
 
     async logout() {
+      const notify = useNotificationStore()
+
       try {
         await api.post('/api/auth/logout')
-      } catch (e) {
-        console.warn('[Error] Выход из аккаунта на сервере с ошибкой! Logout только на клиенте')
+        notify.show({
+          type: 'info',
+          message: 'Вы вышли из аккаунта'
+        })
       } finally {
         this.$reset()
         router.push({ name: 'login' })
