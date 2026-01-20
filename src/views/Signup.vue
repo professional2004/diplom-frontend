@@ -9,7 +9,7 @@ const router = useRouter();
 
 const handleRegister = async () => {
   try {
-    await api.post('/auth/register', {
+    await api.post('/api/auth/register', {
       email: email.value,
       password: password.value,
       active: true

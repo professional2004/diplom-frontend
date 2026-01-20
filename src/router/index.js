@@ -19,18 +19,27 @@ const router = createRouter({
 })
 
 
+let initialAuthCheckDone = false
 
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
-  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+  
+  if (!initialAuthCheckDone) {
     try {
       await auth.fetchUser()
-    } catch {}
-    if (!auth.isAuthenticated) {
-      return { name: 'login' }
+    } catch (e) {
+
+    } finally {
+      initialAuthCheckDone = true
     }
   }
 
+  // Защищённые маршруты
+  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+    return { name: 'login' }
+  }
+
+  // Если пользователь уже залогинен
   if ((to.name === 'login' || to.name === 'register') && auth.isAuthenticated) {
     return { name: 'app' }
   }
