@@ -25,9 +25,9 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+
     async login(credentials) {
       const notify = useNotificationStore()
-
       try {
         await api.post('/api/auth/login', credentials)
         await this.fetchUser()
@@ -36,18 +36,18 @@ export const useAuthStore = defineStore('auth', {
           message: 'Вы успешно вошли в систему'
         })
         router.push({ name: 'app' })
-      } catch (e) {
+      } catch (error) {
         notify.show({
           type: 'error',
           message: 'Неверный email или пароль'
         })
-        throw e
+        throw error
       }
     },
 
+
     async logout() {
       const notify = useNotificationStore()
-
       try {
         await api.post('/api/auth/logout')
         notify.show({
@@ -57,6 +57,25 @@ export const useAuthStore = defineStore('auth', {
       } finally {
         this.$reset()
         router.push({ name: 'login' })
+      }
+    },
+
+
+    async deleteAccount() {
+      const notify = useNotificationStore()
+      try {
+        await api.delete('/api/auth/delete-account');
+        this.$reset()
+        notify.show({
+          type: 'info',
+          message: 'Вы успешно удалили аккаунт'
+        })
+      } catch (error) {
+        notify.show({
+          type: 'error',
+          message: 'Ошибка при удалении аккаунта'
+        })
+        throw error;
       }
     }
     
