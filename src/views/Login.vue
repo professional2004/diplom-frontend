@@ -12,8 +12,7 @@ const handleLogin = async () => {
   try {
     await auth.login({
       email: email.value,
-      password: password.value,
-      active: true
+      password: password.value
     })
     router.push({ name: 'app' })
   } catch {

@@ -11,8 +11,7 @@ const handleRegister = async () => {
   try {
     await api.post('/api/auth/register', {
       email: email.value,
-      password: password.value,
-      active: true
+      password: password.value
     });
     alert('Регистрация успешна!');
     router.push('/login');
