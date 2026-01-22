@@ -1,6 +1,7 @@
 <script setup>
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
+import EditorScene from '@/components/editor/EditorScene.vue'
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -30,5 +31,13 @@ const deleteAccount = async () => {
 
   <button @click="handleLogout">Выйти из аккаунта</button>
   <button @click="deleteAccount">Удалить аккаунт</button>
+
+  <p>3D-редактор</p>
+  <main style="width: 100%; height: 500px;">
+    <TresCanvas shadows alpha>
+      <EditorScene/>
+    </TresCanvas>
+  </main>
+
 </template>
 

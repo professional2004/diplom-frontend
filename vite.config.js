@@ -8,7 +8,7 @@ import fs from 'fs'
 export default defineConfig({
   plugins: [
     vue({
-      template: templateCompilerOptions
+      ...templateCompilerOptions
     })
   ],
   server: {

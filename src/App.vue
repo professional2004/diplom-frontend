@@ -1,5 +1,5 @@
 <script setup>
-import Notifications from './components/Notifications.vue';
+import Notifications from './components/ui/Notifications.vue';
 </script>
 
 <template>
