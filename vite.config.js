@@ -2,14 +2,11 @@ import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { templateCompilerOptions } from '@tresjs/core'
 import fs from 'fs'
 
 export default defineConfig({
   plugins: [
-    vue({
-      ...templateCompilerOptions
-    })
+    vue()
   ],
   server: {
     port: 5173,
