@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import api from '@/services/api';
-import { useNotificationStore } from '@/stores/notifications';
+import { useNotificationStore } from '@/stores/notificationsStore';
 
 const email = ref('');
 const notify = useNotificationStore();

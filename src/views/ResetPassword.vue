@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/services/api'
 import router from '@/router'
-import { useNotificationStore } from '@/stores/notifications'
+import { useNotificationStore } from '@/stores/notificationsStore'
 
 const password = ref('')
 const route = useRoute()

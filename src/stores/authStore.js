@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import api from '@/services/api'
 import router from '@/router'
-import { useNotificationStore } from '@/stores/notifications'
+import { useNotificationStore } from '@/stores/notificationsStore'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({

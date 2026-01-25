@@ -1,5 +1,6 @@
 <script setup>
-import Scene from '@/components/editor/Scene.vue';
+// import Scene from '@/components/editor/Scene.vue';
+import EditorLayout from '@/components/editor/EditorLayout.vue';
 </script>
 
 
@@ -8,7 +9,7 @@ import Scene from '@/components/editor/Scene.vue';
 
   <p>3D-редактор</p>
   <div class="editor-wrapper">
-    <Scene/>      
+    <EditorLayout/>      
   </div>
 
 </template>
