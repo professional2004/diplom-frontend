@@ -1,5 +1,4 @@
 <script setup>
-// import Scene from '@/components/editor/Scene.vue';
 import EditorLayout from '@/components/editor/EditorLayout.vue';
 </script>
 

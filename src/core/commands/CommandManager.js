@@ -1,31 +1,52 @@
+// src/threejs/commands/CommandManager.js
 export class CommandManager {
   constructor() {
     this.history = []
-    this.historyIndex = -1
+    this.index = -1
+    this.onUpdate = null 
+  }
+
+  // Геттеры должны возвращать актуальное состояние
+  get canUndo() {
+    return this.index >= 0
+  }
+
+  get canRedo() {
+    return this.index < this.history.length - 1
   }
 
   execute(command) {
-    // Если мы были в середине истории и сделали новое действие - хвост отрезается
-    if (this.historyIndex < this.history.length - 1) {
-      this.history = this.history.slice(0, this.historyIndex + 1)
+    if (this.index < this.history.length - 1) {
+      this.history = this.history.slice(0, this.index + 1)
     }
-    
+
     command.execute()
     this.history.push(command)
-    this.historyIndex++
+    this.index++
+    
+    this.notify()
   }
 
   undo() {
-    if (this.historyIndex >= 0) {
-      this.history[this.historyIndex].undo()
-      this.historyIndex--
+    if (this.canUndo) {
+      this.history[this.index].undo()
+      this.index--
+      this.notify()
     }
   }
 
   redo() {
-    if (this.historyIndex < this.history.length - 1) {
-      this.historyIndex++
-      this.history[this.historyIndex].execute()
+    if (this.canRedo) {
+      this.index++
+      this.history[this.index].execute()
+      this.notify()
+    }
+  }
+
+  notify() {
+    console.log('CommandManager: вызываю notify. Текущий индекс:', this.index)
+    if (this.onUpdate) {
+      this.onUpdate()
     }
   }
 }

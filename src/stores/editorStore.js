@@ -14,10 +14,14 @@ export const useEditorStore = defineStore('editor', {
     initScene(canvas) {
       if (this.sceneManager) return
       const manager = new SceneManager(canvas)
+      const store = this
       // Подписка на изменение истории команд для обновления UI кнопок
       manager.commandManager.onUpdate = () => {
-        this.canUndo = manager.commandManager.canUndo
-        this.canRedo = manager.commandManager.canRedo
+        console.log('--- Store: получено уведомление от CommandManager ---')
+        // Напрямую обновляем стейт стора
+        store.canUndo = manager.commandManager.canUndo
+        store.canRedo = manager.commandManager.canRedo
+        console.log('Статус Undo:', store.canUndo, 'Индекс:', manager.commandManager.index)
       }
       // markRaw нужен, чтобы Vue не вешал прокси на тяжелый объект Three.js
       this.sceneManager = markRaw(manager) 
