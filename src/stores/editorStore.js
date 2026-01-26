@@ -1,58 +1,59 @@
-import { markRaw } from 'vue' // Важно! Чтобы Vue не делал Three.js объекты реактивными
 import { defineStore } from 'pinia'
-import { SceneManager } from '@/core/SceneManager'
-import { AddCubeCommand } from '@/core/commands/cube/AddCubeCommand'
+import { markRaw } from 'vue'
+import { Engine } from '@/core/engine/Engine'
+import { AddCubeCommand } from '@/core/commands/AddCubeCommand'
 
 export const useEditorStore = defineStore('editor', {
   state: () => ({
-    sceneManager: null, // Ссылка на движок
-    // UI State
-    canUndo: false,
-    canRedo: false,
+    engine: null
   }),
+
   actions: {
-    initScene(canvas) {
-      if (this.sceneManager) return
-      const manager = new SceneManager(canvas)
-      const store = this
-      // Подписка на изменение истории команд для обновления UI кнопок
-      manager.commandManager.onUpdate = () => {
-        console.log('--- Store: получено уведомление от CommandManager ---')
-        // Напрямую обновляем стейт стора
-        store.canUndo = manager.commandManager.canUndo
-        store.canRedo = manager.commandManager.canRedo
-        console.log('Статус Undo:', store.canUndo, 'Индекс:', manager.commandManager.index)
-      }
-      // markRaw нужен, чтобы Vue не вешал прокси на тяжелый объект Three.js
-      this.sceneManager = markRaw(manager) 
+    init(container) {
+      if (this.engine) return
+      const engine = new Engine(container)
+      this.engine = markRaw(engine)
+      // Подписать обновление кнопок undo/redo — простая полл-обёртка:
+      // (HistorySystem здесь не предоставляет событие; можно расширить при необходимости)
+      this.updateUndoRedo()
     },
-    disposeScene() {
-      if (this.sceneManager) {
-        this.sceneManager.dispose()
-        this.sceneManager = null
-      }
-    },
-    // --- Действия камеры ---
-    zoomIn() { this.sceneManager?.camera.zoom(0.9) },
-    zoomOut() { this.sceneManager?.camera.zoom(1.1) },
-    resetView() { this.sceneManager?.camera.reset() },
 
+    // Camera API
+    zoomIn() { this.engine?.cameraSystem.zoom(0.9) },
+    zoomOut() { this.engine?.cameraSystem.zoom(1.1) },
+    resetView() { this.engine?.cameraSystem.reset() },
 
-    // --- Действия редактора (Примеры) ---
-    
-    // Пример добавления куба через паттерн Command
     addCube() {
-      if (!this.sceneManager) return
-      const command = new AddCubeCommand(this.sceneManager.scene)
-      this.sceneManager.commandManager.execute(command)
+      if (!this.engine) return
+      const cmd = new AddCubeCommand(this.engine.sceneSystem)
+      this.engine.historySystem.execute(cmd)
+      this.updateUndoRedo()
     },
+
 
     undo() {
-      this.sceneManager?.commandManager.undo()
+      if (!this.engine) return
+      this.engine.historySystem.undo()
+      this.updateUndoRedo()
     },
 
     redo() {
-      this.sceneManager?.commandManager.redo()
+      if (!this.engine) return
+      this.engine.historySystem.redo()
+      this.updateUndoRedo()
+    },
+
+    updateUndoRedo() {
+      const h = this.engine?.historySystem
+      this.canUndo = !!(h && h.index >= 0)
+      this.canRedo = !!(h && h.index < (h.history?.length - 1))
+    },
+
+    dispose() {
+      if (this.engine) {
+        this.engine.dispose()
+        this.engine = null
+      }
     }
   }
 })

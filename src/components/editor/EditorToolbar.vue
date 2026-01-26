@@ -1,6 +1,5 @@
 <script setup>
 import { useEditorStore } from '@/stores/editorStore'
-
 const store = useEditorStore()
 </script>
 

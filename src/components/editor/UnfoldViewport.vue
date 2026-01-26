@@ -1,37 +1,35 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watchEffect } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useEditorStore } from '@/stores/editorStore'
 import { UnfoldManager } from '@/core/unfold/UnfoldManager'
 
 const containerRef = ref(null)
 const store = useEditorStore()
 let manager = null
-let animFrame = null
+let raf = null
 
 onMounted(() => {
-  if (containerRef.value) {
-    manager = new UnfoldManager(containerRef.value)
-    
-    const loop = () => {
-      // Синхронизируем 2D проекцию с основной 3D сценой стора [cite: 289]
-      if (store.sceneManager?.scene) {
-        manager.sync(store.sceneManager.scene)
-      }
-      manager.render()
-      animFrame = requestAnimationFrame(loop)
+  if (!containerRef.value) return
+  manager = new UnfoldManager(containerRef.value)
+
+  const loop = () => {
+    if (store.engine?.sceneSystem?.scene) {
+      manager.sync(store.engine.sceneSystem.scene)
     }
-    loop()
+    manager.render()
+    raf = requestAnimationFrame(loop)
   }
+  loop()
 })
 
 onBeforeUnmount(() => {
-  if (animFrame) cancelAnimationFrame(animFrame)
-  manager?.renderer.dispose()
+  if (raf) cancelAnimationFrame(raf)
+  manager?.dispose()
 })
 </script>
 
 <template>
-  <div class="unfold-viewport" ref="containerRef">
+  <div ref="containerRef" class="unfold-viewport">
     <div class="overlay-info">Проекция развертки (2D)</div>
   </div>
 </template>

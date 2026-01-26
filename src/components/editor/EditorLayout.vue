@@ -6,17 +6,6 @@ import UnfoldViewport from './UnfoldViewport.vue'
 </script>
 
 
-<!-- <template>
-  <div class="layout">
-    <EditorToolbar class="ui-layer" />
-    <div class="cube-wrapper ui-layer">
-      <ViewCube />
-    </div>
-    <SceneViewport class="scene-layer" />
-  </div>
-</template> -->
-
-
 <template>
   <div class="layout">
     <EditorToolbar class="ui-layer" />

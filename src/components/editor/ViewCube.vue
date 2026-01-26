@@ -6,42 +6,39 @@ import { ViewCubeGizmo } from '@/core/utils/ViewCubeGizmo'
 const containerRef = ref(null)
 const store = useEditorStore()
 let gizmo = null
-let animationFrame = null
+let raf = null
 
 onMounted(() => {
-  // Ждем инициализации основной сцены
   const init = () => {
-    if (store.sceneManager && containerRef.value) {
-      
-      const { camera: mainCamController } = store.sceneManager
+    if (store.engine && containerRef.value) {
+      const mainCamera = store.engine.cameraSystem.camera
+      const mainControls = store.engine.cameraSystem.controls
 
       gizmo = new ViewCubeGizmo(
         containerRef.value,
-        mainCamController.camera,
-        mainCamController.controls,
+        mainCamera,
+        mainControls,
         (direction) => {
-          // При клике вызываем flyTo
-          mainCamController.flyTo(direction)
+          // flyTo через cameraSystem
+          store.engine.cameraSystem.flyTo(direction)
         }
       )
-      
+
+      const animate = () => {
+        gizmo.update()
+        raf = requestAnimationFrame(animate)
+      }
       animate()
     } else {
-      setTimeout(init, 100) // retry
+      setTimeout(init, 100)
     }
   }
-  
   init()
 })
 
-const animate = () => {
-  animationFrame = requestAnimationFrame(animate)
-  if (gizmo) gizmo.update()
-}
-
 onBeforeUnmount(() => {
-  if (animationFrame) cancelAnimationFrame(animationFrame)
-  if (gizmo) gizmo.dispose()
+  if (raf) cancelAnimationFrame(raf)
+  gizmo?.dispose()
 })
 </script>
 

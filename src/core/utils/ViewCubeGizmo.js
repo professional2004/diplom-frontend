@@ -23,7 +23,7 @@ export class ViewCubeGizmo {
     this.camera.position.set(0, 0, 10)
 
     // 3. Создаем Куб
-    this.cube = this._createCube()
+    this.cube = this.createCube()
     this.scene.add(this.cube)
 
     // 4. Raycaster для кликов
@@ -39,24 +39,24 @@ export class ViewCubeGizmo {
     this.gizmoControls.rotateSpeed = 0.5 // Чуть медленнее для точности
 
     // 6. Обработка событий (различаем Клик и Драг)
-    this._onPointerDown = this._onPointerDown.bind(this)
-    this._onPointerUp = this._onPointerUp.bind(this)
+    this.onPointerDown = this.onPointerDown.bind(this)
+    this.onPointerUp = this.onPointerUp.bind(this)
     
     // Используем pointerdown/up на renderer.domElement
-    this.renderer.domElement.addEventListener('pointerdown', this._onPointerDown)
-    this.renderer.domElement.addEventListener('pointerup', this._onPointerUp)
+    this.renderer.domElement.addEventListener('pointerdown', this.onPointerDown)
+    this.renderer.domElement.addEventListener('pointerup', this.onPointerUp)
 
     // Переменные для отслеживания драга
     this.dragStart = { x: 0, y: 0 }
     this.isDragging = false
   }
 
-  _createCube() {
+  createCube() {
     const geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5)
     
     const colors = [0xff3333, 0xaa0000, 0x33ff33, 0x00aa00, 0x3333ff, 0x0000aa]
     const labels = ['Right', 'Left', 'Top', 'Bottom', 'Front', 'Back']
-    const materials = labels.map((label, i) => this._createFaceMaterial(label, colors[i]))
+    const materials = labels.map((label, i) => this.createFaceMaterial(label, colors[i]))
 
     const mesh = new THREE.Mesh(geometry, materials)
     
@@ -73,7 +73,7 @@ export class ViewCubeGizmo {
     return mesh
   }
 
-  _createFaceMaterial(text, color) {
+  createFaceMaterial(text, color) {
     const canvas = document.createElement('canvas')
     canvas.width = 128
     canvas.height = 128
@@ -112,13 +112,13 @@ export class ViewCubeGizmo {
     this.renderer.render(this.scene, this.camera)
   }
 
-  _onPointerDown(event) {
+  onPointerDown(event) {
     this.dragStart.x = event.clientX
     this.dragStart.y = event.clientY
     this.isDragging = false
   }
 
-  _onPointerUp(event) {
+  onPointerUp(event) {
     // Вычисляем, насколько сдвинулась мышь
     const dx = event.clientX - this.dragStart.x
     const dy = event.clientY - this.dragStart.y
@@ -148,8 +148,8 @@ export class ViewCubeGizmo {
   }
 
   dispose() {
-    this.renderer.domElement.removeEventListener('pointerdown', this._onPointerDown)
-    this.renderer.domElement.removeEventListener('pointerup', this._onPointerUp)
+    this.renderer.domElement.removeEventListener('pointerdown', this.onPointerDown)
+    this.renderer.domElement.removeEventListener('pointerup', this.onPointerUp)
     
     this.gizmoControls.dispose() // Не забываем удалить контроллер
     this.renderer.dispose()
