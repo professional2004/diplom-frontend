@@ -16,6 +16,8 @@ export class Engine {
     this.selectionSystem = new SelectionSystem()
     this.historySystem = new HistorySystem()
 
+    this.inputSystem.setEngine(this)
+
     this.systems = [
       this.inputSystem,
       this.cameraSystem,
