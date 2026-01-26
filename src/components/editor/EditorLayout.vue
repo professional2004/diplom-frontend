@@ -1,11 +1,12 @@
 <script setup>
 import SceneViewport from './SceneViewport.vue'
 import EditorToolbar from './EditorToolbar.vue'
-import ViewCube from './ViewCube.vue';
+import ViewCube from './ViewCube.vue'
+import UnfoldViewport from './UnfoldViewport.vue'
 </script>
 
 
-<template>
+<!-- <template>
   <div class="layout">
     <EditorToolbar class="ui-layer" />
     <div class="cube-wrapper ui-layer">
@@ -13,16 +14,49 @@ import ViewCube from './ViewCube.vue';
     </div>
     <SceneViewport class="scene-layer" />
   </div>
+</template> -->
+
+
+<template>
+  <div class="layout">
+    <EditorToolbar class="ui-layer" />
+    
+    <div class="main-container">
+      <div class="viewport-wrapper">
+        <SceneViewport class="scene-layer" />
+        <div class="cube-wrapper ui-layer">
+          <ViewCube />
+        </div>
+      </div>
+
+      <div class="viewport-wrapper">
+        <UnfoldViewport />
+      </div>
+    </div>
+  </div>
 </template>
 
 
 <style scoped>
+
 .layout {
   position: relative;
   width: 100vw;
   height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-container {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Разделение 50/50 */
   overflow: hidden;
-  background: #e2e2e2;
+}
+
+.viewport-wrapper {
+  position: relative;
+  height: 100%;
 }
 
 .ui-layer {
@@ -56,3 +90,5 @@ import ViewCube from './ViewCube.vue';
   z-index: 1;
 }
 </style>
+
+
