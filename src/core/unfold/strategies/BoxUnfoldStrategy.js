@@ -1,7 +1,6 @@
 import * as THREE from 'three';
-import { UnfoldStrategy } from './UnfoldStrategy';
 
-export class BoxUnfoldStrategy extends UnfoldStrategy {
+export class BoxUnfoldStrategy {
   generate(sourceMesh) {
     const { width, height, depth } = sourceMesh.geometry.parameters;
     const group = new THREE.Group();
