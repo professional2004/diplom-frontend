@@ -1,6 +1,13 @@
 <script setup>
 import { useEditorStore } from '@/stores/editorStore'
+import { computed } from 'vue'
+
 const store = useEditorStore()
+
+// Вычисляемое свойство для проверки наличия выбранной фигуры
+const hasSelection = computed(() => {
+  return store.selectedShape !== null
+})
 </script>
 
 <template>
@@ -21,8 +28,14 @@ const store = useEditorStore()
     <div class="divider"></div>
 
     <div class="group">
-      <button :disabled="!store.canUndo" @click="store.undo">Undo</button>
-      <button :disabled="!store.canRedo" @click="store.redo">Redo</button>
+      <button :disabled="!hasSelection" @click="store.deleteShape" title="Delete (Del)">Delete</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="group">
+      <button :disabled="!store.canUndo" @click="store.undo" title="Undo (Ctrl+Z)">Undo</button>
+      <button :disabled="!store.canRedo" @click="store.redo" title="Redo (Ctrl+Shift+Z)">Redo</button>
     </div>
   </div>
 </template>

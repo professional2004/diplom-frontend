@@ -5,6 +5,7 @@ export class InputSystem {
   constructor(container) {
     this.container = container
     this.engine = null // Ссылка на движок будет установлена позже
+    this.store = null  // Ссылка на Pinia store для обновления UI
 
     // Основные инструменты
     this.raycaster = new THREE.Raycaster()
@@ -24,16 +25,23 @@ export class InputSystem {
     this.onPointerDown = this.onPointerDown.bind(this)
     this.onPointerMove = this.onPointerMove.bind(this)
     this.onPointerUp = this.onPointerUp.bind(this)
+    this.onKeyDown = this.onKeyDown.bind(this)
 
     // Слушатели событий
     container.addEventListener('pointerdown', this.onPointerDown)
     container.addEventListener('pointermove', this.onPointerMove)
     container.addEventListener('pointerup', this.onPointerUp)
+    document.addEventListener('keydown', this.onKeyDown)
   }
 
   // Метод для инъекции зависимости (вызывается из Engine)
   setEngine(engine) {
     this.engine = engine
+  }
+
+  // Метод для инъекции Store зависимости (вызывается из editorStore)
+  setStore(store) {
+    this.store = store
   }
 
   // Вспомогательный метод обновления координат мыши
@@ -69,8 +77,13 @@ export class InputSystem {
         this.engine.cameraSystem.controls.enabled = false
       }
 
-      // Выделяем объект через SelectionSystem (для порядка)
-      this.engine.selectionSystem.set(this.dragObject)
+      // Выделяем объект через SelectionSystem (новый метод setSelected)
+      this.engine.selectionSystem.setSelected(this.dragObject)
+
+      // Обновляем store для реактивности UI
+      if (this.store) {
+        this.store.updateSelectedShape(this.dragObject)
+      }
 
       // Настраиваем плоскость перетаскивания.
       // Мы создаем плоскость, проходящую через центр объекта и направленную вверх (нормаль Y),
@@ -87,11 +100,13 @@ export class InputSystem {
       }
 
     } else {
-      // НАЖАЛИ В ПУСТОТУ -> ОЧИСТКА И КАМЕРА
-      // SelectionSystem.set(null) // Можно сбросить выделение, если нужно
+      // НАЖАЛИ В ПУСТОТУ -> очищаем выделение
+      this.engine.selectionSystem.clear()
       
-      // OrbitControls работает сам по себе, если enabled = true.
-      // Здесь ничего делать не нужно, событие провалится к контролам камеры.
+      // Обновляем store для реактивности UI
+      if (this.store) {
+        this.store.updateSelectedShape(null)
+      }
     }
   }
 
@@ -107,6 +122,23 @@ export class InputSystem {
         // Новая позиция = точка пересечения луча с плоскостью + смещение
         const newPos = new THREE.Vector3().addVectors(this.planeIntersectPoint, this.dragOffset)
         this.dragObject.position.copy(newPos)
+      }
+    } else {
+      // HOVER отслеживание - проверяем пересечения мышью
+      this.raycaster.setFromCamera(this.mouse, this.engine.cameraSystem.camera)
+      const intersects = this.raycaster.intersectObjects(this.engine.sceneSystem.scene.children)
+        .filter(hit => hit.object.userData.selectable)
+
+      if (intersects.length > 0) {
+        // Наводимся на объект
+        const hoveredObject = intersects[0].object
+        this.engine.selectionSystem.setHovered(hoveredObject)
+      } else {
+        // Больше не наводимся ни на что
+        if (this.engine.selectionSystem.getHovered() && 
+            this.engine.selectionSystem.getHovered() !== this.engine.selectionSystem.getSelected()) {
+          this.engine.selectionSystem.setHovered(null)
+        }
       }
     }
   }
@@ -149,9 +181,47 @@ export class InputSystem {
     // всё происходит событийно в onPointer...
   }
 
+  onKeyDown(event) {
+    if (!this.engine) return
+
+    // Обработка Delete клавиши для удаления выбранной фигуры
+    if (event.key === 'Delete' || event.key === 'Backspace') {
+      const selected = this.engine.selectionSystem.getSelected()
+      if (selected) {
+        // Эмитим событие через engine или вызываем команду напрямую
+        // Для этого нужно передать в InputSystem какой-то callback,
+        // или испольвать глобальный обработчик.
+        // Пока вызовем Delete через store (это будет сделано в UI)
+        // Но здесь мы можем эмитить кастомное событие для store
+        
+        // Создаем кастомное событие, которое слушает Store
+        window.dispatchEvent(new CustomEvent('deleteSelectedShape', { detail: selected }))
+      }
+    }
+
+    // Undo: Ctrl+Z (или Cmd+Z на Mac)
+    if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
+      event.preventDefault()
+      window.dispatchEvent(new CustomEvent('undo'))
+    }
+
+    // Redo: Ctrl+Shift+Z (или Cmd+Shift+Z на Mac)
+    if ((event.ctrlKey || event.metaKey) && event.key === 'z' && event.shiftKey) {
+      event.preventDefault()
+      window.dispatchEvent(new CustomEvent('redo'))
+    }
+
+    // Redo: Ctrl+Y (альтернативный вариант)
+    if ((event.ctrlKey || event.metaKey) && event.key === 'y') {
+      event.preventDefault()
+      window.dispatchEvent(new CustomEvent('redo'))
+    }
+  }
+
   dispose() {
     this.container.removeEventListener('pointerdown', this.onPointerDown)
     this.container.removeEventListener('pointermove', this.onPointerMove)
     this.container.removeEventListener('pointerup', this.onPointerUp)
+    document.removeEventListener('keydown', this.onKeyDown)
   }
 }
