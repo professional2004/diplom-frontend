@@ -51,4 +51,24 @@ export class CubeShape extends BaseShape {
 
     return group
   }
+
+  // Обновляет геометрию куба при изменении параметров
+  updateMeshGeometry(mesh, newParams) {
+    const { width, height, depth } = newParams
+    
+    // Удаляем старую геометрию
+    if (mesh.geometry) {
+      mesh.geometry.dispose()
+    }
+
+    // Создаем новую геометрию
+    const geometry = new THREE.BoxGeometry(width, height, depth)
+    mesh.geometry = geometry
+
+    // Обновляем позицию (для того чтобы фигура была на полу)
+    mesh.position.y = height / 2
+
+    // Обновляем параметры в userData
+    mesh.userData.params = { width, height, depth }
+  }
 }

@@ -117,4 +117,34 @@ export class RoundedPrismShape extends BaseShape {
 
     return group
   }
+
+  // Обновляет геометрию скругленной призмы при изменении параметров
+  updateMeshGeometry(mesh, newParams) {
+    const { width, depth, height, radius } = newParams
+    const safeRadius = Math.min(radius, width / 2, depth / 2)
+
+    // Удаляем старую геометрию
+    if (mesh.geometry) {
+      mesh.geometry.dispose()
+    }
+
+    // Создаем новую форму
+    const shape = this._createShapePath(width, depth, safeRadius)
+    const geometry = new THREE.ExtrudeGeometry(shape, {
+      depth: height,
+      bevelEnabled: false,
+      curveSegments: 12
+    })
+
+    // Центрируем геометрию
+    geometry.center()
+    
+    mesh.geometry = geometry
+
+    // Обновляем позицию (для того чтобы фигура была на полу)
+    mesh.position.y = height / 2
+    
+    // Обновляем параметры в userData
+    mesh.userData.params = { width, depth, height, radius }
+  }
 }

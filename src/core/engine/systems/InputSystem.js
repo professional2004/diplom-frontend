@@ -1,5 +1,7 @@
 import * as THREE from 'three'
-import { MoveCommand } from '@/core/commands/MoveCommand'
+import { MoveShapeCommand } from '@/core/commands/MoveShapeCommand'
+import { RotateShapeCommand } from '@/core/commands/RotateShapeCommand'
+import { ScaleShapeCommand } from '@/core/commands/ScaleShapeCommand'
 
 export class InputSystem {
   constructor(container) {
@@ -20,6 +22,13 @@ export class InputSystem {
     this.dragObject = null
     this.dragOffset = new THREE.Vector3()
     this.startPosition = new THREE.Vector3() // Для Undo
+    
+    // Состояние трансформирования (поворот, масштаб)
+    this.transformMode = null // 'move' | 'rotate' | 'scale'
+    this.startRotation = new THREE.Euler()
+    this.startScale = new THREE.Vector3()
+    this.lastMouseX = 0
+    this.lastMouseY = 0
 
     // Привязка контекста
     this.onPointerDown = this.onPointerDown.bind(this)
@@ -64,20 +73,26 @@ export class InputSystem {
       .filter(hit => hit.object.userData.selectable)
 
     if (intersects.length > 0) {
-      // НАЖАЛИ НА ФИГУРУ -> РЕЖИМ ПЕРЕМЕЩЕНИЯ
+      // НАЖАЛИ НА ФИГУРУ -> РЕЖИМ ТРАНСФОРМИРОВАНИЯ (по умолчанию ПЕРЕМЕЩЕНИЕ)
       const hit = intersects[0]
       this.dragObject = hit.object
       this.isDragging = true
       
-      // Сохраняем начальную позицию для Undo
+      // Сохраняем начальные значения для всех видов трансформирования
       this.startPosition.copy(this.dragObject.position)
+      this.startRotation.copy(this.dragObject.rotation)
+      this.startScale.copy(this.dragObject.scale)
+      
+      // Сохраняем начальную позицию мыши для расчета дельты
+      this.lastMouseX = event.clientX
+      this.lastMouseY = event.clientY
 
       // Отключаем управление камерой, чтобы она не вращалась пока тащим
       if (this.engine.cameraSystem.controls) {
         this.engine.cameraSystem.controls.enabled = false
       }
 
-      // Выделяем объект через SelectionSystem (новый метод setSelected)
+      // Выделяем объект через SelectionSystem
       this.engine.selectionSystem.setSelected(this.dragObject)
 
       // Обновляем store для реактивности UI
@@ -85,18 +100,17 @@ export class InputSystem {
         this.store.updateSelectedShape(this.dragObject)
       }
 
-      // Настраиваем плоскость перетаскивания.
-      // Мы создаем плоскость, проходящую через центр объекта и направленную вверх (нормаль Y),
-      // чтобы таскать по "полу".
-      // Если нужно таскать вертикально, логику можно усложнить (зависит от угла камеры).
-      this.dragPlane.setFromNormalAndCoplanarPoint(
-        new THREE.Vector3(0, 1, 0), // Нормаль вверх
-        this.dragObject.position
-      )
+      // Если режим не поворота или масштаба, настраиваем плоскость перетаскивания для режима перемещения
+      if (this.transformMode !== 'rotate' && this.transformMode !== 'scale') {
+        this.dragPlane.setFromNormalAndCoplanarPoint(
+          new THREE.Vector3(0, 1, 0), // Нормаль вверх
+          this.dragObject.position
+        )
 
-      // Вычисляем смещение (offset), чтобы объект не "прыгал" центром к курсору
-      if (this.raycaster.ray.intersectPlane(this.dragPlane, this.planeIntersectPoint)) {
-        this.dragOffset.subVectors(this.dragObject.position, this.planeIntersectPoint)
+        // Вычисляем смещение (offset), чтобы объект не "прыгал" центром к курсору
+        if (this.raycaster.ray.intersectPlane(this.dragPlane, this.planeIntersectPoint)) {
+          this.dragOffset.subVectors(this.dragObject.position, this.planeIntersectPoint)
+        }
       }
 
     } else {
@@ -115,13 +129,34 @@ export class InputSystem {
     this.updateMouse(event)
 
     if (this.isDragging && this.dragObject) {
-      // Логика перемещения
-      this.raycaster.setFromCamera(this.mouse, this.engine.cameraSystem.camera)
+      const deltaX = event.clientX - this.lastMouseX
+      const deltaY = event.clientY - this.lastMouseY
+      this.lastMouseX = event.clientX
+      this.lastMouseY = event.clientY
 
-      if (this.raycaster.ray.intersectPlane(this.dragPlane, this.planeIntersectPoint)) {
-        // Новая позиция = точка пересечения луча с плоскостью + смещение
-        const newPos = new THREE.Vector3().addVectors(this.planeIntersectPoint, this.dragOffset)
-        this.dragObject.position.copy(newPos)
+      // Выбираем режим трансформирования
+      if (this.transformMode === 'rotate') {
+        // РЕЖИМ ПОВОРОТА: используем движение мыши для вращения вокруг осей
+        const rotationSpeed = 0.005
+        this.dragObject.rotation.y += deltaX * rotationSpeed
+        this.dragObject.rotation.x += deltaY * rotationSpeed
+      } else if (this.transformMode === 'scale') {
+        // РЕЖИМ МАСШТАБИРОВАНИЯ: движение мыши вверх = увеличение, вниз = уменьшение
+        const scaleSpeed = 0.005
+        const scaleFactor = 1 + (deltaY * scaleSpeed * -1) // инвертируем Y для интуитивности
+        this.dragObject.scale.multiplyScalar(scaleFactor)
+        // Ограничиваем минимальный размер
+        const minScale = 0.1
+        if (this.dragObject.scale.x < minScale) this.dragObject.scale.set(minScale, minScale, minScale)
+      } else {
+        // РЕЖИМ ПЕРЕМЕЩЕНИЯ (по умолчанию): таскаем по плоскости
+        this.raycaster.setFromCamera(this.mouse, this.engine.cameraSystem.camera)
+
+        if (this.raycaster.ray.intersectPlane(this.dragPlane, this.planeIntersectPoint)) {
+          // Новая позиция = точка пересечения луча с плоскостью + смещение
+          const newPos = new THREE.Vector3().addVectors(this.planeIntersectPoint, this.dragOffset)
+          this.dragObject.position.copy(newPos)
+        }
       }
     } else {
       // HOVER отслеживание - проверяем пересечения мышью
@@ -145,25 +180,49 @@ export class InputSystem {
 
   onPointerUp(event) {
     if (this.isDragging && this.dragObject) {
-      // Завершение перетаскивания
+      // Завершение перетаскивания - записываем команду в историю в зависимости от режима
       
-      // Если позиция реально изменилась, записываем в историю
-      if (!this.dragObject.position.equals(this.startPosition)) {
-        const cmd = new MoveCommand(
-          this.dragObject,
-          this.dragObject.position,
-          this.startPosition
-        )
-        // Добавляем команду в стек истории, но не выполняем её повторно (т.к. объект уже сдвинут)
-        // В HistorySystem нужно учесть такой кейс, либо просто сделать execute, который перезапишет то же самое.
-        // Для простоты вызовем execute через систему.
-        this.engine.historySystem.execute(cmd)
-        
-        // ВАЖНО: Обновляем состояние кнопок Undo/Redo в UI (через Store пока не можем напрямую, 
-        // но Store сам может подписаться или мы просто полагаемся на реактивность Vue, 
-        // но здесь чистый JS. Обычно EditorStore дергает updateUndoRedo после действий.
-        // В текущей архитектуре UI обновляется при клике на кнопки, но чтобы кнопки активировались, 
-        // нам нужен триггер. Пока оставим как есть, кнопки обновятся при следующем взаимодействии или можно добавить EventBus).
+      // Сохраняем текущее состояние объекта для сравнения
+      const currentPosition = this.dragObject.position.clone()
+      const currentRotation = this.dragObject.rotation.clone()
+      const currentScale = this.dragObject.scale.clone()
+
+      // Проверяем какой режим был активен и создаем соответствующую команду
+      if (this.transformMode === 'rotate') {
+        // Если поворот действительно изменился, записываем в историю
+        if (!currentRotation.equals(this.startRotation)) {
+          const cmd = new RotateShapeCommand(
+            this.dragObject,
+            currentRotation,
+            this.startRotation
+          )
+          this.engine.historySystem.execute(cmd)
+        }
+      } else if (this.transformMode === 'scale') {
+        // Если масштаб действительно изменился, записываем в историю
+        if (!currentScale.equals(this.startScale)) {
+          const cmd = new ScaleShapeCommand(
+            this.dragObject,
+            currentScale,
+            this.startScale
+          )
+          this.engine.historySystem.execute(cmd)
+        }
+      } else {
+        // РЕЖИМ ПЕРЕМЕЩЕНИЯ (по умолчанию)
+        if (!currentPosition.equals(this.startPosition)) {
+          const cmd = new MoveShapeCommand(
+            this.dragObject,
+            currentPosition,
+            this.startPosition
+          )
+          this.engine.historySystem.execute(cmd)
+        }
+      }
+
+      // Обновляем состояние UI через store
+      if (this.store && this.store.updateUndoRedo) {
+        this.store.updateUndoRedo()
       }
 
       this.isDragging = false
@@ -188,13 +247,6 @@ export class InputSystem {
     if (event.key === 'Delete' || event.key === 'Backspace') {
       const selected = this.engine.selectionSystem.getSelected()
       if (selected) {
-        // Эмитим событие через engine или вызываем команду напрямую
-        // Для этого нужно передать в InputSystem какой-то callback,
-        // или испольвать глобальный обработчик.
-        // Пока вызовем Delete через store (это будет сделано в UI)
-        // Но здесь мы можем эмитить кастомное событие для store
-        
-        // Создаем кастомное событие, которое слушает Store
         window.dispatchEvent(new CustomEvent('deleteSelectedShape', { detail: selected }))
       }
     }
@@ -215,6 +267,33 @@ export class InputSystem {
     if ((event.ctrlKey || event.metaKey) && event.key === 'y') {
       event.preventDefault()
       window.dispatchEvent(new CustomEvent('redo'))
+    }
+
+    // Активация режимов трансформирования для выбранного объекта
+    const selected = this.engine.selectionSystem.getSelected()
+    if (!selected) return
+
+    // R - режим поворота (Rotation mode)
+    if (event.key === 'r' || event.key === 'R') {
+      this.transformMode = this.transformMode === 'rotate' ? null : 'rotate'
+      console.log('Rotation mode:', this.transformMode ? 'ON' : 'OFF')
+    }
+
+    // S - режим масштабирования (Scale mode)
+    if (event.key === 's' || event.key === 'S') {
+      this.transformMode = this.transformMode === 'scale' ? null : 'scale'
+      console.log('Scale mode:', this.transformMode ? 'ON' : 'OFF')
+    }
+
+    // G - режим перемещения (Grab/Move mode) - по умолчанию
+    if (event.key === 'g' || event.key === 'G') {
+      this.transformMode = this.transformMode === 'move' ? null : 'move'
+      console.log('Move mode:', this.transformMode ? 'ON' : 'OFF')
+    }
+
+    // ESC - отмена режима трансформирования
+    if (event.key === 'Escape') {
+      this.transformMode = null
     }
   }
 

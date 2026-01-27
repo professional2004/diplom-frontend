@@ -19,6 +19,12 @@ export class BaseShape {
     throw new Error('createUnfold2D must be implemented')
   }
 
+  // Обновляет геометрию существующего mesh при изменении параметров
+  // Переопределяется в каждой фигуре
+  updateMeshGeometry(mesh, newParams) {
+    throw new Error('updateMeshGeometry must be implemented')
+  }
+
   // Вспомогательный метод для материалов
   getStandardMaterial() {
     return new THREE.MeshStandardMaterial({ 

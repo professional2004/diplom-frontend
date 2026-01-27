@@ -3,6 +3,7 @@ import SceneViewport from './SceneViewport.vue'
 import EditorToolbar from './EditorToolbar.vue'
 import ViewCube from './ViewCube.vue'
 import UnfoldViewport from './UnfoldViewport.vue'
+import PropertiesPanel from './PropertiesPanel.vue'
 </script>
 
 
@@ -20,6 +21,10 @@ import UnfoldViewport from './UnfoldViewport.vue'
 
       <div class="viewport-wrapper">
         <UnfoldViewport />
+      </div>
+
+      <div class="properties-wrapper ui-layer">
+        <PropertiesPanel />
       </div>
     </div>
   </div>
@@ -41,6 +46,7 @@ import UnfoldViewport from './UnfoldViewport.vue'
   display: grid;
   grid-template-columns: 1fr 1fr; /* Разделение 50/50 */
   overflow: hidden;
+  position: relative;
 }
 
 .viewport-wrapper {
@@ -77,6 +83,21 @@ import UnfoldViewport from './UnfoldViewport.vue'
   width: 100%;
   height: 100%;
   z-index: 1;
+}
+
+/* Панель свойств справа */
+.properties-wrapper {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 280px;
+  max-height: 550px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 </style>
 
