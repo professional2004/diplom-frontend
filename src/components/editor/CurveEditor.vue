@@ -1,6 +1,7 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { BezierCurve } from '@/core/curves/BezierCurve'
+import { CanvasEditor } from '@/utils/CanvasEditor'
 import * as THREE from 'three'
 
 const props = defineProps({
@@ -14,122 +15,81 @@ const canvasRef = ref(null)
 const selectedPointIndex = ref(-1)
 const isDragging = ref(false)
 
-const canvas = computed(() => canvasRef.value)
-
-// Параметры визуализации
-const scale = 100
+let editor = null
 const pointRadius = 8
-const controlLineColor = '#999'
-const curveLineColor = '#2563eb'
-const pointColor = '#374151'
-const selectedPointColor = '#dc2626'
-const hoveredPointColor = '#f59e0b'
-
-let ctx = null
-let hoveredPointIndex = -1
 
 onMounted(() => {
-  if (!canvas.value) return
-  ctx = canvas.value.getContext('2d')
+  if (!canvasRef.value) return
   
-  // Устанавливаем размер canvas
-  const rect = canvas.value.parentElement.getBoundingClientRect()
-  canvas.value.width = rect.width
-  canvas.value.height = rect.height
+  editor = new CanvasEditor(canvasRef.value, {
+    pointRadius,
+    colors: {
+      curve: '#2563eb',
+      point: '#374151',
+      selectedPoint: '#dc2626',
+      hoveredPoint: '#f59e0b'
+    }
+  })
   
-  // Рисуем начальное состояние
+  const rect = canvasRef.value.parentElement.getBoundingClientRect()
+  canvasRef.value.width = rect.width
+  canvasRef.value.height = rect.height
+  
+  setupEventHandlers()
   redraw()
   
-  // Слушатели событий
-  canvas.value.addEventListener('mousemove', onMouseMove)
-  canvas.value.addEventListener('mousedown', onMouseDown)
-  canvas.value.addEventListener('mouseup', onMouseUp)
-  canvas.value.addEventListener('mouseleave', onMouseLeave)
+  window.addEventListener('resize', () => {
+    const rect = canvasRef.value.parentElement.getBoundingClientRect()
+    canvasRef.value.width = rect.width
+    canvasRef.value.height = rect.height
+    redraw()
+  })
 })
 
-function redraw() {
-  if (!ctx || !props.curve) return
-  
-  const width = canvas.value.width
-  const height = canvas.value.height
-  const centerX = width / 2
-  const centerY = height / 2
-  
-  // Очищаем canvas
-  ctx.fillStyle = '#ffffff'
-  ctx.fillRect(0, 0, width, height)
-  
-  // Рисуем сетку
-  drawGrid(centerX, centerY)
-  
-  // Рисуем линии управления (между контрольными точками)
-  drawControlLines(centerX, centerY)
-  
-  // Рисуем кривую
-  drawCurve(centerX, centerY)
-  
-  // Рисуем контрольные точки
-  drawControlPoints(centerX, centerY)
+function setupEventHandlers() {
+  canvasRef.value.addEventListener('mousemove', onMouseMove)
+  canvasRef.value.addEventListener('mousedown', onMouseDown)
+  canvasRef.value.addEventListener('mouseup', onMouseUp)
+  canvasRef.value.addEventListener('mouseleave', onMouseLeave)
+  canvasRef.value.addEventListener('wheel', onWheel, { passive: false })
 }
 
-function drawGrid(centerX, centerY) {
-  ctx.strokeStyle = '#e5e7eb'
-  ctx.lineWidth = 1
+function redraw() {
+  if (!editor || !canvasRef.value || !props.curve) return
   
-  // Вертикальная сетка
-  for (let i = -5; i <= 5; i++) {
-    const x = centerX + i * scale
-    ctx.beginPath()
-    ctx.moveTo(x, 0)
-    ctx.lineTo(x, canvas.value.height)
-    ctx.stroke()
-  }
+  const width = canvasRef.value.width
+  const height = canvasRef.value.height
+  const centerX = width / 2 + editor.panX
+  const centerY = height / 2 + editor.panY
   
-  // Горизонтальная сетка
-  for (let i = -5; i <= 5; i++) {
-    const y = centerY + i * scale
-    ctx.beginPath()
-    ctx.moveTo(0, y)
-    ctx.lineTo(canvas.value.width, y)
-    ctx.stroke()
-  }
+  editor.ctx.fillStyle = editor.colors.background
+  editor.ctx.fillRect(0, 0, width, height)
   
-  // Оси координат
-  ctx.strokeStyle = '#6b7280'
-  ctx.lineWidth = 2
-  
-  // X ось
-  ctx.beginPath()
-  ctx.moveTo(0, centerY)
-  ctx.lineTo(canvas.value.width, centerY)
-  ctx.stroke()
-  
-  // Y ось
-  ctx.beginPath()
-  ctx.moveTo(centerX, 0)
-  ctx.lineTo(centerX, canvas.value.height)
-  ctx.stroke()
+  editor.drawGrid()
+  drawControlLines(centerX, centerY)
+  drawCurve(centerX, centerY)
+  drawControlPoints(centerX, centerY)
 }
 
 function drawControlLines(centerX, centerY) {
   if (!props.curve || props.curve.getControlPointCount() < 2) return
   
-  ctx.strokeStyle = controlLineColor
-  ctx.lineWidth = 1
-  ctx.setLineDash([5, 5])
+  editor.ctx.strokeStyle = editor.colors.controlLine
+  editor.ctx.lineWidth = 1
+  editor.ctx.setLineDash([5, 5])
   
   const count = props.curve.getControlPointCount()
   for (let i = 0; i < count; i++) {
     const p1 = props.curve.getControlPoint(i)
     const p2 = props.curve.getControlPoint((i + 1) % count)
     
-    ctx.beginPath()
-    ctx.moveTo(centerX + p1.x * scale, centerY - p1.y * scale)
-    ctx.lineTo(centerX + p2.x * scale, centerY - p2.y * scale)
-    ctx.stroke()
+    editor.ctx.beginPath()
+    editor.ctx.moveTo(centerX + p1.x * editor.scale, centerY - p1.y * editor.scale)
+    editor.ctx.lineTo(centerX + p2.x * editor.scale, centerY - p2.y * editor.scale)
+    editor.ctx.stroke()
   }
   
-  ctx.setLineDash([])
+  editor.ctx.setLineDash([])
 }
 
 function drawCurve(centerX, centerY) {
@@ -137,24 +97,24 @@ function drawCurve(centerX, centerY) {
   
   const points = props.curve.getPoints(100)
   
-  ctx.strokeStyle = curveLineColor
-  ctx.lineWidth = 2
-  ctx.beginPath()
+  editor.ctx.strokeStyle = editor.colors.curve
+  editor.ctx.lineWidth = 2
+  editor.ctx.beginPath()
   
   points.forEach((p, i) => {
-    const x = centerX + p.x * scale
-    const y = centerY - p.y * scale
+    const x = centerX + p.x * editor.scale
+    const y = centerY - p.y * editor.scale
     
-    if (i === 0) ctx.moveTo(x, y)
-    else ctx.lineTo(x, y)
+    if (i === 0) editor.ctx.moveTo(x, y)
+    else editor.ctx.lineTo(x, y)
   })
   
   if (props.curve.closed && points.length > 0) {
     const p = points[0]
-    ctx.lineTo(centerX + p.x * scale, centerY - p.y * scale)
+    editor.ctx.lineTo(centerX + p.x * editor.scale, centerY - p.y * editor.scale)
   }
   
-  ctx.stroke()
+  editor.ctx.stroke()
 }
 
 function drawControlPoints(centerX, centerY) {
@@ -164,67 +124,50 @@ function drawControlPoints(centerX, centerY) {
   
   for (let i = 0; i < count; i++) {
     const p = props.curve.getControlPoint(i)
-    const x = centerX + p.x * scale
-    const y = centerY - p.y * scale
+    const x = centerX + p.x * editor.scale
+    const y = centerY - p.y * editor.scale
     
-    // Выбираем цвет
-    let color = pointColor
+    let color = editor.colors.point
     if (i === selectedPointIndex.value) {
-      color = selectedPointColor
-    } else if (i === hoveredPointIndex) {
-      color = hoveredPointColor
+      color = editor.colors.selectedPoint
+    } else if (i === editor.hoveredPointIndex) {
+      color = editor.colors.hoveredPoint
     }
     
-    // Рисуем окружность
-    ctx.fillStyle = color
-    ctx.beginPath()
-    ctx.arc(x, y, pointRadius, 0, Math.PI * 2)
-    ctx.fill()
+    editor.ctx.fillStyle = color
+    editor.ctx.beginPath()
+    editor.ctx.arc(x, y, pointRadius, 0, Math.PI * 2)
+    editor.ctx.fill()
     
-    // Рисуем границу
-    ctx.strokeStyle = '#ffffff'
-    ctx.lineWidth = 2
-    ctx.stroke()
+    editor.ctx.strokeStyle = '#ffffff'
+    editor.ctx.lineWidth = 2
+    editor.ctx.stroke()
     
-    // Рисуем номер
-    ctx.fillStyle = '#ffffff'
-    ctx.font = 'bold 10px Arial'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(i, x, y)
+    editor.ctx.fillStyle = '#ffffff'
+    editor.ctx.font = 'bold 10px Arial'
+    editor.ctx.textAlign = 'center'
+    editor.ctx.textBaseline = 'middle'
+    editor.ctx.fillText(i, x, y)
   }
 }
 
-function screenToWorld(screenX, screenY) {
-  const rect = canvas.value.getBoundingClientRect()
-  const width = canvas.value.width
-  const height = canvas.value.height
-  const centerX = width / 2
-  const centerY = height / 2
-  
-  const x = (screenX - rect.left - centerX) / scale
-  const y = -(screenY - rect.top - centerY) / scale
-  
-  return new THREE.Vector2(x, y)
-}
-
 function getControlPointAtScreen(screenX, screenY) {
-  const rect = canvas.value.getBoundingClientRect()
+  if (!editor || !canvasRef.value || !props.curve) return -1
+  
+  const rect = canvasRef.value.getBoundingClientRect()
   const x = screenX - rect.left
   const y = screenY - rect.top
   
-  const width = canvas.value.width
-  const height = canvas.value.height
-  const centerX = width / 2
-  const centerY = height / 2
-  
-  if (!props.curve) return -1
+  const width = canvasRef.value.width
+  const height = canvasRef.value.height
+  const centerX = width / 2 + editor.panX
+  const centerY = height / 2 + editor.panY
   
   const count = props.curve.getControlPointCount()
   for (let i = 0; i < count; i++) {
     const p = props.curve.getControlPoint(i)
-    const px = centerX + p.x * scale
-    const py = centerY - p.y * scale
+    const px = centerX + p.x * editor.scale
+    const py = centerY - p.y * editor.scale
     
     const dist = Math.sqrt((x - px) ** 2 + (y - py) ** 2)
     if (dist <= pointRadius * 2) {
@@ -235,24 +178,62 @@ function getControlPointAtScreen(screenX, screenY) {
   return -1
 }
 
-function onMouseMove(e) {
-  if (!canvas.value) return
+function screenToWorld(screenX, screenY) {
+  if (!editor || !canvasRef.value) return new THREE.Vector2()
   
-  // Обновляем hovered точку
-  const oldHovered = hoveredPointIndex
-  hoveredPointIndex = getControlPointAtScreen(e.clientX, e.clientY)
+  const rect = canvasRef.value.getBoundingClientRect()
+  const x = screenX - rect.left
+  const y = screenY - rect.top
+  
+  const width = canvasRef.value.width
+  const height = canvasRef.value.height
+  const centerX = width / 2 + editor.panX
+  const centerY = height / 2 + editor.panY
+  
+  const worldX = (x - centerX) / editor.scale
+  const worldY = -(y - centerY) / editor.scale
+  
+  return new THREE.Vector2(worldX, worldY)
+}
+
+function onMouseMove(e) {
+  if (!editor) return
+  
+  if (editor.isPanning) {
+    const deltaX = e.clientX - editor.lastPanX
+    const deltaY = e.clientY - editor.lastPanY
+    editor.panX += deltaX
+    editor.panY += deltaY
+    editor.lastPanX = e.clientX
+    editor.lastPanY = e.clientY
+    redraw()
+    return
+  }
+  
+  const oldHovered = editor.hoveredPointIndex
+  editor.hoveredPointIndex = getControlPointAtScreen(e.clientX, e.clientY)
   
   if (isDragging.value && selectedPointIndex.value >= 0) {
     const worldPos = screenToWorld(e.clientX, e.clientY)
     const newCurve = props.curve.clone()
     newCurve.setControlPoint(selectedPointIndex.value, worldPos)
     emit('update:curve', newCurve)
-  } else if (oldHovered !== hoveredPointIndex) {
+  } else if (oldHovered !== editor.hoveredPointIndex) {
     redraw()
   }
 }
 
 function onMouseDown(e) {
+  if (!editor) return
+  
+  if (e.button === 1) {
+    e.preventDefault()
+    editor.isPanning = true
+    editor.lastPanX = e.clientX
+    editor.lastPanY = e.clientY
+    return
+  }
+  
   const index = getControlPointAtScreen(e.clientX, e.clientY)
   if (index >= 0) {
     selectedPointIndex.value = index
@@ -260,13 +241,35 @@ function onMouseDown(e) {
   }
 }
 
-function onMouseUp() {
+function onMouseUp(e) {
+  if (e.button === 1) {
+    editor.isPanning = false
+    return
+  }
   isDragging.value = false
 }
 
 function onMouseLeave() {
-  hoveredPointIndex = -1
+  if (editor) editor.hoveredPointIndex = -1
   isDragging.value = false
+  redraw()
+}
+
+function onWheel(e) {
+  if (!editor) return
+  
+  e.preventDefault()
+  
+  const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1
+  const oldScale = editor.scale
+  editor.scale *= zoomFactor
+  
+  editor.scale = Math.max(20, Math.min(editor.scale, 500))
+  
+  const scaleDiff = editor.scale - oldScale
+  editor.panX -= scaleDiff * 0.1
+  editor.panY -= scaleDiff * 0.1
+  
   redraw()
 }
 </script>

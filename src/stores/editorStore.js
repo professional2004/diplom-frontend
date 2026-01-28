@@ -4,6 +4,7 @@ import { Engine } from '@/core/engine/Engine'
 import { AddSurfaceCommand } from '@/core/commands/AddSurfaceCommand'
 import { DeleteSurfaceCommand } from '@/core/commands/DeleteSurfaceCommand'
 import { SurfaceRegistry } from '@/core/surfaces/SurfaceRegistry'
+import { SurfaceStrip } from '@/core/surfaces/SurfaceStrip'
 
 export const useEditorStore = defineStore('editor', {
   state: () => ({
@@ -11,7 +12,8 @@ export const useEditorStore = defineStore('editor', {
     canUndo: false,
     canRedo: false,
     selectedSurface: null,  // Реактивное состояние для выбранной поверхности
-    selectedSurfaceBaseCurve: null  // Кривая основания выбранной поверхности
+    selectedSurfaceBaseCurve: null,  // Кривая основания выбранной поверхности
+    selectedStripContour: null  // Контур отреза для выбранного strip
   }),
 
   actions: {
@@ -35,13 +37,11 @@ export const useEditorStore = defineStore('editor', {
     zoomOut() { this.engine?.cameraSystem.zoom(1.1) },
     resetView() { this.engine?.cameraSystem.reset() },
 
-    // УНИВЕРСАЛЬНЫЙ МЕТОД для добавления поверхности
+    // УНИВЕРСАЛЬНЫЙ МЕТОД для добавления поверхности (как strip)
     addSurface(type) {
       if (!this.engine) return
       
-      // Параметры можно брать из UI, пока дефолтные внутри команд/поверхностей
       const cmd = new AddSurfaceCommand(this.engine.sceneSystem, type)
-      
       this.engine.historySystem.execute(cmd)
       this.updateUndoRedo()
     },
@@ -57,7 +57,7 @@ export const useEditorStore = defineStore('editor', {
         this.engine.sceneSystem,
         this.engine.selectionSystem,
         selected,
-        this  // Передаем store для обновления UI
+        this
       )
       
       this.engine.historySystem.execute(cmd)
@@ -80,13 +80,15 @@ export const useEditorStore = defineStore('editor', {
     clearSelection() {
       if (!this.engine) return
       this.selectedSurface = null
+      this.selectedSurfaceBaseCurve = null
+      this.selectedStripContour = null
       this.engine.selectionSystem.clear()
     },
 
     // Обновить выделение (вызывается из InputSystem)
     updateSelectedSurface(mesh) {
       this.selectedSurface = mesh
-      this._updateSelectedSurfaceCurve()
+      this._updateSelectedSurfaceCurves()
     },
 
     /**
@@ -102,67 +104,115 @@ export const useEditorStore = defineStore('editor', {
     setSelectedSurfaceBaseCurve(curve) {
       if (!this.selectedSurface || !curve) return
 
-      const surfaceType = this.selectedSurface.userData.surfaceType
-      
-      // Для цилиндрических и конических поверхностей есть метод setBaseCurve
-      if (surfaceType === 'cylindrical' || surfaceType === 'conical') {
-        // Получаем данные поверхности и создаем новый инстанс с обновленной кривой
-        const surface = this._getSurfaceInstance(this.selectedSurface)
-        if (surface) {
-          surface.setBaseCurve(curve)
-          
-          // Обновляем геометрию
-          const newMesh = surface.createMesh()
-          const newGeometry = newMesh.geometry
-          
-          // Заменяем геометрию на mesh
-          const oldGeometry = this.selectedSurface.geometry
-          if (oldGeometry) oldGeometry.dispose()
-          this.selectedSurface.geometry = newGeometry
-          
-          // Обновляем userData с новыми параметрами
-          this.selectedSurface.userData.params = { ...surface.params }
-          
-          // Обновляем состояние кривой
-          this.selectedSurfaceBaseCurve = curve.clone()
-        }
+      const strip = this._getStripInstance(this.selectedSurface)
+      if (strip) {
+        strip.setBaseCurve(curve)
+        this._updateMeshFromStrip(strip)
+        this.selectedSurfaceBaseCurve = curve.clone()
       }
     },
 
     /**
-     * Внутренний метод для обновления кривой при выборе поверхности
+     * Получить контур отреза выбранной поверхности
      */
-    _updateSelectedSurfaceCurve() {
+    getSelectedStripContour() {
+      return this.selectedStripContour
+    },
+
+    /**
+     * Установить новый контур отреза для выбранной поверхности
+     */
+    setSelectedStripContour(contour) {
+      if (!this.selectedSurface || !contour) return
+
+      const strip = this._getStripInstance(this.selectedSurface)
+      if (strip) {
+        strip.setStripContour(contour)
+        this._updateMeshFromStrip(strip)
+        this.selectedStripContour = contour.clone()
+      }
+    },
+
+    /**
+     * Получить границы развертки для выбранной поверхности
+     */
+    getSelectedStripUnfoldBounds() {
+      if (!this.selectedSurface) return null
+      const strip = this._getStripInstance(this.selectedSurface)
+      return strip ? strip.getUnfoldBounds() : null
+    },
+
+    /**
+     * Внутренний метод для обновления кривых при выборе поверхности
+     */
+    _updateSelectedSurfaceCurves() {
       if (!this.selectedSurface) {
         this.selectedSurfaceBaseCurve = null
+        this.selectedStripContour = null
         return
       }
 
       try {
-        const surface = this._getSurfaceInstance(this.selectedSurface)
-        if (surface && typeof surface.getBaseCurve === 'function') {
-          this.selectedSurfaceBaseCurve = surface.getBaseCurve().clone()
+        const strip = this._getStripInstance(this.selectedSurface)
+        if (strip) {
+          // Получаем базовую кривую
+          const baseCurve = strip.getBaseCurve()
+          this.selectedSurfaceBaseCurve = baseCurve ? baseCurve.clone() : null
+          
+          // Получаем контур отреза
+          const contour = strip.getStripContour()
+          this.selectedStripContour = contour ? contour.clone() : null
         } else {
           this.selectedSurfaceBaseCurve = null
+          this.selectedStripContour = null
         }
       } catch (e) {
-        console.error('Failed to update selected surface curve:', e)
+        console.error('Failed to update selected surface curves:', e)
         this.selectedSurfaceBaseCurve = null
+        this.selectedStripContour = null
       }
     },
 
     /**
-     * Получить инстанс поверхности на основе mesh
+     * Получить инстанс SurfaceStrip на основе mesh
      * @private
      */
-    _getSurfaceInstance(mesh) {
+    _getStripInstance(mesh) {
       if (!mesh || !mesh.userData.surfaceType) return null
 
       try {
+        // Для strip типов используем stripData если есть
+        if (mesh.userData.isStrip && mesh.userData.stripData) {
+          return SurfaceStrip.fromJSON(mesh.userData.stripData)
+        }
+        // Иначе пытаемся создать через реестр
         return SurfaceRegistry.create(mesh.userData.surfaceType, mesh.userData.params)
       } catch (e) {
-        console.error('Failed to create surface instance:', e)
+        console.error('Failed to create strip instance:', e)
         return null
+      }
+    },
+
+    /**
+     * Обновить mesh после изменения параметров strip
+     * @private
+     */
+    _updateMeshFromStrip(strip) {
+      if (!this.selectedSurface || !strip) return
+
+      try {
+        // Обновляем геометрию mesh
+        const newMesh = strip.createMesh()
+        const newGeometry = newMesh.geometry
+
+        const oldGeometry = this.selectedSurface.geometry
+        if (oldGeometry) oldGeometry.dispose()
+        this.selectedSurface.geometry = newGeometry
+
+        // Обновляем userData
+        this.selectedSurface.userData.stripData = strip.toJSON()
+      } catch (e) {
+        console.error('Failed to update mesh from strip:', e)
       }
     },
 

@@ -9,11 +9,12 @@ import { computed } from 'vue'
 
 const store = useEditorStore()
 
-// Показываем редактор кривой если выбрана цилиндрическая или коническая поверхность
+// Показываем редактор кривой если выбрана поверхность с основанием
 const showCurveEditor = computed(() => {
   if (!store.selectedSurface) return false
   const type = store.selectedSurface.userData.surfaceType
-  return type === 'cylindrical' || type === 'conical'
+  return type === 'cylindrical-strip' || type === 'conical-strip' ||
+         type === 'cylindrical' || type === 'conical'
 })
 
 const selectedSurfaceType = computed(() => {
@@ -30,6 +31,7 @@ function handleCurveUpdate(newCurve) {
     <EditorToolbar class="ui-layer" />
     
     <div class="main-container">
+      <!-- 3D сцена (слева) -->
       <div class="viewport-wrapper">
         <SceneViewport class="scene-layer" />
         <div class="cube-wrapper ui-layer">
@@ -37,22 +39,22 @@ function handleCurveUpdate(newCurve) {
         </div>
       </div>
 
+      <!-- Развертки 2D (справа) -->
       <div class="viewport-wrapper">
         <UnfoldViewport />
       </div>
     </div>
 
-    <!-- Редактор кривой -->
+    <!-- Редактор базовой кривой поверхности (внизу, опциональный) -->
     <div v-if="showCurveEditor" class="curve-editor-panel">
       <CurveEditor
         :curve="store.getSelectedSurfaceBaseCurve()"
-        :title="`Edit ${selectedSurfaceType} base curve`"
+        :title="`Base curve: ${selectedSurfaceType}`"
         @update:curve="handleCurveUpdate"
       />
     </div>
   </div>
 </template>
-
 
 <style scoped>
 .layout {
@@ -85,13 +87,11 @@ function handleCurveUpdate(newCurve) {
   pointer-events: auto;
 }
 
-/* Позиционирование тулбара */
 .layout > .ui-layer:first-child {
   top: 0;
   left: 0;
 }
 
-/* Позиционирование куба */
 .cube-wrapper {
   top: 10px;
   right: 10px;
@@ -106,17 +106,18 @@ function handleCurveUpdate(newCurve) {
   z-index: 1;
 }
 
-/* Панель редактора кривой */
+/* Панель редактора базовой кривой */
 .curve-editor-panel {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 500px;
   background: white;
   border-top: 2px solid #e5e7eb;
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
   z-index: 20;
+  height: 350px;
+  max-height: 50vh;
   animation: slideUp 0.3s ease-out;
 }
 
@@ -131,16 +132,12 @@ function handleCurveUpdate(newCurve) {
   }
 }
 
-/* Адаптивная сетка на мобильных */
-@media (max-width: 768px) {
-  .main-container {
-    grid-template-columns: 1fr;
-  }
-  
+@media (max-width: 1200px) {
   .curve-editor-panel {
-    height: 200px;
+    height: 250px;
   }
 }
 </style>
+
 
 

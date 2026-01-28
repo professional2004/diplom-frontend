@@ -101,8 +101,8 @@ export class ConicalSurface extends BaseSurface {
     const mat = this.getLineMaterial()
 
     // Развертка конуса с произвольным основанием:
-    // 1. Вершина конуса в начале координат
-    // 2. От вершины идут лучи к каждой точке основания
+    // Представляет собой сектор с вершиной в начале координат
+    // и радиусами, равными образующим конуса
 
     const segmentCount = 50
     const basePoints = this.baseCurve.getPoints(segmentCount)
@@ -113,25 +113,23 @@ export class ConicalSurface extends BaseSurface {
       return Math.sqrt(height * height + baseDistance * baseDistance)
     })
 
-    // Находим максимальную длину образующей для масштабирования
-    const maxSlantHeight = Math.max(...slantHeights)
+    // Вычисляем периметр основания
+    let totalPerimeter = 0
+    for (let i = 0; i < basePoints.length - 1; i++) {
+      const p1 = basePoints[i]
+      const p2 = basePoints[i + 1]
+      totalPerimeter += Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2)
+    }
 
-    // Рисуем развертку: вершина в центре, лучи к основанию
+    // Средняя длина образующей
+    const avgSlantHeight = slantHeights.reduce((a, b) => a + b, 0) / slantHeights.length
+
+    // Угол развертки (в радианах)
+    const unfoldAngle = totalPerimeter / avgSlantHeight
+
+    // Рисуем развертку как сектор
     const apex = new THREE.Vector3(0, 0, 0)
-
-    // Развертываем основание вокруг вершины
-    const unfoldedBasePoints = []
-    const totalPerimeter = basePoints.reduce((sum, p, i) => {
-      if (i === 0) return 0
-      const prev = basePoints[i - 1]
-      return sum + Math.sqrt((p.x - prev.x) ** 2 + (p.y - prev.y) ** 2)
-    }, 0)
-
-    // Угол развертки определяется периметром основания и длиной образующей
-    const unfoldAngle = totalPerimeter / maxSlantHeight
-
-    // Рисуем развертку
-    let currentAngle = 0
+    let currentAngle = -unfoldAngle / 2
     const unfoldPoints = [apex.clone()]
 
     for (let i = 0; i < basePoints.length; i++) {
@@ -145,13 +143,13 @@ export class ConicalSurface extends BaseSurface {
         const p1 = basePoints[i]
         const p2 = basePoints[i + 1]
         const segmentLength = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2)
-        const avgSlantHeight = (slantHeights[i] + slantHeights[i + 1]) / 2
-        currentAngle += segmentLength / avgSlantHeight
+        const avgLocalSlantHeight = (slantHeights[i] + slantHeights[i + 1]) / 2
+        currentAngle += segmentLength / avgLocalSlantHeight
       }
     }
 
-    // Замыкаем развертку
-    unfoldPoints.push(unfoldPoints[1])
+    // Замыкаем развертку обратно к вершине
+    unfoldPoints.push(apex.clone())
 
     const unfoldGeo = new THREE.BufferGeometry().setFromPoints(unfoldPoints)
     group.add(new THREE.Line(unfoldGeo, mat))
