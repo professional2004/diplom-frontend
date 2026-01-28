@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js'
-import { ShapeRegistry } from '@/core/shapes/ShapeRegistry'
+import { SurfaceRegistry } from '@/core/surfaces/SurfaceRegistry'
 
 export class UnfoldManager {
   constructor(container) {
@@ -28,10 +28,9 @@ export class UnfoldManager {
 
   sync(threeScene) {
     // Полная очистка сцены развертки перед перерисовкой
-    // (В продакшене лучше делать diff, но для простоты — clear)
     this.scene.clear()
 
-    // Сетка для фона (опционально)
+    // Сетка для фона
     const grid = new THREE.GridHelper(100, 50, 0xddd, 0xeee)
     grid.rotation.x = -Math.PI / 2
     this.scene.add(grid)
@@ -40,38 +39,34 @@ export class UnfoldManager {
     const gap = 5 // Отступ между развертками
 
     threeScene.traverse((obj) => {
-      // Ищем объекты, которые являются фигурами нашего редактора
-      if (obj.isMesh && obj.userData.selectable && obj.userData.shapeType) {
+      // Ищем объекты, которые являются поверхностями нашего редактора
+      if (obj.isMesh && obj.userData.selectable && obj.userData.surfaceType) {
         
         try {
-          // 1. Воссоздаем инстанс фигуры через реестр, передавая параметры
-          const shapeInstance = ShapeRegistry.create(obj.userData.shapeType, obj.userData.params)
+          // 1. Воссоздаем инстанс поверхности через реестр, передавая параметры
+          const surfaceInstance = SurfaceRegistry.create(obj.userData.surfaceType, obj.userData.params)
           
-          // 2. Генерируем 2D графику
-          const unfoldGroup = shapeInstance.createUnfold2D()
+          // 2. Генерируем 2D развертку
+          const unfoldGroup = surfaceInstance.createUnfold2D()
           
           // 3. Расставляем в ряд (Auto-Layout)
-          // Вычисляем примерную ширину (можно точнее через Box3, но пока просто сдвигаем)
           const bbox = new THREE.Box3().setFromObject(unfoldGroup)
           const width = bbox.max.x - bbox.min.x
           
           // Центрируем локально
           const center = new THREE.Vector3()
           bbox.getCenter(center)
-          unfoldGroup.position.sub(center) // сдвиг чтобы центр был в 0,0
+          unfoldGroup.position.sub(center)
 
           // Ставим на позицию в лэйауте
           unfoldGroup.position.x += offsetX + width / 2
-          
-          // Добавляем подпись (ID или Тип) - опционально
-          // (Three.js FontLoader сложен для примера, поэтому без текста пока)
           
           this.scene.add(unfoldGroup)
 
           // Сдвигаем курсор раскладки
           offsetX += width + gap
         } catch (e) {
-          console.warn('Failed to unfold shape:', obj.userData.shapeType, e)
+          console.warn('Failed to unfold surface:', obj.userData.surfaceType, e)
         }
       }
     })
@@ -79,8 +74,6 @@ export class UnfoldManager {
 
   update() {
     this.controls.update()
-    // ВАЖНО: Мы больше не обновляем позиции разверток в цикле. 
-    // Они статичны, пока не изменится состав сцены (вызов sync).
   }
 
   render() {

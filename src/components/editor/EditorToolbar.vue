@@ -4,9 +4,9 @@ import { computed } from 'vue'
 
 const store = useEditorStore()
 
-// Вычисляемое свойство для проверки наличия выбранной фигуры
+// Вычисляемое свойство для проверки наличия выбранной поверхности
 const hasSelection = computed(() => {
-  return store.selectedShape !== null
+  return store.selectedSurface !== null
 })
 </script>
 
@@ -21,14 +21,15 @@ const hasSelection = computed(() => {
     <div class="divider"></div>
     
     <div class="group">
-      <button @click="store.addShape('cube')">Add Cube</button>
-      <button @click="store.addShape('roundedPrism')">Add Rounded Prism</button>
+      <button @click="store.addSurface('planar')">Add Planar</button>
+      <button @click="store.addSurface('conical')">Add Conical</button>
+      <button @click="store.addSurface('cylindrical')">Add Cylindrical</button>
     </div>
 
     <div class="divider"></div>
 
     <div class="group">
-      <button :disabled="!hasSelection" @click="store.deleteShape" title="Delete (Del)">Delete</button>
+      <button :disabled="!hasSelection" @click="store.deleteSurface" title="Delete (Del)">Delete</button>
     </div>
 
     <div class="divider"></div>

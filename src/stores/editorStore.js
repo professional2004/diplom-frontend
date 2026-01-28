@@ -1,15 +1,15 @@
 import { defineStore } from 'pinia'
 import { markRaw } from 'vue'
 import { Engine } from '@/core/engine/Engine'
-import { AddShapeCommand } from '@/core/commands/AddShapeCommand'
-import { DeleteShapeCommand } from '@/core/commands/DeleteShapeCommand'
+import { AddSurfaceCommand } from '@/core/commands/AddSurfaceCommand'
+import { DeleteSurfaceCommand } from '@/core/commands/DeleteSurfaceCommand'
 
 export const useEditorStore = defineStore('editor', {
   state: () => ({
     engine: null,
     canUndo: false,
     canRedo: false,
-    selectedShape: null  // Реактивное состояние для выбранной фигуры
+    selectedSurface: null  // Реактивное состояние для выбранной поверхности
   }),
 
   actions: {
@@ -24,7 +24,7 @@ export const useEditorStore = defineStore('editor', {
       this.updateUndoRedo()
       
       // Слушаем события от InputSystem
-      window.addEventListener('deleteSelectedShape', () => this.deleteShape())
+      window.addEventListener('deleteSelectedSurface', () => this.deleteSurface())
       window.addEventListener('undo', () => this.undo())
       window.addEventListener('redo', () => this.redo())
     },
@@ -33,25 +33,25 @@ export const useEditorStore = defineStore('editor', {
     zoomOut() { this.engine?.cameraSystem.zoom(1.1) },
     resetView() { this.engine?.cameraSystem.reset() },
 
-    // УНИВЕРСАЛЬНЫЙ МЕТОД для добавления фигуры
-    addShape(type) {
+    // УНИВЕРСАЛЬНЫЙ МЕТОД для добавления поверхности
+    addSurface(type) {
       if (!this.engine) return
       
-      // Параметры можно брать из UI, пока дефолтные внутри команд/фигур
-      const cmd = new AddShapeCommand(this.engine.sceneSystem, type)
+      // Параметры можно брать из UI, пока дефолтные внутри команд/поверхностей
+      const cmd = new AddSurfaceCommand(this.engine.sceneSystem, type)
       
       this.engine.historySystem.execute(cmd)
       this.updateUndoRedo()
     },
 
-    // Удаление выбранной фигуры
-    deleteShape() {
+    // Удаление выбранной поверхности
+    deleteSurface() {
       if (!this.engine) return
       
       const selected = this.engine.selectionSystem.getSelected()
       if (!selected) return
       
-      const cmd = new DeleteShapeCommand(
+      const cmd = new DeleteSurfaceCommand(
         this.engine.sceneSystem,
         this.engine.selectionSystem,
         selected,
@@ -62,28 +62,28 @@ export const useEditorStore = defineStore('editor', {
       this.updateUndoRedo()
     },
 
-    // Выбрать фигуру (обновляет реактивное состояние)
-    selectShape(mesh) {
+    // Выбрать поверхность (обновляет реактивное состояние)
+    selectSurface(mesh) {
       if (!this.engine) return
-      this.selectedShape = mesh
+      this.selectedSurface = mesh
       this.engine.selectionSystem.setSelected(mesh)
     },
 
-    // Получить текущую выбранную фигуру
-    getSelectedShape() {
-      return this.selectedShape
+    // Получить текущую выбранную поверхность
+    getSelectedSurface() {
+      return this.selectedSurface
     },
 
     // Очистить выделение
     clearSelection() {
       if (!this.engine) return
-      this.selectedShape = null
+      this.selectedSurface = null
       this.engine.selectionSystem.clear()
     },
 
     // Обновить выделение (вызывается из InputSystem)
-    updateSelectedShape(mesh) {
-      this.selectedShape = mesh
+    updateSelectedSurface(mesh) {
+      this.selectedSurface = mesh
     },
 
     undo() {
@@ -105,7 +105,7 @@ export const useEditorStore = defineStore('editor', {
     },
 
     dispose() {
-      window.removeEventListener('deleteSelectedShape', () => this.deleteShape())
+      window.removeEventListener('deleteSelectedSurface', () => this.deleteSurface())
       window.removeEventListener('undo', () => this.undo())
       window.removeEventListener('redo', () => this.redo())
       this.engine?.dispose()

@@ -1,14 +1,17 @@
-import { ShapeRegistry } from '@/core/shapes/ShapeRegistry'
+import { SurfaceRegistry } from '@/core/surfaces/SurfaceRegistry'
 
-export class DeleteShapeCommand {
+/**
+ * Команда для удаления поверхности со сцены
+ */
+export class DeleteSurfaceCommand {
   constructor(sceneSystem, selectionSystem, mesh, store = null) {
     this.sceneSystem = sceneSystem
     this.selectionSystem = selectionSystem
     this.store = store
     this.mesh = mesh
-    
-    // Сохраняем данные фигуры для восстановления
-    this.shapeType = mesh.userData.shapeType
+
+    // Сохраняем данные поверхности для восстановления
+    this.surfaceType = mesh.userData.surfaceType
     this.params = mesh.userData.params ? { ...mesh.userData.params } : {}
     this.position = mesh.position.clone()
     this.rotation = mesh.rotation.clone()
@@ -17,24 +20,24 @@ export class DeleteShapeCommand {
   }
 
   execute() {
-    // Удаляем фигуру со сцены
+    // Удаляем поверхность со сцены
     this.sceneSystem.remove(this.mesh)
-    
-    // Очищаем выделение если удаляемая фигура была выбрана
+
+    // Очищаем выделение если удаляемая поверхность была выбрана
     if (this.selectionSystem.getSelected() === this.mesh) {
       this.selectionSystem.clear()
-      
+
       // Обновляем store для реактивности UI
       if (this.store) {
-        this.store.updateSelectedShape(null)
+        this.store.updateSelectedSurface(null)
       }
     }
   }
 
   undo() {
-    // Восстанавливаем фигуру со сцены с сохраненными параметрами
+    // Восстанавливаем поверхность со сцены
     this.sceneSystem.add(this.mesh)
-    
+
     // Восстанавливаем трансформацию
     this.mesh.position.copy(this.position)
     this.mesh.rotation.copy(this.rotation)

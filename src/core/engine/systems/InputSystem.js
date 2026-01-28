@@ -82,7 +82,7 @@ export class InputSystem {
 
       // Обновляем store для реактивности UI
       if (this.store) {
-        this.store.updateSelectedShape(this.dragObject)
+        this.store.updateSelectedSurface(this.dragObject)
       }
 
       // Настраиваем плоскость перетаскивания.
@@ -105,7 +105,7 @@ export class InputSystem {
       
       // Обновляем store для реактивности UI
       if (this.store) {
-        this.store.updateSelectedShape(null)
+        this.store.updateSelectedSurface(null)
       }
     }
   }
@@ -188,14 +188,8 @@ export class InputSystem {
     if (event.key === 'Delete' || event.key === 'Backspace') {
       const selected = this.engine.selectionSystem.getSelected()
       if (selected) {
-        // Эмитим событие через engine или вызываем команду напрямую
-        // Для этого нужно передать в InputSystem какой-то callback,
-        // или испольвать глобальный обработчик.
-        // Пока вызовем Delete через store (это будет сделано в UI)
-        // Но здесь мы можем эмитить кастомное событие для store
-        
         // Создаем кастомное событие, которое слушает Store
-        window.dispatchEvent(new CustomEvent('deleteSelectedShape', { detail: selected }))
+        window.dispatchEvent(new CustomEvent('deleteSelectedSurface', { detail: selected }))
       }
     }
 
