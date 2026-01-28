@@ -1,13 +1,11 @@
-import { PlanarSurface } from './PlanarSurface'
 import { ConicalSurface } from './ConicalSurface'
 import { CylindricalSurface } from './CylindricalSurface'
 
 /**
  * Реестр для создания поверхностей по типам
- * Поддерживаемые типы: planar, conical, cylindrical
+ * Поддерживаемые типы: conical, cylindrical
  */
 export const SurfaceRegistry = {
-  planar: PlanarSurface,
   conical: ConicalSurface,
   cylindrical: CylindricalSurface,
 

@@ -3,13 +3,15 @@ import { markRaw } from 'vue'
 import { Engine } from '@/core/engine/Engine'
 import { AddSurfaceCommand } from '@/core/commands/AddSurfaceCommand'
 import { DeleteSurfaceCommand } from '@/core/commands/DeleteSurfaceCommand'
+import { SurfaceRegistry } from '@/core/surfaces/SurfaceRegistry'
 
 export const useEditorStore = defineStore('editor', {
   state: () => ({
     engine: null,
     canUndo: false,
     canRedo: false,
-    selectedSurface: null  // Реактивное состояние для выбранной поверхности
+    selectedSurface: null,  // Реактивное состояние для выбранной поверхности
+    selectedSurfaceBaseCurve: null  // Кривая основания выбранной поверхности
   }),
 
   actions: {
@@ -84,6 +86,84 @@ export const useEditorStore = defineStore('editor', {
     // Обновить выделение (вызывается из InputSystem)
     updateSelectedSurface(mesh) {
       this.selectedSurface = mesh
+      this._updateSelectedSurfaceCurve()
+    },
+
+    /**
+     * Получить базовую кривую выбранной поверхности
+     */
+    getSelectedSurfaceBaseCurve() {
+      return this.selectedSurfaceBaseCurve
+    },
+
+    /**
+     * Установить базовую кривую для выбранной поверхности
+     */
+    setSelectedSurfaceBaseCurve(curve) {
+      if (!this.selectedSurface || !curve) return
+
+      const surfaceType = this.selectedSurface.userData.surfaceType
+      
+      // Для цилиндрических и конических поверхностей есть метод setBaseCurve
+      if (surfaceType === 'cylindrical' || surfaceType === 'conical') {
+        // Получаем данные поверхности и создаем новый инстанс с обновленной кривой
+        const surface = this._getSurfaceInstance(this.selectedSurface)
+        if (surface) {
+          surface.setBaseCurve(curve)
+          
+          // Обновляем геометрию
+          const newMesh = surface.createMesh()
+          const newGeometry = newMesh.geometry
+          
+          // Заменяем геометрию на mesh
+          const oldGeometry = this.selectedSurface.geometry
+          if (oldGeometry) oldGeometry.dispose()
+          this.selectedSurface.geometry = newGeometry
+          
+          // Обновляем userData с новыми параметрами
+          this.selectedSurface.userData.params = { ...surface.params }
+          
+          // Обновляем состояние кривой
+          this.selectedSurfaceBaseCurve = curve.clone()
+        }
+      }
+    },
+
+    /**
+     * Внутренний метод для обновления кривой при выборе поверхности
+     */
+    _updateSelectedSurfaceCurve() {
+      if (!this.selectedSurface) {
+        this.selectedSurfaceBaseCurve = null
+        return
+      }
+
+      try {
+        const surface = this._getSurfaceInstance(this.selectedSurface)
+        if (surface && typeof surface.getBaseCurve === 'function') {
+          this.selectedSurfaceBaseCurve = surface.getBaseCurve().clone()
+        } else {
+          this.selectedSurfaceBaseCurve = null
+        }
+      } catch (e) {
+        console.error('Failed to update selected surface curve:', e)
+        this.selectedSurfaceBaseCurve = null
+      }
+    },
+
+    /**
+     * Получить инстанс поверхности на основе mesh
+     * @private
+     */
+    _getSurfaceInstance(mesh) {
+      if (!mesh || !mesh.userData.surfaceType) return null
+
+      try {
+        return SurfaceRegistry.create(mesh.userData.surfaceType, mesh.userData.params)
+      } catch (e) {
+        console.error('Failed to create surface instance:', e)
+        return null
+      }
     },
 
     undo() {

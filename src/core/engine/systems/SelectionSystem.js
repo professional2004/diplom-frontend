@@ -18,10 +18,10 @@ export class SelectionSystem {
 
     this.selected = object
     
-    // Применяем материал выбранной фигуры
+    // Применяем материал выбранной поверхности
     if (object) {
       this.applySelectMaterial(object)
-      console.log('Selected:', object.userData.shapeType || 'unknown shape')
+      console.log('Selected:', object.userData.surfaceType || 'unknown surface')
     }
   }
 
