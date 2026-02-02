@@ -216,6 +216,16 @@ export const useEditorStore = defineStore('editor', {
       }
     },
 
+    /**
+     * Получить точные точки контура развертки
+     */
+    getSelectedStripOutlinePoints() {
+      if (!this.selectedSurface) return null
+      const strip = this._getStripInstance(this.selectedSurface)
+      return strip ? strip.getUnfoldOutlinePoints() : null
+    },
+
+
     undo() {
       if (!this.engine) return
       this.engine.historySystem.undo()

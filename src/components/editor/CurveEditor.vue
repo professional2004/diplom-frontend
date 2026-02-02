@@ -1,7 +1,6 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { BezierCurve } from '@/core/curves/BezierCurve'
-import { CanvasEditor } from '@/utils/CanvasEditor'
 import * as THREE from 'three'
 
 const props = defineProps({
@@ -10,339 +9,275 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:curve'])
-
 const canvasRef = ref(null)
-const selectedPointIndex = ref(-1)
-const isDragging = ref(false)
 
-let editor = null
-const pointRadius = 8
+// State
+const selectedPointIndex = ref(-1)
+const hoveredPointIndex = ref(-1)
+const isDragging = ref(false)
+const isPanning = ref(false)
+const lastMouse = { x: 0, y: 0 }
+
+// Viewport
+const transform = ref({ scale: 40, offsetX: 0, offsetY: 0 })
+let ctx = null
+const POINT_RADIUS = 6
 
 onMounted(() => {
   if (!canvasRef.value) return
-  
-  editor = new CanvasEditor(canvasRef.value, {
-    pointRadius,
-    colors: {
-      curve: '#2563eb',
-      point: '#374151',
-      selectedPoint: '#dc2626',
-      hoveredPoint: '#f59e0b'
-    }
-  })
-  
-  const rect = canvasRef.value.parentElement.getBoundingClientRect()
-  canvasRef.value.width = rect.width
-  canvasRef.value.height = rect.height
-  
-  setupEventHandlers()
+  ctx = canvasRef.value.getContext('2d')
+  resize()
+  centerView()
   redraw()
   
-  window.addEventListener('resize', () => {
-    const rect = canvasRef.value.parentElement.getBoundingClientRect()
-    canvasRef.value.width = rect.width
-    canvasRef.value.height = rect.height
-    redraw()
+  const el = canvasRef.value
+  window.addEventListener('resize', () => { resize(); redraw() })
+  
+  // Мышь
+  el.addEventListener('mousedown', onMouseDown)
+  el.addEventListener('mousemove', onMouseMove)
+  el.addEventListener('mouseup', onMouseUp)
+  el.addEventListener('wheel', onWheel, { passive: false })
+  el.addEventListener('dblclick', onDblClick)
+  el.addEventListener('contextmenu', onContextMenu)
+  el.addEventListener('mouseleave', () => {
+      isDragging.value = false; isPanning.value = false; redraw()
   })
 })
 
-function setupEventHandlers() {
-  canvasRef.value.addEventListener('mousemove', onMouseMove)
-  canvasRef.value.addEventListener('mousedown', onMouseDown)
-  canvasRef.value.addEventListener('mouseup', onMouseUp)
-  canvasRef.value.addEventListener('mouseleave', onMouseLeave)
-  canvasRef.value.addEventListener('wheel', onWheel, { passive: false })
+watch(() => props.curve, redraw, { deep: true })
+
+function resize() {
+  const rect = canvasRef.value.parentElement.getBoundingClientRect()
+  canvasRef.value.width = rect.width
+  canvasRef.value.height = rect.height
+}
+
+function centerView() {
+    const w = canvasRef.value.width, h = canvasRef.value.height
+    transform.value.offsetX = w/2
+    transform.value.offsetY = h/2
+}
+
+// Координаты: World (0,0) -> Screen (Center)
+// Y World вверх -> Y Screen вниз
+function toScreen(x, y) {
+    return {
+        x: transform.value.offsetX + x * transform.value.scale,
+        y: transform.value.offsetY - y * transform.value.scale
+    }
+}
+function toWorld(sx, sy) {
+    return {
+        x: (sx - transform.value.offsetX) / transform.value.scale,
+        y: -(sy - transform.value.offsetY) / transform.value.scale
+    }
 }
 
 function redraw() {
-  if (!editor || !canvasRef.value || !props.curve) return
-  
-  const width = canvasRef.value.width
-  const height = canvasRef.value.height
-  const centerX = width / 2 + editor.panX
-  const centerY = height / 2 + editor.panY
-  
-  editor.ctx.fillStyle = editor.colors.background
-  editor.ctx.fillRect(0, 0, width, height)
-  
-  editor.drawGrid()
-  drawControlLines(centerX, centerY)
-  drawCurve(centerX, centerY)
-  drawControlPoints(centerX, centerY)
+    if (!ctx) return
+    const w = canvasRef.value.width, h = canvasRef.value.height
+    
+    // Фон
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0,0,w,h)
+    
+    drawGrid(w, h)
+    
+    if (props.curve) {
+        drawCurve()
+        drawPoints()
+    }
 }
 
-function drawControlLines(centerX, centerY) {
-  if (!props.curve || props.curve.getControlPointCount() < 2) return
-  
-  editor.ctx.strokeStyle = editor.colors.controlLine
-  editor.ctx.lineWidth = 1
-  editor.ctx.setLineDash([5, 5])
-  
-  const count = props.curve.getControlPointCount()
-  for (let i = 0; i < count; i++) {
-    const p1 = props.curve.getControlPoint(i)
-    const p2 = props.curve.getControlPoint((i + 1) % count)
+function drawGrid(w, h) {
+    ctx.strokeStyle = '#f0f0f0'
+    ctx.lineWidth = 1
+    const step = transform.value.scale
+    const offX = transform.value.offsetX % step
+    const offY = transform.value.offsetY % step
     
-    editor.ctx.beginPath()
-    editor.ctx.moveTo(centerX + p1.x * editor.scale, centerY - p1.y * editor.scale)
-    editor.ctx.lineTo(centerX + p2.x * editor.scale, centerY - p2.y * editor.scale)
-    editor.ctx.stroke()
-  }
-  
-  editor.ctx.setLineDash([])
+    ctx.beginPath()
+    for(let x=offX; x<w; x+=step) { ctx.moveTo(x,0); ctx.lineTo(x,h) }
+    for(let y=offY; y<h; y+=step) { ctx.moveTo(0,y); ctx.lineTo(w,y) }
+    ctx.stroke()
+    
+    // Оси
+    const center = toScreen(0,0)
+    ctx.strokeStyle = '#ddd'
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(0, center.y); ctx.lineTo(w, center.y)
+    ctx.moveTo(center.x, 0); ctx.lineTo(center.x, h)
+    ctx.stroke()
 }
 
-function drawCurve(centerX, centerY) {
-  if (!props.curve) return
-  
-  const points = props.curve.getPoints(100)
-  
-  editor.ctx.strokeStyle = editor.colors.curve
-  editor.ctx.lineWidth = 2
-  editor.ctx.beginPath()
-  
-  points.forEach((p, i) => {
-    const x = centerX + p.x * editor.scale
-    const y = centerY - p.y * editor.scale
-    
-    if (i === 0) editor.ctx.moveTo(x, y)
-    else editor.ctx.lineTo(x, y)
-  })
-  
-  if (props.curve.closed && points.length > 0) {
-    const p = points[0]
-    editor.ctx.lineTo(centerX + p.x * editor.scale, centerY - p.y * editor.scale)
-  }
-  
-  editor.ctx.stroke()
+function drawCurve() {
+    const points = props.curve.getPoints(100)
+    ctx.beginPath()
+    ctx.strokeStyle = '#2563eb'
+    ctx.lineWidth = 2
+    points.forEach((p, i) => {
+        const s = toScreen(p.x, p.y)
+        if (i===0) ctx.moveTo(s.x, s.y)
+        else ctx.lineTo(s.x, s.y)
+    })
+    if (props.curve.closed && points.length) {
+        const s = toScreen(points[0].x, points[0].y)
+        ctx.lineTo(s.x, s.y)
+    }
+    ctx.stroke()
 }
 
-function drawControlPoints(centerX, centerY) {
-  if (!props.curve) return
-  
-  const count = props.curve.getControlPointCount()
-  
-  for (let i = 0; i < count; i++) {
-    const p = props.curve.getControlPoint(i)
-    const x = centerX + p.x * editor.scale
-    const y = centerY - p.y * editor.scale
+function drawPoints() {
+    const count = props.curve.getControlPointCount()
+    for(let i=0; i<count; i++) {
+        const p = props.curve.getControlPoint(i)
+        const s = toScreen(p.x, p.y)
+        
+        ctx.beginPath()
+        ctx.arc(s.x, s.y, POINT_RADIUS, 0, Math.PI*2)
+        ctx.fillStyle = (i === selectedPointIndex.value) ? '#dc2626' : '#374151'
+        if (i === hoveredPointIndex.value) ctx.fillStyle = '#f59e0b'
+        
+        ctx.fill()
+        ctx.stroke()
+        
+        // Index
+        ctx.fillStyle = 'white'
+        ctx.font = '9px Arial'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText(i, s.x, s.y)
+    }
+}
+
+function getPointIndexAt(sx, sy) {
+    if (!props.curve) return -1
+    const count = props.curve.getControlPointCount()
+    for(let i=0; i<count; i++) {
+        const p = props.curve.getControlPoint(i)
+        const s = toScreen(p.x, p.y)
+        const dx = s.x - sx, dy = s.y - sy
+        if (dx*dx + dy*dy < 100) return i
+    }
+    return -1
+}
+
+// --- События ---
+
+function onMouseDown(e) {
+    const rect = canvasRef.value.getBoundingClientRect()
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top
     
-    let color = editor.colors.point
-    if (i === selectedPointIndex.value) {
-      color = editor.colors.selectedPoint
-    } else if (i === editor.hoveredPointIndex) {
-      color = editor.colors.hoveredPoint
+    if (e.button === 1 || e.altKey) {
+        isPanning.value = true
+        lastMouse.x = mx; lastMouse.y = my
+        return
     }
     
-    editor.ctx.fillStyle = color
-    editor.ctx.beginPath()
-    editor.ctx.arc(x, y, pointRadius, 0, Math.PI * 2)
-    editor.ctx.fill()
-    
-    editor.ctx.strokeStyle = '#ffffff'
-    editor.ctx.lineWidth = 2
-    editor.ctx.stroke()
-    
-    editor.ctx.fillStyle = '#ffffff'
-    editor.ctx.font = 'bold 10px Arial'
-    editor.ctx.textAlign = 'center'
-    editor.ctx.textBaseline = 'middle'
-    editor.ctx.fillText(i, x, y)
-  }
-}
-
-function getControlPointAtScreen(screenX, screenY) {
-  if (!editor || !canvasRef.value || !props.curve) return -1
-  
-  const rect = canvasRef.value.getBoundingClientRect()
-  const x = screenX - rect.left
-  const y = screenY - rect.top
-  
-  const width = canvasRef.value.width
-  const height = canvasRef.value.height
-  const centerX = width / 2 + editor.panX
-  const centerY = height / 2 + editor.panY
-  
-  const count = props.curve.getControlPointCount()
-  for (let i = 0; i < count; i++) {
-    const p = props.curve.getControlPoint(i)
-    const px = centerX + p.x * editor.scale
-    const py = centerY - p.y * editor.scale
-    
-    const dist = Math.sqrt((x - px) ** 2 + (y - py) ** 2)
-    if (dist <= pointRadius * 2) {
-      return i
+    const idx = getPointIndexAt(mx, my)
+    if (idx !== -1) {
+        selectedPointIndex.value = idx
+        isDragging.value = true
+    } else {
+        // Drag background to pan
+        isPanning.value = true
+        lastMouse.x = mx; lastMouse.y = my
     }
-  }
-  
-  return -1
-}
-
-function screenToWorld(screenX, screenY) {
-  if (!editor || !canvasRef.value) return new THREE.Vector2()
-  
-  const rect = canvasRef.value.getBoundingClientRect()
-  const x = screenX - rect.left
-  const y = screenY - rect.top
-  
-  const width = canvasRef.value.width
-  const height = canvasRef.value.height
-  const centerX = width / 2 + editor.panX
-  const centerY = height / 2 + editor.panY
-  
-  const worldX = (x - centerX) / editor.scale
-  const worldY = -(y - centerY) / editor.scale
-  
-  return new THREE.Vector2(worldX, worldY)
 }
 
 function onMouseMove(e) {
-  if (!editor) return
-  
-  if (editor.isPanning) {
-    const deltaX = e.clientX - editor.lastPanX
-    const deltaY = e.clientY - editor.lastPanY
-    editor.panX += deltaX
-    editor.panY += deltaY
-    editor.lastPanX = e.clientX
-    editor.lastPanY = e.clientY
-    redraw()
-    return
-  }
-  
-  const oldHovered = editor.hoveredPointIndex
-  editor.hoveredPointIndex = getControlPointAtScreen(e.clientX, e.clientY)
-  
-  if (isDragging.value && selectedPointIndex.value >= 0) {
-    const worldPos = screenToWorld(e.clientX, e.clientY)
-    const newCurve = props.curve.clone()
-    newCurve.setControlPoint(selectedPointIndex.value, worldPos)
-    emit('update:curve', newCurve)
-  } else if (oldHovered !== editor.hoveredPointIndex) {
-    redraw()
-  }
+    const rect = canvasRef.value.getBoundingClientRect()
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top
+    
+    if (isPanning.value) {
+        transform.value.offsetX += mx - lastMouse.x
+        transform.value.offsetY += my - lastMouse.y
+        lastMouse.x = mx; lastMouse.y = my
+        redraw()
+        return
+    }
+    
+    if (isDragging.value && selectedPointIndex.value !== -1) {
+        const w = toWorld(mx, my)
+        props.curve.setControlPoint(selectedPointIndex.value, new THREE.Vector2(w.x, w.y))
+        emit('update:curve', props.curve)
+        redraw()
+    } else {
+        const idx = getPointIndexAt(mx, my)
+        if (idx !== hoveredPointIndex.value) {
+            hoveredPointIndex.value = idx
+            redraw()
+        }
+    }
 }
 
-function onMouseDown(e) {
-  if (!editor) return
-  
-  if (e.button === 1) {
-    e.preventDefault()
-    editor.isPanning = true
-    editor.lastPanX = e.clientX
-    editor.lastPanY = e.clientY
-    return
-  }
-  
-  const index = getControlPointAtScreen(e.clientX, e.clientY)
-  if (index >= 0) {
-    selectedPointIndex.value = index
-    isDragging.value = true
-  }
-}
-
-function onMouseUp(e) {
-  if (e.button === 1) {
-    editor.isPanning = false
-    return
-  }
-  isDragging.value = false
-}
-
-function onMouseLeave() {
-  if (editor) editor.hoveredPointIndex = -1
-  isDragging.value = false
-  redraw()
+function onMouseUp() {
+    isDragging.value = false
+    isPanning.value = false
 }
 
 function onWheel(e) {
-  if (!editor) return
-  
-  e.preventDefault()
-  
-  const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1
-  const oldScale = editor.scale
-  editor.scale *= zoomFactor
-  
-  editor.scale = Math.max(20, Math.min(editor.scale, 500))
-  
-  const scaleDiff = editor.scale - oldScale
-  editor.panX -= scaleDiff * 0.1
-  editor.panY -= scaleDiff * 0.1
-  
-  redraw()
+    e.preventDefault()
+    const factor = e.deltaY > 0 ? 0.9 : 1.1
+    transform.value.scale *= factor
+    redraw()
+}
+
+// Добавление точки
+function onDblClick(e) {
+    const rect = canvasRef.value.getBoundingClientRect()
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top
+    const w = toWorld(mx, my)
+    
+    // Пытаемся вставить точку в сегмент
+    const idx = props.curve.insertControlPointAt(new THREE.Vector2(w.x, w.y))
+    if (idx !== -1) {
+        selectedPointIndex.value = idx
+        emit('update:curve', props.curve)
+        redraw()
+    } else {
+        // Если далеко от линий - просто добавляем в конец
+        props.curve.addControlPoint(new THREE.Vector2(w.x, w.y))
+        selectedPointIndex.value = props.curve.getControlPointCount() - 1
+        emit('update:curve', props.curve)
+        redraw()
+    }
+}
+
+// Удаление точки
+function onContextMenu(e) {
+    e.preventDefault()
+    const rect = canvasRef.value.getBoundingClientRect()
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top
+    
+    const idx = getPointIndexAt(mx, my)
+    if (idx !== -1) {
+        props.curve.removeControlPoint(idx)
+        selectedPointIndex.value = -1
+        emit('update:curve', props.curve)
+        redraw()
+    }
 }
 </script>
 
 <template>
   <div class="curve-editor">
     <div class="editor-header">
-      <h3>{{ title || 'Curve Editor' }}</h3>
-      <div class="info">
-        Control points: {{ curve?.getControlPointCount() || 0 }}
-      </div>
+       <h3>{{ title }}</h3>
+       <div class="help">DblClick: Add Point | R-Click: Del Point | Alt+Drag: Pan</div>
     </div>
     <div class="canvas-container">
-      <canvas ref="canvasRef" class="editor-canvas"></canvas>
-    </div>
-    <div class="editor-footer">
-      <p class="hint">Drag control points to edit the curve</p>
+       <canvas ref="canvasRef"></canvas>
     </div>
   </div>
 </template>
 
 <style scoped>
-.curve-editor {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-}
-
-.editor-header {
-  padding: 10px;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.editor-header h3 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.info {
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.canvas-container {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.editor-canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-  cursor: crosshair;
-}
-
-.editor-footer {
-  padding: 8px 10px;
-  border-top: 1px solid #e5e7eb;
-  background: #f9fafb;
-  font-size: 12px;
-}
-
-.hint {
-  margin: 0;
-  color: #6b7280;
-}
+.curve-editor { height: 100%; display:flex; flex-direction:column; background:white; }
+.editor-header { padding: 8px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; }
+.help { font-size:11px; color:#888; }
+.canvas-container { flex:1; overflow:hidden; }
+canvas { width:100%; height:100%; display:block; cursor:crosshair; }
 </style>

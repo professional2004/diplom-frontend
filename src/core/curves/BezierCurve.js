@@ -1,142 +1,199 @@
 import * as THREE from 'three'
 
-/**
- * Класс для работы с кривыми Безье третьей степени (cubic Bezier curves)
- * Поддерживает как замкнутые, так и незамкнутые кривые
- */
 export class BezierCurve {
-  /**
-   * @param {THREE.Vector2[]} controlPoints - массив контрольных точек
-   * @param {boolean} closed - замкнута ли кривая
-   */
   constructor(controlPoints, closed = false) {
+    // Копируем точки, чтобы избежать мутаций извне
     this.controlPoints = controlPoints.map(p => p.clone())
     this.closed = closed
-    this._updateCachedValues()
+    this._cache = { length: null, arcLengths: null }
   }
 
-  /**
-   * Клонирует кривую
-   */
   clone() {
     return new BezierCurve(this.controlPoints.map(p => p.clone()), this.closed)
   }
 
-  /**
-   * Получить точку на кривой по параметру t (от 0 до 1)
-   * @param {number} t - параметр [0, 1]
-   * @returns {THREE.Vector2} точка на кривой
-   */
+  // --- Геометрия ---
+
   getPoint(t) {
-    if (t <= 0) return this.controlPoints[0].clone()
-    if (t >= 1) return this.controlPoints[this.controlPoints.length - 1].clone()
+    if (this.controlPoints.length < 2) return new THREE.Vector2()
+    
+    // Обработка замкнутости и выхода за границы
+    if (this.closed) {
+      t = t - Math.floor(t) // 1.2 -> 0.2
+    } else {
+      t = Math.max(0, Math.min(1, t))
+    }
 
-    const points = this.closed ? [...this.controlPoints, this.controlPoints[0]] : this.controlPoints
-    const segments = points.length - 1
+    const count = this.controlPoints.length
+    const segments = this.closed ? count : count - 1
+    
+    // Глобальный t -> локальный индекс сегмента
+    const globalT = t * segments
+    let i = Math.floor(globalT)
+    const localT = globalT - i
+    
+    // Замыкание индексов
+    if (this.closed) i = i % count
+    const nextI = (i + 1) % count
+    
+    // Защита для незамкнутых
+    if (!this.closed && i >= segments) {
+        return this.controlPoints[count - 1].clone()
+    }
 
-    // Определяем, на каком сегменте находится точка
-    const segmentIndex = Math.floor(t * segments)
-    const segmentT = (t * segments) - segmentIndex
+    const p0 = this.controlPoints[i]
+    const p1 = this.controlPoints[nextI]
 
-    const p0 = points[segmentIndex]
-    const p1 = points[(segmentIndex + 1) % points.length]
-
-    // Кубическая кривая Безье (для простоты используем квадратичную между двумя точками)
-    return this._quadraticBezier(p0, p1, segmentT)
+    // Линейная интерполяция (для оснований САПР обычно достаточно полилинии, 
+    // если нужна кривизна Безье между точками - можно раскомментировать кубическую логику)
+    return new THREE.Vector2(
+      p0.x + (p1.x - p0.x) * localT,
+      p0.y + (p1.y - p0.y) * localT
+    )
   }
 
-  /**
-   * Генерирует точки для визуализации кривой
-   * @param {number} segments - количество сегментов (точек)
-   * @returns {THREE.Vector2[]} массив точек кривой
-   */
   getPoints(segments = 50) {
     const points = []
     for (let i = 0; i <= segments; i++) {
-      const t = i / segments
-      points.push(this.getPoint(t))
+      points.push(this.getPoint(i / segments))
     }
     return points
   }
 
-  /**
-   * Квадратичная интерполяция Безье между двумя точками (простая версия)
-   * @private
-   */
-  _quadraticBezier(p0, p1, t) {
-    const x = (1 - t) * p0.x + t * p1.x
-    const y = (1 - t) * p0.y + t * p1.y
-    return new THREE.Vector2(x, y)
-  }
+  // --- Работа с длиной (для разверток) ---
 
-  /**
-   * Получить длину кривой
-   * @param {number} segments - количество сегментов для интегрирования
-   * @returns {number} приблизительная длина кривой
-   */
-  getLength(segments = 100) {
+  _updateLengthCache(segments = 200) {
     let length = 0
     let lastPoint = this.getPoint(0)
+    const arcLengths = [0]
 
     for (let i = 1; i <= segments; i++) {
-      const point = this.getPoint(i / segments)
+      const t = i / segments
+      const point = this.getPoint(t)
       length += lastPoint.distanceTo(point)
+      arcLengths.push(length)
       lastPoint = point
     }
+    
+    this._cache.length = length
+    this._cache.arcLengths = arcLengths
+    this._cache.segments = segments
+  }
 
-    return length
+  getLength() {
+    if (this._cache.length === null) this._updateLengthCache()
+    return this._cache.length
   }
 
   /**
-   * Переместить контрольную точку
-   * @param {number} index - индекс контрольной точки
-   * @param {THREE.Vector2} newPosition - новая позиция
+   * Найти параметр t (0..1) соответствующий расстоянию dist от начала кривой
    */
+  getTAtDist(dist) {
+    if (this._cache.length === null) this._updateLengthCache()
+    
+    const totalLength = this._cache.length
+    
+    if (dist <= 0) return 0
+    if (dist >= totalLength) return 1
+
+    // Бинарный поиск по кэшу длин
+    const list = this._cache.arcLengths
+    let low = 0, high = list.length - 1
+    while (low <= high) {
+        const mid = (low + high) >>> 1
+        if (list[mid] < dist) low = mid + 1
+        else high = mid - 1
+    }
+    
+    // Интерполяция внутри сегмента кэша
+    const idx = low 
+    const prevDist = list[idx - 1]
+    const nextDist = list[idx]
+    const segmentFrac = (dist - prevDist) / (nextDist - prevDist)
+    
+    const tStep = 1 / this._cache.segments
+    return (idx - 1) * tStep + segmentFrac * tStep
+  }
+
+  getPointAtDist(dist) {
+      const t = this.getTAtDist(dist)
+      return this.getPoint(t)
+  }
+
+  // --- Редактирование ---
+
   setControlPoint(index, newPosition) {
     if (index >= 0 && index < this.controlPoints.length) {
       this.controlPoints[index].copy(newPosition)
-      this._updateCachedValues()
+      this._cache.length = null // Сброс кэша
     }
   }
 
-  /**
-   * Получить контрольную точку
-   */
   getControlPoint(index) {
-    if (index >= 0 && index < this.controlPoints.length) {
-      return this.controlPoints[index].clone()
-    }
-    return null
+    return this.controlPoints[index]?.clone() || null
   }
 
-  /**
-   * Добавить контрольную точку в конец
-   */
-  addControlPoint(point) {
-    this.controlPoints.push(point.clone())
-    this._updateCachedValues()
-  }
-
-  /**
-   * Удалить контрольную точку
-   */
-  removeControlPoint(index) {
-    if (index >= 0 && index < this.controlPoints.length && this.controlPoints.length > 2) {
-      this.controlPoints.splice(index, 1)
-      this._updateCachedValues()
-    }
-  }
-
-  /**
-   * Получить количество контрольных точек
-   */
   getControlPointCount() {
     return this.controlPoints.length
   }
 
-  /**
-   * Сериализовать кривую в JSON
-   */
+  // Добавить точку (в конец)
+  addControlPoint(point) {
+    this.controlPoints.push(point.clone())
+    this._cache.length = null
+  }
+
+  // Вставить точку на кривую (разбиение сегмента)
+  // Ищет ближайший сегмент к точке pos и вставляет туда
+  insertControlPointAt(pos) {
+    let minIsoDist = Infinity
+    let insertIndex = -1
+    
+    const pts = this.controlPoints
+    const count = this.closed ? pts.length : pts.length - 1
+
+    for(let i=0; i<count; i++) {
+        const p1 = pts[i]
+        const p2 = pts[(i+1)%pts.length]
+        
+        // Расстояние от точки до отрезка
+        const dist = this._distToSegment(pos, p1, p2)
+        if (dist < minIsoDist) {
+            minIsoDist = dist
+            insertIndex = (i + 1)
+        }
+    }
+
+    if (insertIndex !== -1) {
+        this.controlPoints.splice(insertIndex, 0, new THREE.Vector2(pos.x, pos.y))
+        this._cache.length = null
+        return insertIndex
+    }
+    return -1
+  }
+
+  removeControlPoint(index) {
+    if (this.controlPoints.length <= 3 && this.closed) return // Не ломать минимум для замкнутой
+    if (this.controlPoints.length <= 2 && !this.closed) return
+
+    if (index >= 0 && index < this.controlPoints.length) {
+      this.controlPoints.splice(index, 1)
+      this._cache.length = null
+    }
+  }
+
+  // Вспомогательный метод: расстояние от точки P до отрезка AB
+  _distToSegment(p, a, b) {
+      const l2 = a.distanceToSquared(b)
+      if (l2 === 0) return p.distanceTo(a)
+      let t = ((p.x - a.x) * (b.x - a.x) + (p.y - a.y) * (b.y - a.y)) / l2
+      t = Math.max(0, Math.min(1, t))
+      const proj = new THREE.Vector2(a.x + t * (b.x - a.x), a.y + t * (b.y - a.y))
+      return p.distanceTo(proj)
+  }
+
+  // --- Сериализация ---
+
   toJSON() {
     return {
       controlPoints: this.controlPoints.map(p => ({ x: p.x, y: p.y })),
@@ -144,56 +201,8 @@ export class BezierCurve {
     }
   }
 
-  /**
-   * Десериализовать кривую из JSON
-   */
   static fromJSON(data) {
     const points = data.controlPoints.map(p => new THREE.Vector2(p.x, p.y))
     return new BezierCurve(points, data.closed)
-  }
-
-  /**
-   * Обновить кэшированные значения (для оптимизации)
-   * @private
-   */
-  _updateCachedValues() {
-    // Можно добавить кэширование для оптимизации в будущем
-  }
-
-  /**
-   * Получить bounding box кривой
-   */
-  getBoundingBox() {
-    let minX = Infinity, maxX = -Infinity
-    let minY = Infinity, maxY = -Infinity
-
-    for (const point of this.controlPoints) {
-      minX = Math.min(minX, point.x)
-      maxX = Math.max(maxX, point.x)
-      minY = Math.min(minY, point.y)
-      maxY = Math.max(maxY, point.y)
-    }
-
-    return {
-      min: new THREE.Vector2(minX, minY),
-      max: new THREE.Vector2(maxX, maxY),
-      width: maxX - minX,
-      height: maxY - minY
-    }
-  }
-
-  /**
-   * Нормализовать кривую к диапазону [0, 1]
-   */
-  normalize() {
-    const bbox = this.getBoundingBox()
-    const scale = Math.max(bbox.width, bbox.height) || 1
-
-    for (const point of this.controlPoints) {
-      point.x = (point.x - bbox.min.x) / scale
-      point.y = (point.y - bbox.min.y) / scale
-    }
-
-    return this
   }
 }
