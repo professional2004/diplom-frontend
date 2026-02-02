@@ -6,8 +6,7 @@ import * as THREE from 'three'
 
 const props = defineProps({
   contour: BezierCurve,
-  // Принимаем точки контура развертки (серый фон)
-  unfoldOutlinePoints: { type: Array, default: () => [] },
+  unfoldOutlinePoints: { type: Array, default: () => [] }, // "Серый" контур развертки
   title: String
 })
 
@@ -18,7 +17,6 @@ const canvasRef = ref(null)
 let ctx = null
 const transform = ref({ scale: 40, offsetX: 0, offsetY: 0 })
 
-// State
 const selectedPointIndex = ref(-1)
 const hoveredPointIndex = ref(-1)
 const isDragging = ref(false)
@@ -26,15 +24,15 @@ const isPanning = ref(false)
 const lastMouse = { x: 0, y: 0 }
 const HIT_RADIUS = 8
 
-// Кэш границ для ограничения перетаскивания
-let boundsCache = null
+// Кэш для быстрого ограничения
+let polygonCache = []
 
 onMounted(() => {
     if (!canvasRef.value) return
     ctx = canvasRef.value.getContext('2d')
     resize()
+    updatePolygonCache()
     centerView()
-    updateBoundsCache() // Расчет границ
     redraw()
     
     const cvs = canvasRef.value
@@ -54,16 +52,17 @@ onMounted(() => {
 
 watch(() => props.contour, redraw, { deep: true })
 watch(() => props.unfoldOutlinePoints, () => {
-    updateBoundsCache()
-    centerView()
+    updatePolygonCache()
+    centerView() // Центрируем только если изменилась развертка (новая поверхность)
     redraw()
 }, { deep: true })
 
-function updateBoundsCache() {
-    if (props.unfoldOutlinePoints && props.unfoldOutlinePoints.length > 0) {
-        boundsCache = new THREE.Box2().setFromPoints(props.unfoldOutlinePoints)
+function updatePolygonCache() {
+    if (props.unfoldOutlinePoints && props.unfoldOutlinePoints.length > 2) {
+        // Просто копируем точки для использования в math
+        polygonCache = props.unfoldOutlinePoints.map(p => new THREE.Vector2(p.x, p.y))
     } else {
-        boundsCache = null
+        polygonCache = []
     }
 }
 
@@ -79,9 +78,20 @@ function centerView() {
     if (!canvasRef.value) return
     const w = canvasRef.value.width, h = canvasRef.value.height
     
-    if (boundsCache) {
+    if (polygonCache.length > 0) {
+        const box = new THREE.Box2().setFromPoints(polygonCache)
         const center = new THREE.Vector2()
-        boundsCache.getCenter(center)
+        box.getCenter(center)
+        
+        // Автозум, чтобы вся развертка влезла
+        const bw = box.max.x - box.min.x
+        const bh = box.max.y - box.min.y
+        const padding = 50
+        const scaleX = (w - padding*2) / bw
+        const scaleY = (h - padding*2) / bh
+        
+        transform.value.scale = Math.min(Math.min(scaleX, scaleY), 100) // Не больше 100, чтоб не огромно
+        
         transform.value.offsetX = w/2 - center.x * transform.value.scale
         transform.value.offsetY = h/2 + center.y * transform.value.scale
     } else {
@@ -140,18 +150,22 @@ function drawRealOutline() {
 function drawGrid(w, h) {
     ctx.strokeStyle = '#e0e0e0'
     ctx.lineWidth = 1
-    const step = transform.value.scale
-    const ox = transform.value.offsetX % step
-    const oy = transform.value.offsetY % step
+    const step = 50 // Фиксированный шаг сетки в пикселях для красоты, или transform.value.scale для точности
+    // Давайте лучше динамическую
+    const gridStep = transform.value.scale >= 20 ? transform.value.scale : transform.value.scale * 5
+    
+    const ox = transform.value.offsetX % gridStep
+    const oy = transform.value.offsetY % gridStep
+    
     ctx.beginPath()
-    for(let x=ox; x<w; x+=step) { ctx.moveTo(x,0); ctx.lineTo(x,h) }
-    for(let y=oy; y<h; y+=step) { ctx.moveTo(0,y); ctx.lineTo(w,y) }
+    for(let x=ox; x<w; x+=gridStep) { ctx.moveTo(x,0); ctx.lineTo(x,h) }
+    for(let y=oy; y<h; y+=gridStep) { ctx.moveTo(0,y); ctx.lineTo(w,y) }
     ctx.stroke()
 }
 
 function drawContour() {
     if (!props.contour) return
-    const pts = props.contour.getPoints(100)
+    const pts = props.contour.getPoints(150)
     ctx.beginPath()
     ctx.strokeStyle = '#ef4444'
     ctx.lineWidth = 2
@@ -192,7 +206,73 @@ function getPointAt(sx, sy) {
     return -1
 }
 
-// --- Interaction ---
+// --- Математика ограничения (Clamping) ---
+
+// 1. Проверка попадания точки в полигон (Ray Casting)
+function isPointInPolygon(p, polygon) {
+    let inside = false
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const xi = polygon[i].x, yi = polygon[i].y
+        const xj = polygon[j].x, yj = polygon[j].y
+        
+        const intersect = ((yi > p.y) !== (yj > p.y)) &&
+            (p.x < (xj - xi) * (p.y - yi) / (yj - yi) + xi)
+        if (intersect) inside = !inside
+    }
+    return inside
+}
+
+// 2. Найти ближайшую точку НА ГРАНИЦЕ полигона
+function getClosestPointOnPolygonOutline(p, polygon) {
+    let minDistSq = Infinity
+    let closest = new THREE.Vector2()
+    
+    // Проходим по всем ребрам
+    for (let i = 0; i < polygon.length; i++) {
+        const p1 = polygon[i]
+        const p2 = polygon[(i + 1) % polygon.length] // Замыкаем на начало
+        
+        const proj = getClosestPointOnSegment(p, p1, p2)
+        const dSq = p.distanceToSquared(proj)
+        
+        if (dSq < minDistSq) {
+            minDistSq = dSq
+            closest.copy(proj)
+        }
+    }
+    return closest
+}
+
+// Проекция точки P на отрезок AB
+function getClosestPointOnSegment(p, a, b) {
+    const ab = new THREE.Vector2().subVectors(b, a)
+    const ap = new THREE.Vector2().subVectors(p, a)
+    
+    const lenSq = ab.lengthSq()
+    if (lenSq === 0) return a.clone() // Отрезок нулевой длины
+    
+    // Проекция (t от 0 до 1)
+    let t = ap.dot(ab) / lenSq
+    t = Math.max(0, Math.min(1, t))
+    
+    return new THREE.Vector2().addVectors(a, ab.multiplyScalar(t))
+}
+
+// Главная функция ограничения
+function clampPointToPolygon(point, polygon) {
+    if (!polygon || polygon.length < 3) return point
+    
+    // Если внутри - возвращаем как есть
+    if (isPointInPolygon(point, polygon)) {
+        return point
+    }
+    
+    // Если снаружи - ищем ближайшую точку на границе
+    return getClosestPointOnPolygonOutline(point, polygon)
+}
+
+
+// --- Обработчики ---
 
 function onMouseDown(e) {
     const rect = canvasRef.value.getBoundingClientRect()
@@ -227,17 +307,14 @@ function onMouseMove(e) {
     
     if (isDragging.value && selectedPointIndex.value !== -1 && props.contour) {
         let w = toWorld(mx, my)
+        let vecW = new THREE.Vector2(w.x, w.y)
         
-        // --- Ограничение (Clamping) ---
-        // Если есть границы развертки, не даем точке выйти за них
-        if (boundsCache) {
-            // Маленький отступ (epsilon) чтобы точка не залипла намертво на границе
-            const eps = 0.001 
-            w.x = Math.max(boundsCache.min.x, Math.min(boundsCache.max.x, w.x))
-            w.y = Math.max(boundsCache.min.y, Math.min(boundsCache.max.y, w.y))
+        // [!] УМНОЕ ОГРАНИЧЕНИЕ
+        if (polygonCache.length > 2) {
+             vecW = clampPointToPolygon(vecW, polygonCache)
         }
 
-        props.contour.setControlPoint(selectedPointIndex.value, new THREE.Vector2(w.x, w.y))
+        props.contour.setControlPoint(selectedPointIndex.value, vecW)
         emit('update:contour', props.contour)
         redraw()
     } else {
@@ -263,18 +340,18 @@ function onDblClick(e) {
     if (!props.contour) return
     const rect = canvasRef.value.getBoundingClientRect()
     let w = toWorld(e.clientX - rect.left, e.clientY - rect.top)
+    let vecW = new THREE.Vector2(w.x, w.y)
     
-    // Также клампим при создании
-    if (boundsCache) {
-        w.x = Math.max(boundsCache.min.x, Math.min(boundsCache.max.x, w.x))
-        w.y = Math.max(boundsCache.min.y, Math.min(boundsCache.max.y, w.y))
+    // Клампим при создании
+    if (polygonCache.length > 2) {
+        vecW = clampPointToPolygon(vecW, polygonCache)
     }
     
-    const idx = props.contour.insertControlPointAt(new THREE.Vector2(w.x, w.y))
+    const idx = props.contour.insertControlPointAt(vecW)
     if (idx !== -1) {
         selectedPointIndex.value = idx
     } else {
-        props.contour.addControlPoint(new THREE.Vector2(w.x, w.y))
+        props.contour.addControlPoint(vecW)
         selectedPointIndex.value = props.contour.getControlPointCount() - 1
     }
     emit('update:contour', props.contour)
