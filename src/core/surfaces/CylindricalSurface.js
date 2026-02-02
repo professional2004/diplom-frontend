@@ -138,15 +138,6 @@ export class CylindricalSurface extends BaseSurface {
     const unfoldGeo = new THREE.BufferGeometry().setFromPoints(unfoldPoints)
     group.add(new THREE.Line(unfoldGeo, mat))
 
-    // Рисуем масштабированное основание рядом для справки
-    const scale = perimeter / (Math.max(...basePoints.map(p => Math.abs(p.x)), ...basePoints.map(p => Math.abs(p.y))) || 1)
-    const scaledBasePoints = basePoints.map(p => 
-      new THREE.Vector3((p.x * scale) + perimeter + 1, p.y * scale, 0)
-    )
-    scaledBasePoints.push(scaledBasePoints[0])
-
-    const baseLabelGeo = new THREE.BufferGeometry().setFromPoints(scaledBasePoints)
-    group.add(new THREE.Line(baseLabelGeo, mat))
 
     return group
   }
