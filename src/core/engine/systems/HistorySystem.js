@@ -31,6 +31,7 @@ export class HistorySystem {
     }
   }
 
+  
   undo() {
     if (!Array.isArray(this.history)) return
     if (this.index >= 0) {
