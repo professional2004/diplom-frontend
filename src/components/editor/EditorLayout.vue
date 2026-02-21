@@ -3,6 +3,7 @@ import SceneViewport from './SceneViewport.vue'
 import EditorToolbar from './EditorToolbar.vue'
 import ViewCube from './ViewCube.vue'
 import UnfoldViewport from './UnfoldViewport.vue'
+import ParamPanel from './ParamPanel.vue'
 </script>
 
 
@@ -15,6 +16,9 @@ import UnfoldViewport from './UnfoldViewport.vue'
         <SceneViewport class="scene-layer" />
         <div class="cube-wrapper ui-layer">
           <ViewCube />
+        </div>
+        <div class="param-panel-wrapper ui-layer" style="left:10px; bottom:10px;">
+          <ParamPanel />
         </div>
       </div>
 

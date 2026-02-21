@@ -34,11 +34,11 @@ export const useEditorStore = defineStore('editor', {
     resetView() { this.engine?.cameraSystem.reset() },
 
     // УНИВЕРСАЛЬНЫЙ МЕТОД для добавления фигуры
-    addShape(type) {
+    // Принимает необязательный объект params для параметрических моделей
+    addShape(type, params = {}) {
       if (!this.engine) return
-      
-      // Параметры можно брать из UI, пока дефолтные внутри команд/фигур
-      const cmd = new AddShapeCommand(this.engine.sceneSystem, type)
+      // Параметры передаются в команду и далее в ShapeRegistry
+      const cmd = new AddShapeCommand(this.engine.sceneSystem, type, params)
       
       this.engine.historySystem.execute(cmd)
       this.updateUndoRedo()

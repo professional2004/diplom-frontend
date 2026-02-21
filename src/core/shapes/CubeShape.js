@@ -1,5 +1,7 @@
 import * as THREE from 'three'
 import { BaseShape } from './BaseShape'
+import { primitives } from '@jscad/modeling'
+import { createMeshFromJscad } from '@/core/jscad/JscadAdapter'
 
 export class CubeShape extends BaseShape {
   get defaultParams() {
@@ -8,14 +10,15 @@ export class CubeShape extends BaseShape {
 
   createMesh() {
     const { width, height, depth } = this.params
-    const geometry = new THREE.BoxGeometry(width, height, depth)
-    const mesh = new THREE.Mesh(geometry, this.getStandardMaterial())
-    
+    // Создаем форму с помощью JSCAD (параметрическое моделирование)
+    const jscadGeom = primitives.cuboid({ size: [width, height, depth] })
+    const mesh = createMeshFromJscad(jscadGeom, this.getStandardMaterial())
+
     // Сохраняем тип и параметры для восстановления/развертки
     mesh.userData.shapeType = 'cube'
     mesh.userData.params = this.params
     mesh.userData.selectable = true
-    
+
     // Ставим на "пол" (половина высоты)
     mesh.position.y = height / 2
     return mesh
