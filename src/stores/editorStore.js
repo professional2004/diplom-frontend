@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
 import { markRaw } from 'vue'
-import { Engine } from '@/core/engine/Engine'
-import { AddShapeCommand } from '@/core/commands/AddShapeCommand'
-import { DeleteShapeCommand } from '@/core/commands/DeleteShapeCommand'
+import { Engine } from '@/core/3D_editor/engine/Engine'
+import { AddShapeCommand } from '@/core/general/commands/AddShapeCommand'
+import { DeleteShapeCommand } from '@/core/general/commands/DeleteShapeCommand'
 
 export const useEditorStore = defineStore('editor', {
   state: () => ({

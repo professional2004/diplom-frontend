@@ -1,4 +1,4 @@
-import { ShapeRegistry } from '@/core/shapes/ShapeRegistry'
+import { ShapeRegistry } from '@/core/3D_editor/shapes/ShapeRegistry'
 
 export class AddShapeCommand {
   constructor(sceneSystem, shapeType, params = {}) {

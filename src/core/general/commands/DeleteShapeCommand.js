@@ -1,5 +1,3 @@
-import { ShapeRegistry } from '@/core/shapes/ShapeRegistry'
-
 export class DeleteShapeCommand {
   constructor(sceneSystem, selectionSystem, mesh, store = null) {
     this.sceneSystem = sceneSystem

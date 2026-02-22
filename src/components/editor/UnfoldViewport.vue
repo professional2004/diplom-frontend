@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useEditorStore } from '@/stores/editorStore'
-import { UnfoldManager } from '@/core/unfold/UnfoldManager'
+import { UnfoldManager } from '@/core/2D_editor/unfold/UnfoldManager'
 import { watch } from 'vue'
 
 const containerRef = ref(null)
