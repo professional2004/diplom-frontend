@@ -1,57 +1,33 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useEditorStore } from '@/stores/editorStore'
-import { UnfoldManager } from '@/core/2D_editor/unfold/UnfoldManager'
-import { watch } from 'vue'
+import { Engine2D } from '@/core/2D_editor/engine/Engine2D'
 
 const containerRef = ref(null)
 const store = useEditorStore()
-let manager = null
-let raf = null
+let engine2D = null
 
-// Убираем sync из loop!
-const loop = () => {
-   manager.update()
-   manager.render()
-   raf = requestAnimationFrame(loop)
-}
-
-// Добавляем слежение за историей (как индикатор изменений)
+// Передаем 3D-движок в 2D-движок, как только он проинициализируется в сторе
 watch(
-  () => store.engine?.historySystem?.index, 
-  () => {
-     if (store.engine?.sceneSystem?.scene) {
-        manager.sync(store.engine.sceneSystem.scene)
-     }
-  }
+  () => store.engine,
+  (newEngine) => {
+    if (newEngine && engine2D) {
+      engine2D.set3DEngine(newEngine)
+    }
+  },
+  { immediate: true }
 )
-
-const handleResize = () => {
-  if (containerRef.value && manager) {
-    manager.resize(containerRef.value.clientWidth, containerRef.value.clientHeight)
-  }
-}
 
 onMounted(() => {
   if (!containerRef.value) return
-  manager = new UnfoldManager(containerRef.value)
-
-  const loop = () => {
-    if (store.engine?.sceneSystem?.scene) {
-      manager.sync(store.engine.sceneSystem.scene)
-    }
-    manager.update()
-    manager.render()
-    raf = requestAnimationFrame(loop)
+  engine2D = new Engine2D(containerRef.value)
+  if (store.engine) {
+    engine2D.set3DEngine(store.engine)
   }
-  loop()
-  window.addEventListener('resize', handleResize)
 })
 
 onBeforeUnmount(() => {
-  if (raf) cancelAnimationFrame(raf)
-  window.removeEventListener('resize', handleResize)
-  manager?.dispose()
+  engine2D?.dispose()
 })
 </script>
 
@@ -63,13 +39,13 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .unfold-viewport { 
-  width: 100%; 
+  width: 100%;
   height: 100%; 
   background: #f0f0f0; 
   border-left: 2px solid #ddd;
   position: relative;
   overflow: hidden;
-  cursor: crosshair;
+  cursor: default;
 }
 .overlay-info {
   position: absolute;
@@ -79,5 +55,6 @@ onBeforeUnmount(() => {
   color: #666;
   text-transform: uppercase;
   letter-spacing: 1px;
+  pointer-events: none;
 }
 </style>

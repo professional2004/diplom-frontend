@@ -22,11 +22,13 @@ export const useEditorStore = defineStore('editor', {
       this.engine.inputSystem.setStore(this)
       
       this.updateUndoRedo()
-      
+
       // Слушаем события от InputSystem
       window.addEventListener('deleteSelectedShape', () => this.deleteShape())
       window.addEventListener('undo', () => this.undo())
       window.addEventListener('redo', () => this.redo())
+      
+      window.addEventListener('updateUndoRedo', () => this.updateUndoRedo())
     },
 
     zoomIn() { this.engine?.cameraSystem.zoom(0.9) },

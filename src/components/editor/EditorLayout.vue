@@ -48,7 +48,10 @@ import ParamPanel from './ParamPanel.vue'
 }
 
 .viewport-wrapper {
+  min-width: 0; 
+  min-height: 0;
   position: relative;
+  width: 100%;
   height: 100%;
 }
 
