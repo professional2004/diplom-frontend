@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { Move2DCommand } from '@/core/2D_editor/commands/Move2DCommand'
+import { Move2DCommand } from '@/core/2D_editor/commands/MoveUnfoldDetailCommand'
 
 export class InputSystem2D {
   constructor(container) {

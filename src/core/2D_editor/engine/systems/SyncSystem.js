@@ -1,6 +1,6 @@
 import * as THREE from 'three'
-import { ShapeRegistry } from '@/core/3D_editor/shapes/ShapeRegistry'
-import { UnfoldPart } from '@/core/2D_editor/entities/UnfoldPart'
+import { ShapeRegistry } from '@/core/3D_editor/entities/ShapeRegistry'
+import { UnfoldPart } from '@/core/2D_editor/entities/UnfoldDetail'
 
 export class SyncSystem2D {
   constructor(engine) {

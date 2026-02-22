@@ -1,9 +1,9 @@
 <script setup>
-import SceneViewport from './SceneViewport.vue'
-import EditorToolbar from './EditorToolbar.vue'
-import ViewCube from './ViewCube.vue'
-import UnfoldViewport from './UnfoldViewport.vue'
-import ParamPanel from './ParamPanel.vue'
+import Scene3D from './scenes/Scene3DViewport.vue'
+import Scene2D from './scenes/Scene2DViewport.vue'
+import ViewCube from './utils/ViewCubeGizmo3D.vue'
+import EditorToolbar from './panels/EditorToolbar.vue'
+import ParamPanel from './panels/ParamPanel.vue'
 </script>
 
 
@@ -13,7 +13,7 @@ import ParamPanel from './ParamPanel.vue'
     
     <div class="main-container">
       <div class="viewport-wrapper">
-        <SceneViewport class="scene-layer" />
+        <Scene3D class="scene-layer" />
         <div class="cube-wrapper ui-layer">
           <ViewCube />
         </div>
@@ -23,7 +23,7 @@ import ParamPanel from './ParamPanel.vue'
       </div>
 
       <div class="viewport-wrapper">
-        <UnfoldViewport />
+        <Scene2D />
       </div>
     </div>
   </div>
@@ -47,12 +47,20 @@ import ParamPanel from './ParamPanel.vue'
   overflow: hidden;
 }
 
+
 .viewport-wrapper {
-  min-width: 0; 
-  min-height: 0;
   position: relative;
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+}
+
+canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .ui-layer {

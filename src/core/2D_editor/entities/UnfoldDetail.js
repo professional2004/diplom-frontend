@@ -1,5 +1,3 @@
-import * as THREE from 'three'
-
 export class UnfoldPart {
   constructor(meshGroup, parentShapeId) {
     this.mesh = meshGroup

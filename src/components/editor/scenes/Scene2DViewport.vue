@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useEditorStore } from '@/stores/editorStore'
-import { Engine2D } from '@/core/2D_editor/engine/Engine2D'
+import { Engine2D } from '@/core/2D_editor/engine/Engine'
 
 const containerRef = ref(null)
 const store = useEditorStore()

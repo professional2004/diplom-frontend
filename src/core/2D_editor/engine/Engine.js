@@ -1,9 +1,9 @@
-import { SceneSystem2D } from './systems/SceneSystem2D'
-import { CameraSystem2D } from './systems/CameraSystem2D'
-import { RenderSystem2D } from './systems/RenderSystem2D'
-import { InputSystem2D } from './systems/InputSystem2D'
-import { SelectionSystem2D } from './systems/SelectionSystem2D'
-import { SyncSystem2D } from './systems/SyncSystem2D'
+import { SceneSystem2D } from './systems/SceneSystem'
+import { CameraSystem2D } from './systems/CameraSystem'
+import { RenderSystem2D } from './systems/RenderSystem'
+import { InputSystem2D } from './systems/InputSystem'
+import { SelectionSystem2D } from './systems/SelectionSystem'
+import { SyncSystem2D } from './systems/SyncSystem'
 
 export class Engine2D {
   constructor(container) {
