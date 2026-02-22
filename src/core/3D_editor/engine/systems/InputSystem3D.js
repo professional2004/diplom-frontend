@@ -53,6 +53,17 @@ export class InputSystem3D {
 
   onPointerDown(event) {
     if (!this.engine3D) return
+
+    // Сначала Гизмо
+    if (this.engine3D.viewCubeGizmo) {
+      const handled = this.engine3D.viewCubeGizmo.handlePointer(
+        event.clientX, 
+        event.clientY, 
+        this.container
+      );
+      if (handled) return; // Прерываем, так как кликнули по кубу
+    }
+
     this.updateMouse(event)
 
     this.raycaster.setFromCamera(this.mouse, this.engine3D.cameraSystem3D.camera)

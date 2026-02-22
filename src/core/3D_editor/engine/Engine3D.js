@@ -3,6 +3,7 @@ import { RenderSystem3D } from '@/core/3D_editor/engine/systems/RenderSystem3D'
 import { CameraSystem3D } from '@/core/3D_editor/engine/systems/CameraSystem3D'
 import { InputSystem3D } from '@/core/3D_editor/engine/systems/InputSystem3D'
 import { SelectionSystem3D } from '@/core/3D_editor/engine/systems/SelectionSystem3D'
+import { ViewCubeGizmo } from '@/core/3D_editor/utils/ViewCubeGizmo'
 
 export class Engine3D {
   constructor(container, registry) {
@@ -22,10 +23,17 @@ export class Engine3D {
 
     this.inputSystem3D.setEngine(this)
 
+    this.viewCubeGizmo = new ViewCubeGizmo(
+      this.cameraSystem3D.camera, 
+      this.renderSystem3D.renderer,
+      this.cameraSystem3D.controls // чтобы Гизмо мог вращать камеру
+    )
+
     this.systems = [
       this.inputSystem3D,
       this.cameraSystem3D,
       this.selectionSystem3D, 
+      this.viewCubeGizmo,
       this.renderSystem3D
     ]
 

@@ -1,66 +1,39 @@
 import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
 export class ViewCubeGizmo {
-  constructor(container, mainCamera, mainControls, onFaceClick) {
-    this.container = container
+  constructor(mainCamera, mainControls) {
     this.mainCamera = mainCamera
     this.mainControls = mainControls
-    this.onFaceClick = onFaceClick
 
-    // 1. Инициализация сцены и рендера
+    // Своя сцена и камера для Гизмо
     this.scene = new THREE.Scene()
     
-    this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true })
-    this.renderer.setSize(container.clientWidth, container.clientHeight)
-    this.renderer.setPixelRatio(window.devicePixelRatio)
-    this.container.appendChild(this.renderer.domElement)
-
-    // 2. Камера Gizmo (всегда смотрит на 0,0,0)
-    const aspect = container.clientWidth / container.clientHeight
+    // Используем ортографическую камеру для CAD-вида
     const d = 1.8
-    this.camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 0.1, 100)
-    this.camera.position.set(0, 0, 10)
+    this.camera = new THREE.OrthographicCamera(-d, d, d, -d, 0.1, 100)
+    this.camera.position.set(0, 0, 5)
 
-    // 3. Создаем Куб
+    // Создаем куб
     this.cube = this.createCube()
     this.scene.add(this.cube)
 
-    // 4. Raycaster для кликов
+    // Инструменты для взаимодействия
     this.raycaster = new THREE.Raycaster()
     this.mouse = new THREE.Vector2()
-
-    // 5. НОВОЕ: Контроллер вращения для куба
-    // Мы привязываем его к канвасу куба, но управляем ГЛАВНОЙ камерой
-    this.gizmoControls = new OrbitControls(this.mainCamera, this.renderer.domElement)
-    this.gizmoControls.enableZoom = false // Зум на кубе не нужен
-    this.gizmoControls.enablePan = false  // Пан на кубе не нужен
-    this.gizmoControls.enableDamping = false // Мгновенная реакция
-    this.gizmoControls.rotateSpeed = 0.5 // Чуть медленнее для точности
-
-    // 6. Обработка событий (различаем Клик и Драг)
-    this.onPointerDown = this.onPointerDown.bind(this)
-    this.onPointerUp = this.onPointerUp.bind(this)
     
-    // Используем pointerdown/up на renderer.domElement
-    this.renderer.domElement.addEventListener('pointerdown', this.onPointerDown)
-    this.renderer.domElement.addEventListener('pointerup', this.onPointerUp)
-
-    // Переменные для отслеживания драга
-    this.dragStart = { x: 0, y: 0 }
-    this.isDragging = false
+    // Размер гизмо на экране (в пикселях)
+    this.gizmoSize = 120 
   }
 
   createCube() {
-    const geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5)
-    
-    const colors = [0xff3333, 0xaa0000, 0x33ff33, 0x00aa00, 0x3333ff, 0x0000aa]
+    const geometry = new THREE.BoxGeometry(1.6, 1.6, 1.6)
+    const colors = [0xff4444, 0xcc0000, 0x44ff44, 0x00cc00, 0x4444ff, 0x0000cc]
     const labels = ['Right', 'Left', 'Top', 'Bottom', 'Front', 'Back']
-    const materials = labels.map((label, i) => this.createFaceMaterial(label, colors[i]))
-
-    const mesh = new THREE.Mesh(geometry, materials)
     
-    // Нормали для выравнивания камеры
+    const materials = labels.map((label, i) => this.createFaceMaterial(label, colors[i]))
+    const mesh = new THREE.Mesh(geometry, materials)
+
+    // Направления для каждой грани (куда должна смотреть камера при клике)
     mesh.userData.directions = [
       new THREE.Vector3(1, 0, 0),  // Right
       new THREE.Vector3(-1, 0, 0), // Left
@@ -69,7 +42,6 @@ export class ViewCubeGizmo {
       new THREE.Vector3(0, 0, 1),  // Front
       new THREE.Vector3(0, 0, -1), // Back
     ]
-    
     return mesh
   }
 
@@ -78,81 +50,117 @@ export class ViewCubeGizmo {
     canvas.width = 128
     canvas.height = 128
     const ctx = canvas.getContext('2d')
-    
+
     ctx.fillStyle = '#' + new THREE.Color(color).getHexString()
     ctx.fillRect(0, 0, 128, 128)
     
-    ctx.lineWidth = 10
-    ctx.strokeStyle = '#fff'
+    ctx.strokeStyle = 'white'
+    ctx.lineWidth = 8
     ctx.strokeRect(0, 0, 128, 128)
-    
-    ctx.font = 'bold 32px Arial'
-    ctx.fillStyle = '#ffffff'
+
+    ctx.font = 'bold 28px Arial'
+    ctx.fillStyle = 'white'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
     ctx.fillText(text.toUpperCase(), 64, 64)
 
-    return new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas) })
+    const texture = new THREE.CanvasTexture(canvas)
+    return new THREE.MeshBasicMaterial({ map: texture })
   }
+
+  // Вызывается в основном цикле loop()
+  // update() {
+  //   // Синхронизируем положение камеры гизмо с вектором взгляда основной камеры
+  //   const eye = new THREE.Vector3()
+  //   eye.subVectors(this.mainCamera.position, this.mainControls.target).normalize()
+    
+  //   this.camera.position.copy(eye.multiplyScalar(3))
+  //   this.camera.lookAt(0, 0, 0)
+  // }
 
   update() {
-    // 1. Обновляем контроллеры (нужно, чтобы синхронизировать таргет)
-    // Важно: если основная камера сместилась (pan), gizmoControls должен знать новый target
-    this.gizmoControls.target.copy(this.mainControls.target)
-    this.gizmoControls.update()
-
-    // 2. Синхронизация визуального куба с главной камерой
-    const dir = new THREE.Vector3()
-    dir.subVectors(this.mainCamera.position, this.mainControls.target)
-    dir.normalize()
-
-    this.camera.position.copy(dir.multiplyScalar(5))
-    this.camera.lookAt(0, 0, 0)
-
-    this.renderer.render(this.scene, this.camera)
-  }
-
-  onPointerDown(event) {
-    this.dragStart.x = event.clientX
-    this.dragStart.y = event.clientY
-    this.isDragging = false
-  }
-
-  onPointerUp(event) {
-    // Вычисляем, насколько сдвинулась мышь
-    const dx = event.clientX - this.dragStart.x
-    const dy = event.clientY - this.dragStart.y
-    const dist = Math.sqrt(dx * dx + dy * dy)
-
-    // Если сдвиг больше 3 пикселей, считаем это вращением, а не кликом
-    if (dist > 3) {
-      this.isDragging = true
-      return // Прерываем, не обрабатываем клик по грани
+    // Проверка: если камера или контроллеры еще не подтянулись, выходим из метода
+    if (!this.mainCamera || !this.mainControls || !this.mainControls.target) {
+      return;
     }
 
-    // Логика клика (Raycasting)
-    const rect = this.renderer.domElement.getBoundingClientRect()
-    this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
-    this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+    try {
+      const eye = new THREE.Vector3();
+      // Безопасно копируем векторы
+      const cameraPos = this.mainCamera.position;
+      const targetPos = this.mainControls.target;
 
+      // Вычисляем вектор взгляда
+      eye.subVectors(cameraPos, targetPos).normalize();
+      
+      // Дистанция в 3 единицы для камеры Гизмо
+      this.camera.position.copy(eye.multiplyScalar(3));
+      this.camera.lookAt(0, 0, 0);
+    } catch (e) {
+      console.warn("[ViewCubeGizmo] Update failed:", e);
+    }
+  }
+
+  // Метод отрисовки, вызываемый из RenderSystem3D
+  render(renderer) {
+    const size = renderer.getSize(new THREE.Vector2())
+    
+    // Отрисовываем Гизмо в углу (Viewport)
+    renderer.setViewport(size.x - this.gizmoSize, size.y - this.gizmoSize, this.gizmoSize, this.gizmoSize)
+    renderer.setScissor(size.x - this.gizmoSize, size.y - this.gizmoSize, this.gizmoSize, this.gizmoSize)
+    renderer.setScissorTest(true)
+    
+    renderer.render(this.scene, this.camera)
+    
+    // Сбрасываем настройки рендера обратно в полный экран
+    renderer.setViewport(0, 0, size.x, size.y)
+    renderer.setScissor(0, 0, size.x, size.y)
+    renderer.setScissorTest(false)
+  }
+
+  // Метод обработки клика. Вызывается из InputSystem3D
+  handlePointer(clientX, clientY, container) {
+    const rect = container.getBoundingClientRect()
+    
+    // Проверяем, попал ли клик в область Гизмо (правый верхний угол)
+    const isInsideGizmo = 
+      clientX > (rect.right - this.gizmoSize) && 
+      clientY < (rect.top + this.gizmoSize)
+
+    if (!isInsideGizmo) return false
+
+    // Локальные координаты внутри квадрата Гизмо
+    const x = ((clientX - (rect.right - this.gizmoSize)) / this.gizmoSize) * 2 - 1
+    const y = -((clientY - rect.top) / this.gizmoSize) * 2 + 1
+    
+    this.mouse.set(x, y)
     this.raycaster.setFromCamera(this.mouse, this.camera)
     const intersects = this.raycaster.intersectObject(this.cube)
 
     if (intersects.length > 0) {
       const faceIndex = intersects[0].face.materialIndex
       const direction = this.cube.userData.directions[faceIndex]
-      if (this.onFaceClick && direction) {
-        this.onFaceClick(direction)
-      }
+      this.snapCameraToDirection(direction)
+      return true // Клик обработан Гизмо
     }
+
+    return false
+  }
+
+  snapCameraToDirection(direction) {
+    // В идеале здесь должна быть анимация (Tween), 
+    // но для начала просто переставляем камеру:
+    const dist = this.mainCamera.position.distanceTo(this.mainControls.target)
+    const newPos = direction.clone().multiplyScalar(dist).add(this.mainControls.target)
+    
+    this.mainCamera.position.copy(newPos)
+    this.mainControls.update()
   }
 
   dispose() {
-    this.renderer.domElement.removeEventListener('pointerdown', this.onPointerDown)
-    this.renderer.domElement.removeEventListener('pointerup', this.onPointerUp)
-    
-    this.gizmoControls.dispose() // Не забываем удалить контроллер
-    this.renderer.dispose()
     this.scene.clear()
+    this.cube.geometry.dispose()
+    this.cube.material.forEach(m => m.map.dispose())
+    this.cube.material.forEach(m => m.dispose())
   }
 }

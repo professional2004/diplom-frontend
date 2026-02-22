@@ -11,6 +11,29 @@ export const useEditorStore = defineStore('editor', {
   }),
 
   actions: {
+
+    // --- Методы управления 3D камерой ---
+    zoomIn() {
+      EngineRegistry.engine3D.cameraSystem3D.zoom(0.9)
+    },
+    zoomOut() {
+      EngineRegistry.engine3D.cameraSystem3D.zoom(1.1)
+    },
+    resetView() {
+      EngineRegistry.engine3D.cameraSystem3D.reset()
+    },
+
+    // --- Методы управления 2D камерой ---
+    zoomIn2D() {
+      EngineRegistry.engine2D.cameraSystem2D.zoom(0.9)
+    },
+    zoomOut2D() {
+      EngineRegistry.engine2D.cameraSystem2D.zoom(1.1)
+    },
+    reset2D() {
+      EngineRegistry.engine2D.cameraSystem2D.reset()
+    },
+
     // Подписываемся на события ядра один раз
     setupListeners() {
       EngineRegistry.emitter.on('selection:changed', (shape) => {

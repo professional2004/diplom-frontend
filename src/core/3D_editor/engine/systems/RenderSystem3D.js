@@ -49,8 +49,20 @@ export class RenderSystem3D {
   }
   
   update(engine3D) {
-    if (engine3D?.sceneSystem3D && engine3D?.cameraSystem3D) {
-      this.renderer.render(engine3D.sceneSystem3D.scene, engine3D.cameraSystem3D.camera)
+    const { sceneSystem3D, cameraSystem3D, viewCubeGizmo } = engine3D
+
+    if (!sceneSystem3D?.scene || !cameraSystem3D?.camera) return;
+    
+    // Рендерим основную сцену
+    this.renderer.clear()
+    this.renderer.render(sceneSystem3D.scene, cameraSystem3D.camera)
+    
+    // Рендерим Гизмо поверх
+    if (viewCubeGizmo && typeof viewCubeGizmo.render === 'function') {
+      // Выключаем авто-очистку, чтобы не стереть основную сцену
+      this.renderer.autoClear = false
+      viewCubeGizmo.render(this.renderer)
+      this.renderer.autoClear = true
     }
   }
 
