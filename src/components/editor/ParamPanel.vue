@@ -1,3 +1,14 @@
+<script setup>
+import { reactive } from 'vue'
+import { useEditorStore } from '@/stores/editorStore'
+
+const store = useEditorStore()
+
+const params = reactive({ width: 2, height: 2, depth: 2, radius: 0.5 })
+
+</script>
+
+
 <template>
   <div class="param-panel">
     <h3>Параметрические модели</h3>
@@ -7,24 +18,12 @@
     <div class="field"><label>Radius</label><input type="number" v-model.number="params.radius" /></div>
 
     <div class="buttons">
-      <button @click="add('cube')">Add Cube</button>
-      <button @click="add('roundedPrism')">Add Rounded Prism</button>
+      <button @click="store.addShape('cube', { ...params })">Add Cube</button>
+      <button @click="store.addShape('roundedPrism', { ...params })">Add Rounded Prism</button>
     </div>
   </div>
 </template>
 
-<script setup>
-import { reactive } from 'vue'
-import { useEditorStore } from '@/stores/editorStore'
-
-const store = useEditorStore()
-
-const params = reactive({ width: 2, height: 2, depth: 2, radius: 0.5 })
-
-function add(type) {
-  store.addShape(type, { ...params })
-}
-</script>
 
 <style scoped>
 .param-panel {

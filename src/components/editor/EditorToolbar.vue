@@ -1,6 +1,6 @@
 <script setup>
-import { useEditorStore } from '@/stores/editorStore'
 import { computed } from 'vue'
+import { useEditorStore } from '@/stores/editorStore'
 
 const store = useEditorStore()
 
@@ -16,13 +16,6 @@ const hasSelection = computed(() => {
       <button @click="store.zoomIn">Zoom +</button>
       <button @click="store.zoomOut">Zoom -</button>
       <button @click="store.resetView">Reset</button>
-    </div>
-    
-    <div class="divider"></div>
-    
-    <div class="group">
-      <button @click="store.addShape('cube')">Add Cube</button>
-      <button @click="store.addShape('roundedPrism')">Add Rounded Prism</button>
     </div>
 
     <div class="divider"></div>

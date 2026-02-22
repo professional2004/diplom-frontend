@@ -1,5 +1,5 @@
-import { CubeShape } from './CubeShape'
-import { RoundedPrismShape } from './RoundedPrismShape'
+import { CubeShape } from './primitives/CubeShape'
+import { RoundedPrismShape } from './primitives/RoundedPrismShape'
 
 export const ShapeRegistry = {
   cube: CubeShape,

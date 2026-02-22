@@ -1,6 +1,6 @@
 import * as THREE from 'three'
-import { BaseShape } from './BaseShape'
 import { primitives } from '@jscad/modeling'
+import { BaseShape } from '../BaseShape'
 import { createMeshFromJscad } from '@/core/jscad/JscadAdapter'
 
 export class CubeShape extends BaseShape {

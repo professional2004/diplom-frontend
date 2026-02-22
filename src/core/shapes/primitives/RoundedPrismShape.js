@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { BaseShape } from './BaseShape'
+import { BaseShape } from '../BaseShape'
 
 export class RoundedPrismShape extends BaseShape {
   get defaultParams() {
