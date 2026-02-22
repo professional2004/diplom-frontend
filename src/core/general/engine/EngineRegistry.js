@@ -72,14 +72,14 @@ class EngineRegistry {
 
   // Единый метод для выполнения команд
   executeCommand(command) {
-  this.historySystem.execute(command)
-  this.emitter.emit('history:changed')
-  if (this.engine2D && this.engine3D) {
-    if (command.is3DCommand) {
-      this.syncSystem.rebuildAllFrom3D()
+    this.historySystem.execute(command)
+    this.emitter.emit('history:changed')
+    if (this.engine2D && this.engine3D) {
+      if (command.is3DCommand) {
+        this.syncSystem.rebuildAllFrom3D()
+      }
     }
   }
-}
 
 
   dispose() {

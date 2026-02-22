@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useEditorStore } from '@/stores/editorStore'
 
 const canvasRef = ref(null)
