@@ -7,12 +7,8 @@ const store = useEditorStore()
 
 onMounted(() => {
   if (canvasRef.value) {
-    store.init(canvasRef.value)
+    store.init3D(canvasRef.value)
   }
-})
-
-onBeforeUnmount(() => {
-  store.dispose()
 })
 </script>
 

@@ -6,6 +6,7 @@ export class AddShapeCommand {
     this.shapeType = shapeType
     this.params = params
     this.mesh = null
+    this.is3DCommand = true 
   }
 
   execute() {

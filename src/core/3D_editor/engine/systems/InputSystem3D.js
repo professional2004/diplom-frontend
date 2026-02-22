@@ -55,58 +55,35 @@ export class InputSystem3D {
     if (!this.engine3D) return
     this.updateMouse(event)
 
-    // 1. Ищем пересечения с объектами
     this.raycaster.setFromCamera(this.mouse, this.engine3D.cameraSystem3D.camera)
-    
-    // Фильтруем только те объекты, которые помечены как selectable
-    // (Это задается в AddCubeCommand: mesh.userData.selectable = true)
     const intersects = this.raycaster.intersectObjects(this.engine3D.sceneSystem3D.scene.children)
       .filter(hit => hit.object.userData.selectable)
 
     if (intersects.length > 0) {
-      // НАЖАЛИ НА ФИГУРУ -> РЕЖИМ ПЕРЕМЕЩЕНИЯ
       const hit = intersects[0]
       this.dragObject = hit.object
       this.isDragging = true
-      
-      // Сохраняем начальную позицию для Undo
       this.startPosition.copy(this.dragObject.position)
 
-      // Отключаем управление камерой, чтобы она не вращалась пока тащим
       if (this.engine3D.cameraSystem3D.controls) {
         this.engine3D.cameraSystem3D.controls.enabled = false
       }
 
-      // Выделяем объект через SelectionSystem (новый метод setSelected)
       this.engine3D.selectionSystem3D.setSelected(this.dragObject)
+      this.engine3D.registry.emitUIUpdate('selection:changed', this.dragObject)
 
-      // Обновляем store для реактивности UI
-      if (this.store) {
-        this.store.updateSelectedShape(this.dragObject)
-      }
-
-      // Настраиваем плоскость перетаскивания.
-      // Мы создаем плоскость, проходящую через центр объекта и направленную вверх (нормаль Y),
-      // чтобы таскать по "полу".
-      // Если нужно таскать вертикально, логику можно усложнить (зависит от угла камеры).
       this.dragPlane.setFromNormalAndCoplanarPoint(
-        new THREE.Vector3(0, 1, 0), // Нормаль вверх
+        new THREE.Vector3(0, 1, 0),
         this.dragObject.position
       )
 
-      // Вычисляем смещение (offset), чтобы объект не "прыгал" центром к курсору
       if (this.raycaster.ray.intersectPlane(this.dragPlane, this.planeIntersectPoint)) {
         this.dragOffset.subVectors(this.dragObject.position, this.planeIntersectPoint)
       }
 
     } else {
-      // НАЖАЛИ В ПУСТОТУ -> очищаем выделение
       this.engine3D.selectionSystem3D.clear()
-      
-      // Обновляем store для реактивности UI
-      if (this.store) {
-        this.store.updateSelectedShape(null)
-      }
+      this.engine3D.registry.emitUIUpdate('selection:changed', null)
     }
   }
 
@@ -143,78 +120,49 @@ export class InputSystem3D {
     }
   }
 
-  onPointerUp(event) {
+  onPointerUp() {
     if (this.isDragging && this.dragObject) {
-      // Завершение перетаскивания
-      
-      // Если позиция реально изменилась, записываем в историю
       if (!this.dragObject.position.equals(this.startPosition)) {
         const cmd = new MoveShapeCommand(
           this.dragObject,
           this.dragObject.position,
           this.startPosition
         )
-        // Добавляем команду в стек истории, но не выполняем её повторно (т.к. объект уже сдвинут)
-        // В HistorySystem нужно учесть такой кейс, либо просто сделать execute, который перезапишет то же самое.
-        // Для простоты вызовем execute через систему.
-        this.engine3D.historySystem.execute(cmd)
-        
-        // ВАЖНО: Обновляем состояние кнопок Undo/Redo в UI (через Store пока не можем напрямую, 
-        // но Store сам может подписаться или мы просто полагаемся на реактивность Vue, 
-        // но здесь чистый JS. Обычно EditorStore дергает updateUndoRedo после действий.
-        // В текущей архитектуре UI обновляется при клике на кнопки, но чтобы кнопки активировались, 
-        // нам нужен триггер. Пока оставим как есть, кнопки обновятся при следующем взаимодействии или можно добавить EventBus).
+        this.engine3D.registry.executeCommand(cmd) 
       }
-
       this.isDragging = false
       this.dragObject = null
     }
 
-    // В любом случае включаем камеру обратно
     if (this.engine3D && this.engine3D.cameraSystem3D.controls) {
       this.engine3D.cameraSystem3D.controls.enabled = true
     }
   }
 
-  update(engine3D) {
-    // В методе update больше не нужно обрабатывать лучи, 
-    // всё происходит событийно в onPointer...
-  }
+  update() {}
 
   onKeyDown(event) {
     if (!this.engine3D) return
 
-    // Обработка Delete клавиши для удаления выбранной фигуры
     if (event.key === 'Delete' || event.key === 'Backspace') {
-      const selected = this.engine3D.selectionSystem3D.getSelected()
-      if (selected) {
-        // Эмитим событие через engine3D или вызываем команду напрямую
-        // Для этого нужно передать в InputSystem какой-то callback,
-        // или испольвать глобальный обработчик.
-        // Пока вызовем Delete через store (это будет сделано в UI)
-        // Но здесь мы можем эмитить кастомное событие для store
-        
-        // Создаем кастомное событие, которое слушает Store
-        window.dispatchEvent(new CustomEvent('deleteSelectedShape', { detail: selected }))
+      if (this.engine3D.selectionSystem3D.getSelected()) {
+         this.engine3D.registry.emitUIUpdate('ui:deleteSelected')
       }
     }
-
+    
     // Undo: Ctrl+Z (или Cmd+Z на Mac)
     if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
-      event.preventDefault()
-      window.dispatchEvent(new CustomEvent('undo'))
+      this.engine3D.registry.emitUIUpdate('ui:undo')
     }
 
     // Redo: Ctrl+Shift+Z (или Cmd+Shift+Z на Mac)
     if ((event.ctrlKey || event.metaKey) && event.key === 'z' && event.shiftKey) {
-      event.preventDefault()
-      window.dispatchEvent(new CustomEvent('redo'))
+      this.engine3D.registry.emitUIUpdate('ui:redo')
     }
 
     // Redo: Ctrl+Y (альтернативный вариант)
     if ((event.ctrlKey || event.metaKey) && event.key === 'y') {
-      event.preventDefault()
-      window.dispatchEvent(new CustomEvent('redo'))
+      this.engine3D.registry.emitUIUpdate('ui:redo')
     }
   }
 

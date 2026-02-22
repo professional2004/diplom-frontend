@@ -1,4 +1,8 @@
-// Небольшой EventEmitter и singleton EngineRegistry
+import { HistorySystem } from './systems/HistorySystem'
+import { SyncSystem } from './systems/SyncSystem'
+import { Engine3D } from '@/core/3D_editor/engine/Engine3D'
+import { Engine2D } from '@/core/2D_editor/engine/Engine2D'
+
 class SimpleEmitter {
   constructor() { this._map = new Map() }
   on(event, cb) {
@@ -13,9 +17,8 @@ class SimpleEmitter {
   emit(event, ...args) {
     const s = this._map.get(event)
     if (!s) return
-    // копируем, чтобы безопасно вызывать при модификации слушателей
     Array.from(s).forEach(cb => {
-      try { cb(...args) } catch (e) { console.error('[Emitter] handler error', e) }
+      try { cb(...args) } catch (e) { console.error('[Emitter]', e) }
     })
   }
 }
@@ -24,86 +27,69 @@ class EngineRegistry {
   constructor() {
     this.engine2D = null
     this.engine3D = null
-    this.systems = new Set() // общие системы (SyncSystem, HistorySystem и т.д.)
+    
+    // Глобальные системы инициализируются здесь
+    this.historySystem = new HistorySystem()
+    this.syncSystem = new SyncSystem()
+    
     this.emitter = new SimpleEmitter()
   }
 
-  // ---------- Engine getters ----------
-  getEngine2D() { return this.engine2D }
-  getEngine3D() { return this.engine3D }
-
-  // ---------- Engine registration ----------
-  registerEngine2D(engine2D) {
-    this.engine2D = engine2D
-    this.emitter.emit('engine2D:registered', engine2D)
-    // после регистрации пробуем "прокинуть" обе движки в системы
-    this._notifySystemsIfReady()
+  // Создание 3D движка (вызывается из Viewport)
+  initEngine3D(container) {
+    if (this.engine3D) return
+    this.engine3D = new Engine3D(container, this)
+    this._checkEnginesReady()
   }
 
-  registerEngine3D(engine3D) {
-    this.engine3D = engine3D
-    this.emitter.emit('engine3D:registered', engine3D)
-    this._notifySystemsIfReady()
+  // Создание 2D движка (вызывается из Viewport)
+  initEngine2D(container) {
+    if (this.engine2D) return
+    this.engine2D = new Engine2D(container, this)
+    this._checkEnginesReady()
   }
 
-  // ---------- Systems management ----------
-  addSystem(system) {
-    // system — объект с опциональными методами:
-    // - setEngines({engine2D, engine3D})
-    // - init() / start()
-    // - dispose()
-    this.systems.add(system)
-    // если у системы есть setEngines и двигатели уже есть - вызовем сразу
-    if (typeof system.setEngines === 'function') {
-      system.setEngines({ engine2D: this.engine2D, engine3D: this.engine3D })
-    }
-    if (typeof system.init === 'function') {
-      try { system.init() } catch (e) { console.warn('[EngineRegistry] system.init failed', e) }
-    }
-    return () => this.removeSystem(system)
-  }
 
-  removeSystem(system) {
-    if (this.systems.has(system)) {
-      this.systems.delete(system)
-      if (typeof system.dispose === 'function') {
-        try { system.dispose() } catch (e) { console.warn('[EngineRegistry] system.dispose failed', e) }
-      }
-    }
-  }
-
-  // уведомляем все системы о доступности движков
-  _notifySystemsIfReady() {
-    for (const system of this.systems) {
-      if (typeof system.setEngines === 'function') {
-        try {
-          system.setEngines({ engine2D: this.engine2D, engine3D: this.engine3D })
-        } catch (e) {
-          console.warn('[EngineRegistry] setEngines failed for system', e)
-        }
-      }
-    }
-    // эмитим событие что оба движка теперь доступны (если оба есть)
+  _checkEnginesReady() {
     if (this.engine2D && this.engine3D) {
-      this.emitter.emit('engines:ready', { engine2D: this.engine2D, engine3D: this.engine3D })
+      // Берем параметры сетки из 3D сцены и применяем к 2D
+      const grid3D = this.engine3D.sceneSystem3D.grid
+      this.engine2D.sceneSystem2D.matchGridFrom(grid3D)
+      // Подключаем систему синхронизации объектов
+      this.syncSystem.setEngines({ 
+        engine2D: this.engine2D, 
+        engine3D: this.engine3D 
+      });
+      this.emitter.emit('engines:ready');
     }
   }
 
-  // подписка на события реестра
-  on(event, cb) { return this.emitter.on(event, cb) }
-  off(event, cb) { return this.emitter.off(event, cb) }
 
-  // очистка реестра
-  dispose() {
-    for (const s of Array.from(this.systems)) {
-      this.removeSystem(s)
+  // Проброс событий для UI
+  emitUIUpdate(eventName, payload) {
+    this.emitter.emit(eventName, payload)
+  }
+
+  // Единый метод для выполнения команд
+  executeCommand(command) {
+  this.historySystem.execute(command)
+  this.emitter.emit('history:changed')
+  if (this.engine2D && this.engine3D) {
+    if (command.is3DCommand) {
+      this.syncSystem.rebuildAllFrom3D()
     }
-    this.engine2D = null
-    this.engine3D = null
-    this.emitter = new SimpleEmitter()
   }
 }
 
-// Экспортируем singleton
+
+  dispose() {
+    this.engine3D?.dispose()
+    this.engine2D?.dispose()
+    this.syncSystem?.dispose()
+    this.engine3D = null
+    this.engine2D = null
+  }
+}
+
 const registry = new EngineRegistry()
 export default registry

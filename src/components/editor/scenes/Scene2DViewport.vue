@@ -1,46 +1,19 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useEditorStore } from '@/stores/editorStore'
-import { Engine2D } from '@/core/2D_editor/engine/Engine2D'
 
 const containerRef = ref(null)
 const store = useEditorStore()
-let engine2D = null
-
-watch(
-  () => store.engine3D,
-  (engine3D) => {
-    if (engine3D && engine2D) {
-      engine2D.set3DEngine(engine3D)
-    }
-  },
-  { immediate: true }
-)
 
 onMounted(() => {
   if (!containerRef.value) return
-
-  engine2D = new Engine2D(containerRef.value)
-
-  // регистрируем в store
-  store.setEngine2D(engine2D)
-
-  if (store.engine3D) {
-    engine2D.set3DEngine(store.engine3D)
-  }
-})
-
-onBeforeUnmount(() => {
-  engine2D?.dispose()
-  store.setEngine2D(null)
+  store.init2D(containerRef.value) // Используем новый метод init2D
 })
 </script>
 
 <template>
   <div ref="containerRef" class="unfold-viewport">
     <div class="overlay-info">Проекция развертки (2D)</div>
-
-    <!-- 2D toolbar overlay -->
     <div class="toolbar-2d" aria-hidden="false">
       <button @click="store.zoomIn2D()">Zoom +</button>
       <button @click="store.zoomOut2D()">Zoom -</button>

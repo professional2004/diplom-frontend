@@ -3,11 +3,11 @@ import { CameraSystem2D } from './systems/CameraSystem2D'
 import { RenderSystem2D } from './systems/RenderSystem2D'
 import { InputSystem2D } from './systems/InputSystem2D'
 import { SelectionSystem2D } from './systems/SelectionSystem2D'
-import EngineRegistry from '@/core/general/engine/EngineRegistry'
 
 export class Engine2D {
-  constructor(container) {
-    this.engine3D = null // Ссылка на 3D-движок
+  constructor(container, registry) {
+    this.registry = registry
+    this.engine3D = null
     
     this.sceneSystem2D = new SceneSystem2D()
     this.cameraSystem2D = new CameraSystem2D(container)
@@ -31,23 +31,16 @@ export class Engine2D {
     this.running = true
     this.loop = this.loop.bind(this)
     requestAnimationFrame(this.loop)
-
-    // регистрация в EngineRegistry
-    EngineRegistry.registerEngine2D(this)
   }
 
 
-  // Метод для внедрения 3D-движка
   set3DEngine(engine3D) {
     this.engine3D = engine3D
-    // Если 3D сцена уже проинициализирована — подогнать 2D-сетку под 3D
     try {
       if (engine3D?.sceneSystem3D?.grid) {
         this.sceneSystem2D.matchGridFrom(engine3D.sceneSystem3D.grid)
       }
-    } catch (e) {
-      console.warn('[Engine2D] matchGridFrom failed', e)
-    }
+    } catch (e) { console.warn('[Engine2D] matchGridFrom failed', e) }
   }
 
   loop() {

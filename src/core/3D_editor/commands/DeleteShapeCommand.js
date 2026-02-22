@@ -4,6 +4,7 @@ export class DeleteShapeCommand {
     this.selectionSystem = selectionSystem
     this.store = store
     this.mesh = mesh
+    this.is3DCommand = true 
     
     // Сохраняем данные фигуры для восстановления
     this.shapeType = mesh.userData.shapeType

@@ -87,11 +87,7 @@ export class InputSystem2D {
     if (this.isDragging && this.dragObject) {
       if (!this.dragObject.position.equals(this.startPosition)) {
         const cmd = new MoveUnfoldDetailCommand(this.dragObject, this.dragObject.position, this.startPosition)
-        // Записываем команду в общую HistorySystem, если она передана в движок
-        if (this.engine2D.historySystem) {
-          this.engine2D.historySystem.execute(cmd)
-          window.dispatchEvent(new Event('updateUndoRedo')) // Сигнал для UI
-        }
+        this.engine2D.registry.executeCommand(cmd) 
       }
       this.isDragging = false
       this.dragObject = null
