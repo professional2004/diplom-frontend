@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { MoveCommand } from '@/core/general/commands/MoveCommand'
+import { MoveCommand } from '@/core/general/engine/commands/MoveCommand'
 
 export class InputSystem {
   constructor(container) {

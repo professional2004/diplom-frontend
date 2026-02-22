@@ -3,7 +3,7 @@ import { RenderSystem } from '@/core/3D_editor/engine/systems/RenderSystem'
 import { CameraSystem } from '@/core/3D_editor/engine/systems/CameraSystem'
 import { InputSystem } from '@/core/3D_editor/engine/systems/InputSystem'
 import { SelectionSystem } from '@/core/3D_editor/engine/systems/SelectionSystem'
-import { HistorySystem } from '@/core/3D_editor/engine/systems/HistorySystem'
+import { HistorySystem } from '@/core/general/engine/systems/HistorySystem'
 
 export class Engine {
   constructor(container) {
