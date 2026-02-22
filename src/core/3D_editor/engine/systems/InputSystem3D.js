@@ -1,10 +1,10 @@
 import * as THREE from 'three'
-import { MoveCommand } from '@/core/3D_editor/commands/MoveShapeCommand'
+import { MoveShapeCommand } from '@/core/3D_editor/commands/MoveShapeCommand'
 
-export class InputSystem {
+export class InputSystem3D {
   constructor(container) {
     this.container = container
-    this.engine = null // Ссылка на движок будет установлена позже
+    this.engine3D = null // Ссылка на движок будет установлена позже
     this.store = null  // Ссылка на Pinia store для обновления UI
 
     // Основные инструменты
@@ -35,8 +35,8 @@ export class InputSystem {
   }
 
   // Метод для инъекции зависимости (вызывается из Engine)
-  setEngine(engine) {
-    this.engine = engine
+  setEngine(engine3D) {
+    this.engine3D = engine3D
   }
 
   // Метод для инъекции Store зависимости (вызывается из editorStore)
@@ -52,15 +52,15 @@ export class InputSystem {
   }
 
   onPointerDown(event) {
-    if (!this.engine) return
+    if (!this.engine3D) return
     this.updateMouse(event)
 
     // 1. Ищем пересечения с объектами
-    this.raycaster.setFromCamera(this.mouse, this.engine.cameraSystem.camera)
+    this.raycaster.setFromCamera(this.mouse, this.engine3D.cameraSystem3D.camera)
     
     // Фильтруем только те объекты, которые помечены как selectable
     // (Это задается в AddCubeCommand: mesh.userData.selectable = true)
-    const intersects = this.raycaster.intersectObjects(this.engine.sceneSystem.scene.children)
+    const intersects = this.raycaster.intersectObjects(this.engine3D.sceneSystem3D.scene.children)
       .filter(hit => hit.object.userData.selectable)
 
     if (intersects.length > 0) {
@@ -73,12 +73,12 @@ export class InputSystem {
       this.startPosition.copy(this.dragObject.position)
 
       // Отключаем управление камерой, чтобы она не вращалась пока тащим
-      if (this.engine.cameraSystem.controls) {
-        this.engine.cameraSystem.controls.enabled = false
+      if (this.engine3D.cameraSystem3D.controls) {
+        this.engine3D.cameraSystem3D.controls.enabled = false
       }
 
       // Выделяем объект через SelectionSystem (новый метод setSelected)
-      this.engine.selectionSystem.setSelected(this.dragObject)
+      this.engine3D.selectionSystem3D.setSelected(this.dragObject)
 
       // Обновляем store для реактивности UI
       if (this.store) {
@@ -101,7 +101,7 @@ export class InputSystem {
 
     } else {
       // НАЖАЛИ В ПУСТОТУ -> очищаем выделение
-      this.engine.selectionSystem.clear()
+      this.engine3D.selectionSystem3D.clear()
       
       // Обновляем store для реактивности UI
       if (this.store) {
@@ -111,12 +111,12 @@ export class InputSystem {
   }
 
   onPointerMove(event) {
-    if (!this.engine) return
+    if (!this.engine3D) return
     this.updateMouse(event)
 
     if (this.isDragging && this.dragObject) {
       // Логика перемещения
-      this.raycaster.setFromCamera(this.mouse, this.engine.cameraSystem.camera)
+      this.raycaster.setFromCamera(this.mouse, this.engine3D.cameraSystem3D.camera)
 
       if (this.raycaster.ray.intersectPlane(this.dragPlane, this.planeIntersectPoint)) {
         // Новая позиция = точка пересечения луча с плоскостью + смещение
@@ -125,19 +125,19 @@ export class InputSystem {
       }
     } else {
       // HOVER отслеживание - проверяем пересечения мышью
-      this.raycaster.setFromCamera(this.mouse, this.engine.cameraSystem.camera)
-      const intersects = this.raycaster.intersectObjects(this.engine.sceneSystem.scene.children)
+      this.raycaster.setFromCamera(this.mouse, this.engine3D.cameraSystem3D.camera)
+      const intersects = this.raycaster.intersectObjects(this.engine3D.sceneSystem3D.scene.children)
         .filter(hit => hit.object.userData.selectable)
 
       if (intersects.length > 0) {
         // Наводимся на объект
         const hoveredObject = intersects[0].object
-        this.engine.selectionSystem.setHovered(hoveredObject)
+        this.engine3D.selectionSystem3D.setHovered(hoveredObject)
       } else {
         // Больше не наводимся ни на что
-        if (this.engine.selectionSystem.getHovered() && 
-            this.engine.selectionSystem.getHovered() !== this.engine.selectionSystem.getSelected()) {
-          this.engine.selectionSystem.setHovered(null)
+        if (this.engine3D.selectionSystem3D.getHovered() && 
+            this.engine3D.selectionSystem3D.getHovered() !== this.engine3D.selectionSystem3D.getSelected()) {
+          this.engine3D.selectionSystem3D.setHovered(null)
         }
       }
     }
@@ -149,7 +149,7 @@ export class InputSystem {
       
       // Если позиция реально изменилась, записываем в историю
       if (!this.dragObject.position.equals(this.startPosition)) {
-        const cmd = new MoveCommand(
+        const cmd = new MoveShapeCommand(
           this.dragObject,
           this.dragObject.position,
           this.startPosition
@@ -157,7 +157,7 @@ export class InputSystem {
         // Добавляем команду в стек истории, но не выполняем её повторно (т.к. объект уже сдвинут)
         // В HistorySystem нужно учесть такой кейс, либо просто сделать execute, который перезапишет то же самое.
         // Для простоты вызовем execute через систему.
-        this.engine.historySystem.execute(cmd)
+        this.engine3D.historySystem.execute(cmd)
         
         // ВАЖНО: Обновляем состояние кнопок Undo/Redo в UI (через Store пока не можем напрямую, 
         // но Store сам может подписаться или мы просто полагаемся на реактивность Vue, 
@@ -171,24 +171,24 @@ export class InputSystem {
     }
 
     // В любом случае включаем камеру обратно
-    if (this.engine && this.engine.cameraSystem.controls) {
-      this.engine.cameraSystem.controls.enabled = true
+    if (this.engine3D && this.engine3D.cameraSystem3D.controls) {
+      this.engine3D.cameraSystem3D.controls.enabled = true
     }
   }
 
-  update(engine) {
+  update(engine3D) {
     // В методе update больше не нужно обрабатывать лучи, 
     // всё происходит событийно в onPointer...
   }
 
   onKeyDown(event) {
-    if (!this.engine) return
+    if (!this.engine3D) return
 
     // Обработка Delete клавиши для удаления выбранной фигуры
     if (event.key === 'Delete' || event.key === 'Backspace') {
-      const selected = this.engine.selectionSystem.getSelected()
+      const selected = this.engine3D.selectionSystem3D.getSelected()
       if (selected) {
-        // Эмитим событие через engine или вызываем команду напрямую
+        // Эмитим событие через engine3D или вызываем команду напрямую
         // Для этого нужно передать в InputSystem какой-то callback,
         // или испольвать глобальный обработчик.
         // Пока вызовем Delete через store (это будет сделано в UI)

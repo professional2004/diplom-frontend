@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
-export class CameraSystem {
+export class CameraSystem3D {
   constructor(domElement, options = {}) {
     if (!domElement) { throw new Error('[CameraSystem.js] domElement is requireв')}
     const { fov = 45, near = 0.1, far = 1000 } = options

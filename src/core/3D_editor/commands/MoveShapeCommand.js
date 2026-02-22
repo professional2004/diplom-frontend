@@ -1,4 +1,4 @@
-export class MoveCommand {
+export class MoveShapeCommand {
   constructor(mesh, newPosition, oldPosition) {
     this.mesh = mesh
     // Копируем значения, чтобы они не менялись по ссылке

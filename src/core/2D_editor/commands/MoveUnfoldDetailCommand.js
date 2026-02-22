@@ -1,4 +1,4 @@
-export class Move2DCommand {
+export class MoveUnfoldDetailCommand {
   constructor(mesh, newPosition, oldPosition) {
     this.mesh = mesh
     this.newPosition = newPosition.clone()

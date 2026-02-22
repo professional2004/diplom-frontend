@@ -10,9 +10,9 @@ let raf = null
 
 onMounted(() => {
   const init = () => {
-    if (store.engine && containerRef.value) {
-      const mainCamera = store.engine.cameraSystem.camera
-      const mainControls = store.engine.cameraSystem.controls
+    if (store.engine3D && containerRef.value) {
+      const mainCamera = store.engine3D.cameraSystem3D.camera
+      const mainControls = store.engine3D.cameraSystem3D.controls
 
       gizmo = new ViewCubeGizmo(
         containerRef.value,
@@ -20,7 +20,7 @@ onMounted(() => {
         mainControls,
         (direction) => {
           // flyTo через cameraSystem
-          store.engine.cameraSystem.flyTo(direction)
+          store.engine3D.cameraSystem3D.flyTo(direction)
         }
       )
 

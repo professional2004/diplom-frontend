@@ -33,9 +33,9 @@ export class RenderSystem2D {
     this.resizeObserver.observe(container)
   }
 
-  update(engine) {
-    if (engine?.sceneSystem?.scene && engine?.cameraSystem?.camera) {
-      this.renderer.render(engine.sceneSystem.scene, engine.cameraSystem.camera)
+  update(engine2D) {
+    if (engine2D?.sceneSystem2D?.scene && engine2D?.cameraSystem2D?.camera) {
+      this.renderer.render(engine2D.sceneSystem2D.scene, engine2D.cameraSystem2D.camera)
     }
   }
 

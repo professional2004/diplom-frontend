@@ -1,4 +1,4 @@
-export class UnfoldPart {
+export class UnfoldDetail {
   constructor(meshGroup, parentShapeId) {
     this.mesh = meshGroup
     

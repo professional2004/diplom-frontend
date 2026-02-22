@@ -1,4 +1,4 @@
-export class SelectionSystem {
+export class SelectionSystem3D {
   constructor() {
     this.selected = null
     this.hovered = null

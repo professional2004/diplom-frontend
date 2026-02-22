@@ -1,7 +1,7 @@
 <script setup>
-import Scene3D from './scenes/Scene3DViewport.vue'
-import Scene2D from './scenes/Scene2DViewport.vue'
-import ViewCube from './utils/ViewCubeGizmo3D.vue'
+import Scene3DViewport from './scenes/Scene3DViewport.vue'
+import Scene2DViewport from './scenes/Scene2DViewport.vue'
+import ViewCubeGizmo from './utils/ViewCubeGizmo.vue'
 import EditorToolbar from './panels/EditorToolbar.vue'
 import ParamPanel from './panels/ParamPanel.vue'
 </script>
@@ -13,9 +13,9 @@ import ParamPanel from './panels/ParamPanel.vue'
     
     <div class="main-container">
       <div class="viewport-wrapper">
-        <Scene3D class="scene-layer" />
+        <Scene3DViewport class="scene-layer" />
         <div class="cube-wrapper ui-layer">
-          <ViewCube />
+          <ViewCubeGizmo />
         </div>
         <div class="param-panel-wrapper ui-layer" style="left:10px; bottom:10px;">
           <ParamPanel />
@@ -23,7 +23,7 @@ import ParamPanel from './panels/ParamPanel.vue'
       </div>
 
       <div class="viewport-wrapper">
-        <Scene2D />
+        <Scene2DViewport />
       </div>
     </div>
   </div>

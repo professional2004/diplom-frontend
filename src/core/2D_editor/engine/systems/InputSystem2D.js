@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { Move2DCommand } from '@/core/2D_editor/commands/MoveUnfoldDetailCommand'
+import { MoveUnfoldDetailCommand } from '@/core/2D_editor/commands/MoveUnfoldDetailCommand'
 
 export class InputSystem2D {
   constructor(container) {
@@ -25,7 +25,7 @@ export class InputSystem2D {
     container.addEventListener('pointerup', this.onPointerUp)
   }
 
-  setEngine(engine) { this.engine = engine }
+  setEngine(engine2D) { this.engine2D = engine2D }
 
   updateMouse(event) {
     const rect = this.container.getBoundingClientRect()
@@ -34,8 +34,8 @@ export class InputSystem2D {
   }
 
   getIntersectedObject() {
-    this.raycaster.setFromCamera(this.mouse, this.engine.cameraSystem.camera)
-    const objects = this.engine.sceneSystem.unfoldObjects.children
+    this.raycaster.setFromCamera(this.mouse, this.engine2D.cameraSystem2D.camera)
+    const objects = this.engine2D.sceneSystem2D.unfoldObjects.children
     const intersects = this.raycaster.intersectObjects(objects, true)
     
     // Ищем родительскую группу-кусок (UnfoldPart), помеченную как selectable
@@ -48,7 +48,7 @@ export class InputSystem2D {
   }
 
   onPointerDown(event) {
-    if (!this.engine) return
+    if (!this.engine2D) return
     this.updateMouse(event)
     const hitObject = this.getIntersectedObject()
 
@@ -56,47 +56,47 @@ export class InputSystem2D {
       this.dragObject = hitObject
       this.isDragging = true
       this.startPosition.copy(this.dragObject.position)
-      this.engine.cameraSystem.controls.enabled = false
-      this.engine.selectionSystem.setSelected(this.dragObject)
+      this.engine2D.cameraSystem2D.controls.enabled = false
+      this.engine2D.selectionSystem2D.setSelected(this.dragObject)
 
       if (this.raycaster.ray.intersectPlane(this.dragPlane, this.planeIntersectPoint)) {
         this.dragOffset.subVectors(this.dragObject.position, this.planeIntersectPoint)
       }
     } else {
-      this.engine.selectionSystem.clear()
+      this.engine2D.selectionSystem2D.clear()
     }
   }
 
   onPointerMove(event) {
-    if (!this.engine) return
+    if (!this.engine2D) return
     this.updateMouse(event)
 
     if (this.isDragging && this.dragObject) {
-      this.raycaster.setFromCamera(this.mouse, this.engine.cameraSystem.camera)
+      this.raycaster.setFromCamera(this.mouse, this.engine2D.cameraSystem2D.camera)
       if (this.raycaster.ray.intersectPlane(this.dragPlane, this.planeIntersectPoint)) {
         const newPos = new THREE.Vector3().addVectors(this.planeIntersectPoint, this.dragOffset)
         this.dragObject.position.copy(newPos)
       }
     } else {
       const hitObject = this.getIntersectedObject()
-      this.engine.selectionSystem.setHovered(hitObject || null)
+      this.engine2D.selectionSystem2D.setHovered(hitObject || null)
     }
   }
 
   onPointerUp() {
     if (this.isDragging && this.dragObject) {
       if (!this.dragObject.position.equals(this.startPosition)) {
-        const cmd = new Move2DCommand(this.dragObject, this.dragObject.position, this.startPosition)
+        const cmd = new MoveUnfoldDetailCommand(this.dragObject, this.dragObject.position, this.startPosition)
         // Записываем команду в общую HistorySystem, если она передана в движок
-        if (this.engine.historySystem) {
-          this.engine.historySystem.execute(cmd)
+        if (this.engine2D.historySystem) {
+          this.engine2D.historySystem.execute(cmd)
           window.dispatchEvent(new Event('updateUndoRedo')) // Сигнал для UI
         }
       }
       this.isDragging = false
       this.dragObject = null
     }
-    if (this.engine) this.engine.cameraSystem.controls.enabled = true
+    if (this.engine2D) this.engine2D.cameraSystem2D.controls.enabled = true
   }
 
   dispose() {

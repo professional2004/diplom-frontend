@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 
-export class SceneSystem {
+export class SceneSystem3D {
   constructor(options = {}) {
     this.scene = new THREE.Scene()
     this.scene.background = new THREE.Color(options.backgroundColor ?? 0xe2e2e2)
@@ -15,6 +15,10 @@ export class SceneSystem {
     const size = options.gridSize ?? 20
     const divisions = options.gridDivisions ?? 20
     this.grid = new THREE.GridHelper(size, divisions, 0x444444, 0x222222)
+    // сохраняем параметры размера/делений, чтобы другие подсистемы могли их прочитать
+    this.grid.userData = this.grid.userData || {}
+    this.grid.userData.gridSize = size
+    this.grid.userData.gridDivisions = divisions
     this.scene.add(this.grid)
 
     // Опциональная плоскость "ground" (тонкая, чтобы не мешать), можно отключить через options.noGround=true
