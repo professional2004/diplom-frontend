@@ -4,7 +4,6 @@ import { RenderSystem2D } from './systems/RenderSystem2D'
 import { InputSystem2D } from './systems/InputSystem2D'
 import { SelectionSystem2D } from './systems/SelectionSystem2D'
 import EngineRegistry from '@/core/general/engine/EngineRegistry'
-import { SyncSystem } from '@/core/general/engine/systems/SyncSystem'
 
 export class Engine2D {
   constructor(container) {
@@ -35,10 +34,6 @@ export class Engine2D {
 
     // регистрация в EngineRegistry
     EngineRegistry.registerEngine2D(this)
-
-    // синхронизация размера сетки в движках
-    const sync = new SyncSystem() // конструктор может быть пустой
-    EngineRegistry.addSystem(sync)
   }
 
 

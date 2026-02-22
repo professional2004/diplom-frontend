@@ -1,6 +1,6 @@
 export class HistorySystem {
   constructor() {
-    this.stack = []
+    this.history = []
     this.index = -1
   }
 

@@ -1,5 +1,6 @@
 // src/core/systems/SyncSystem.js
 import * as THREE from 'three'
+import EngineRegistry from '@/core/general/engine/EngineRegistry'
 import { ShapeRegistry } from '@/core/3D_editor/entities/ShapeRegistry'
 import { UnfoldDetail } from '@/core/2D_editor/entities/UnfoldDetail'
 
@@ -25,10 +26,22 @@ export class SyncSystem {
     this._boundOnHistoryChange = this._onHistoryChange.bind(this)
     this._subscribedToHistory = false
     this._trySubscribeHistory()
+
+    // Подписываемся на событие готовности обоих движков из EngineRegistry
+    this._boundOnEnginesReady = this._onEnginesReady.bind(this)
+    EngineRegistry.on('engines:ready', this._boundOnEnginesReady)
+  }
+
+  // Обработчик события когда оба движка готовы
+  _onEnginesReady(engines) {
+    this.setEngines(engines)
   }
 
   // Попытка подписаться (если isEventEmitter-like API существует)
   _trySubscribeHistory() {
+    // Если уже подписаны - не подписываемся еще раз
+    if (this._subscribedToHistory) return
+    
     const hist = this.engine3D?.historySystem
     if (!hist) return
     // предполагаем: historySystem может иметь addListener / on / subscribe
@@ -168,11 +181,16 @@ export class SyncSystem {
   setEngines({ engine2D, engine3D }) {
     this.engine2D = engine2D
     this.engine3D = engine3D
-    // можно выполнить начальную синхронизацию сразу, если нужно
+    // Попробуем подписаться на события истории с новным Engine3D
+    this._trySubscribeHistory()
+    // Затем выполняем начальную синхронизацию
     this.rebuildAllFrom3D && this.rebuildAllFrom3D()
   }
 
   dispose() {
+    // Отписываемся от события engines:ready
+    EngineRegistry.off('engines:ready', this._boundOnEnginesReady)
+    
     // очистка
     this._removeAllUnfolds()
     if (this._subscribedToHistory && this.engine3D?.historySystem) {

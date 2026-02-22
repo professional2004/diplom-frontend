@@ -4,6 +4,7 @@ import { CameraSystem3D } from '@/core/3D_editor/engine/systems/CameraSystem3D'
 import { InputSystem3D } from '@/core/3D_editor/engine/systems/InputSystem3D'
 import { SelectionSystem3D } from '@/core/3D_editor/engine/systems/SelectionSystem3D'
 import { HistorySystem } from '@/core/general/engine/systems/HistorySystem'
+import { SyncSystem } from '@/core/general/engine/systems/SyncSystem'
 import EngineRegistry from '@/core/general/engine/EngineRegistry'
 
 export class Engine3D {
@@ -30,12 +31,16 @@ export class Engine3D {
 
     this.inputSystem3D.setEngine(this)
 
+    // Создаем SyncSystem для синхронизации 3D->2D
+    const syncSystem = new SyncSystem()
+
     this.systems = [
       this.inputSystem3D,
       this.cameraSystem3D,
       this.selectionSystem3D, 
       this.renderSystem3D,
-      this.historySystem
+      this.historySystem,
+      syncSystem  // Добавляем SyncSystem в системы, чтобы его update вызывался в цикле
     ]
 
     this.running = true
