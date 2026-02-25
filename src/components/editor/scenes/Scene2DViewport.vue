@@ -7,7 +7,7 @@ const store = useEditorStore()
 
 onMounted(() => {
   if (!containerRef.value) return
-  store.init2D(containerRef.value) // Используем новый метод init2D
+  store.init2D(containerRef.value)
 })
 </script>
 

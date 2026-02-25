@@ -8,6 +8,15 @@ export class RoundedPrismShape extends BaseShape {
     return { width: 3, depth: 2, height: 4, radius: 0.5 }
   }
 
+  get parameterDefinitions() {
+    return {
+      width: { label: 'Ширина', type: 'number', min: 0.1, step: 0.1 },
+      depth: { label: 'Глубина', type: 'number', min: 0.1, step: 0.1 },
+      height: { label: 'Высота', type: 'number', min: 0.1, step: 0.1 },
+      radius: { label: 'Радиус', type: 'number', min: 0.01, step: 0.05 }
+    }
+  }
+
   // Вспомогательный метод для построения контура скруглённого прямоугольника (для развёртки)
   _createShapePath(w, d, r) {
     const shape = new THREE.Shape()

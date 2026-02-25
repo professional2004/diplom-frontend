@@ -9,6 +9,10 @@ export class BaseShape {
     return {}
   }
 
+  get parameterDefinitions() {
+    return {}
+  }
+
   // Создает 3D Mesh для сцены
   createMesh() {
     throw new Error('createMesh must be implemented')

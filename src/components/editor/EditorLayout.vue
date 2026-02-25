@@ -5,6 +5,10 @@ import ViewCubeGizmo from './utils/ViewCubeGizmo.vue'
 import ToolbarPanel3D from './panels/ToolbarPanel3D.vue'
 import ToolbarPanel2D from './panels/ToolbarPanel2D.vue'
 import ToolbarBoard from './boards/ToolbarBoard.vue'
+import ShapeChangeBoard from './boards/ShapeChangeBoard.vue' 
+import { useEditorStore } from '@/stores/editorStore'
+
+const store = useEditorStore()
 </script>
 
 
@@ -30,7 +34,11 @@ import ToolbarBoard from './boards/ToolbarBoard.vue'
           <ToolbarPanel2D />
         </div>
       </div>
-      <div class="wrapper"></div>
+      <div class="wrapper">
+        <div class="ui-layer" v-if="store.selectedShape">
+          <ShapeChangeBoard />
+        </div>
+      </div>
     </div>
   </div>
 </template>

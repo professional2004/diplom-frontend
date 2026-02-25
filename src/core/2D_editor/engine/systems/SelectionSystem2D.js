@@ -27,7 +27,7 @@ export class SelectionSystem2D {
 
   applySelectMaterial(object) {
     object.traverse(child => {
-      if (child.isLine) child.material.color.setHex(0xFF6600) // Яркий цвет выделения
+      if (child.isLine) child.material.color.setHex(0xFF6600)
     })
   }
 

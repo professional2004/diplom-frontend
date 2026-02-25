@@ -2,12 +2,14 @@ import { defineStore } from 'pinia'
 import EngineRegistry from '@/core/general/engine/EngineRegistry'
 import { AddShapeCommand } from '@/core/3D_editor/commands/AddShapeCommand'
 import { DeleteShapeCommand } from '@/core/3D_editor/commands/DeleteShapeCommand'
+import { UpdateShapeCommand } from '@/core/3D_editor/commands/UpdateShapeCommand'
 
 export const useEditorStore = defineStore('editor', {
   state: () => ({
     canUndo: false,
     canRedo: false,
-    selectedShape: null
+    selectedShape: null,
+    selectedShapeParams: null
   }),
 
   actions: {
@@ -35,10 +37,20 @@ export const useEditorStore = defineStore('editor', {
     },
 
     // Подписываемся на события ядра один раз
-    setupListeners() {
+setupListeners() {
       EngineRegistry.emitter.on('selection:changed', (shape) => {
         this.selectedShape = shape
+        // Обновляем параметры при клике на новую фигуру
+        this.selectedShapeParams = shape ? { ...shape.userData.params } : null 
       })
+      
+      // Слушаем изменения после Undo/Redo или редактирования
+      EngineRegistry.emitter.on('params:changed', (shape) => {
+        if (this.selectedShape === shape) {
+          this.selectedShapeParams = { ...shape.userData.params }
+        }
+      })
+      
       EngineRegistry.emitter.on('history:changed', () => {
         this.updateUndoRedo()
       })
@@ -67,6 +79,14 @@ export const useEditorStore = defineStore('editor', {
       const engine = EngineRegistry.engine3D
       if (!engine || !this.selectedShape) return
       const cmd = new DeleteShapeCommand(engine.sceneSystem3D, engine.selectionSystem3D, this.selectedShape)
+      EngineRegistry.executeCommand(cmd)
+    },
+
+    updateShapeParams(newParams) {
+      const engine = EngineRegistry.engine3D
+      if (!engine || !this.selectedShape) return
+      
+      const cmd = new UpdateShapeCommand(engine, this.selectedShape, newParams)
       EngineRegistry.executeCommand(cmd)
     },
 

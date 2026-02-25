@@ -38,7 +38,7 @@ export class InputSystem2D {
     const objects = this.engine2D.sceneSystem2D.unfoldObjects.children
     const intersects = this.raycaster.intersectObjects(objects, true)
     
-    // Ищем родительскую группу-кусок (UnfoldPart), помеченную как selectable
+    // Ищем родительскую UnfoldDetail, помеченную как selectable
     for (let hit of intersects) {
       let obj = hit.object
       while (obj && !obj.userData.selectable) obj = obj.parent

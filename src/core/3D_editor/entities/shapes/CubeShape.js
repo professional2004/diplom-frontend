@@ -8,6 +8,14 @@ export class CubeShape extends BaseShape {
     return { width: 2, height: 2, depth: 2 }
   }
 
+  get parameterDefinitions() {
+    return {
+      width: { label: 'Ширина', type: 'number', min: 0.1, step: 0.1 },
+      height: { label: 'Высота', type: 'number', min: 0.1, step: 0.1 },
+      depth: { label: 'Глубина', type: 'number', min: 0.1, step: 0.1 }
+    }
+  }
+
   createMesh() {
     const { width, height, depth } = this.params
     // Создаем форму с помощью JSCAD (параметрическое моделирование)
