@@ -1,57 +1,31 @@
 import * as THREE from 'three'
 import { BaseShape } from '../BaseShape'
 
-/**
- * CylindricalSurfaceShape
- *
- * Представление: гибкая лента (призма вдоль ломаной).
- *
- * Параметры:
- *  - polyline: массив точек [[x,y,z], ...] задаёт линию вдоль которой "натягивается" лента.
- *              Может быть открытой или замкнутой (если замкнута — последний ≈ первый).
- *  - width: ширина ленты
- *  - polygon: ограничивающий многоугольник в параметрическом пространстве поверхности: массив точек [[u, v], ...]
- *      - u в формате относительного положения вдоль ломаной (0..1)
- *      - v — смещение по ширине в локальных единицах (в диапазоне примерно [-width/2 .. width/2])
- *
- * Реализация createMesh:
- *  - строит двухвершинную полосу (строку треугольников) вдоль каждого узла ломаной: для каждого узла генерируем 2 вершины (лево/право).
- *  - коннектим секции соседних узлов в индексы треугольников.
- *
- * createUnfold2D:
- *  - развёртка: вдоль X — длина полилинии (arc length), по Y — ширина; polygon (u,v) -> (u*length, v)
- *
- * Примечание: polygon ожидается в относительных координатах u∈[0,1], v в абсолютных единицах (например -w/2..w/2).
- */
 export class CylindricalSurfaceShape extends BaseShape {
   get defaultParams() {
     return {
       width: 0.5,
-      // простая прямая ломаная по оси X длиной 2
       polyline: [
         [-1, 0],
         [1, 0]
       ],
-      // polygon в параметрическом пространстве [u, v]
       polygon: [
         [0, -0.25],
         [1, -0.25],
         [1, 0.25],
         [0, 0.25]
-      ],
-      segmentsPerUnit: 10 // опция: больше -> более гладкая лента
+      ]
     }
   }
 
   get parameterDefinitions() {
     return {
-      width: { label: 'Ширина', type: 'number', min: 0.001, step: 0.01 },
-      polyline: { label: 'Ломаная (polyline)', type: 'object' },
+      width: { label: 'Ширина (для отображения рамки)', type: 'number', min: 0.001, step: 0.01 },
+      polyline: { label: 'Ломаная основания', type: 'object' },
       polygon: { label: 'Ограничивающий многоугольник (u,v)', type: 'object' }
     }
   }
 
-  // 2D -> Vector3 (лежит в плоскости X-Y, Z=0)
   _toVec3Array(polyline) {
     return polyline.map(p => new THREE.Vector3(p[0], 0, p[1]))
   }
@@ -66,60 +40,60 @@ export class CylindricalSurfaceShape extends BaseShape {
     return { lens, total: acc }
   }
 
-createMesh() {
-    const { width } = this.params
+  createMesh() {
     const polyline2D = this.params.polyline?.length >= 2
       ? this.params.polyline
       : this.defaultParams.polyline
 
     const polyline = this._toVec3Array(polyline2D)
-    const n = polyline.length
+    const { lens } = this._computeArcLengths(polyline)
 
-    const leftRightVerts = []
+    const polygonRaw = this.params.polygon || this.defaultParams.polygon
 
-    for (let i = 0; i < n; i++) {
-      const cur = polyline[i]
-
-      let dir = new THREE.Vector3()
-      if (i === 0) dir.copy(polyline[i + 1]).sub(cur)
-      else if (i === n - 1) dir.copy(cur).sub(polyline[i - 1])
-      else dir.addVectors(
-        polyline[i + 1].clone().sub(cur),
-        cur.clone().sub(polyline[i - 1])
-      )
-
-      dir.normalize()
-
-      // ширина уходит по оси Z (перпендикуляр к плоскости основания)
-      const lat = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 0, 1))
-      lat.normalize().multiplyScalar(width / 2)
-
-      leftRightVerts.push([
-        cur.clone().sub(lat),
-        cur.clone().add(lat)
-      ])
+    // Создаем базовую плоскую геометрию из многоугольника
+    const shape = new THREE.Shape()
+    if (polygonRaw.length >= 3) {
+      shape.moveTo(polygonRaw[0][0], polygonRaw[0][1])
+      for (let i = 1; i < polygonRaw.length; i++) {
+        shape.lineTo(polygonRaw[i][0], polygonRaw[i][1])
+      }
+      shape.closePath()
     }
 
-    const positions = []
-    const indices = []
-    const uvs = []
+    // Триангулируем многоугольник в UV пространстве
+    const geom = new THREE.ShapeGeometry(shape)
+    const posAttribute = geom.attributes.position
 
-    for (let i = 0; i < n; i++) {
-      const [l, r] = leftRightVerts[i]
-      positions.push(l.x, l.y, l.z, r.x, r.y, r.z)
-      uvs.push(i / (n - 1), 0, i / (n - 1), 1)
+    // Искривляем каждую вершину: заворачиваем 2D координаты в 3D цилиндр
+    for (let i = 0; i < posAttribute.count; i++) {
+      const u = posAttribute.getX(i) // расстояние по кривой
+      const v = posAttribute.getY(i) // высота
+
+      // Ищем нужный сегмент ломаной
+      let sec = 0
+      for (let j = 0; j < lens.length - 1; j++) {
+        if (u >= lens[j] && u <= lens[j+1]) {
+          sec = j
+          break
+        }
+        if (u > lens[j+1]) sec = j
+      }
+
+      const L0 = lens[sec]
+      const L1 = lens[sec + 1]
+      const t = (L1 - L0) > 0 ? Math.max(0, Math.min(1, (u - L0) / (L1 - L0))) : 0
+
+      const p0 = polyline[sec]
+      const p1 = polyline[sec + 1]
+
+      // Интерполируем позицию на плоскости (X, Z)
+      const x = p0.x + (p1.x - p0.x) * t
+      const z = p0.z + (p1.z - p0.z) * t
+      const y = v // v соответствует высоте по оси Y
+
+      posAttribute.setXYZ(i, x, y, z)
     }
 
-    for (let i = 0; i < n - 1; i++) {
-      const i0 = i * 2
-      indices.push(i0, i0 + 2, i0 + 1)
-      indices.push(i0 + 2, i0 + 3, i0 + 1)
-    }
-
-    const geom = new THREE.BufferGeometry()
-    geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
-    geom.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
-    geom.setIndex(indices)
     geom.computeVertexNormals()
 
     const mat = this.getStandardMaterial()
@@ -134,27 +108,34 @@ createMesh() {
   }
 
   createUnfold2D() {
-    const polyline = this.params.polyline?.length >= 2
-      ? this._toVec3Array(this.params.polyline)
-      : this._toVec3Array(this.defaultParams.polyline)
-
-    const { lens, total } = this._computeArcLengths(polyline)
-    const width = this.params.width
-
     const group = new THREE.Group()
+    const mat = this.getLineMaterial()
 
-    const rect = [
-      new THREE.Vector3(0, -width / 2, 0),
-      new THREE.Vector3(total, -width / 2, 0),
-      new THREE.Vector3(total, width / 2, 0),
-      new THREE.Vector3(0, width / 2, 0),
-      new THREE.Vector3(0, -width / 2, 0)
-    ]
+    // 1. Отрисовываем сам обрезающий многоугольник (это и есть точная развертка)
+    const polygonRaw = this.params.polygon || this.defaultParams.polygon
+    if (polygonRaw.length >= 3) {
+      const points = polygonRaw.map(p => new THREE.Vector3(p[0], p[1], 0))
+      points.push(points[0].clone())
+      const geo = new THREE.BufferGeometry().setFromPoints(points)
+      group.add(new THREE.Line(geo, mat))
+    }
 
+    // 2. Вспомогательные линии (ось "позвоночника" развертки и засечки сегментов)
+    const polyline = this._toVec3Array(this.params.polyline?.length >= 2 ? this.params.polyline : this.defaultParams.polyline)
+    const { total, lens } = this._computeArcLengths(polyline)
+    const faintMat = new THREE.LineBasicMaterial({ color: 0xcccccc })
+    
     group.add(new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints(rect),
-      new THREE.LineBasicMaterial({ color: 0x999999 })
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(total, 0, 0)]), 
+      faintMat
     ))
+
+    for (let L of lens) {
+      group.add(new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(L, -0.1, 0), new THREE.Vector3(L, 0.1, 0)]), 
+        faintMat
+      ))
+    }
 
     return group
   }
