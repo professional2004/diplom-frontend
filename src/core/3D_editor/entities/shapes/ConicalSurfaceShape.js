@@ -28,11 +28,11 @@ export class ConicalSurfaceShape extends BaseShape {
   get defaultParams() {
     return {
       basePolyline: [
-        [-1, 0, 0],
-        [0, 0, 0],
-        [1, 0, 0]
+        [-1, 0],
+        [0, 0],
+        [1, 0]
       ],
-      apex: [0, 1.5, 0],
+      apex: [0, 1.5, 1],
       // polygon в параметрическом пространстве (u along base 0..1, v radial distance to apex — обычно 0..slant)
       polygon: [
         [0, 0],
@@ -49,29 +49,30 @@ export class ConicalSurfaceShape extends BaseShape {
     }
   }
 
-  _asVector3Array(poly) {
-    return poly.map(p => new THREE.Vector3(p[0], p[1], p[2] || 0))
+  _toVec3Array(poly) {
+    return poly.map(p => new THREE.Vector3(p[0], 0, p[1]))
   }
 
   createMesh() {
-    const base = this._asVector3Array(this.params.basePolyline && this.params.basePolyline.length >= 2 ? this.params.basePolyline : this.defaultParams.basePolyline)
+    const base2D = this.params.basePolyline?.length >= 2
+      ? this.params.basePolyline
+      : this.defaultParams.basePolyline
+
+    const base = this._toVec3Array(base2D)
     const apex = new THREE.Vector3(...(this.params.apex || this.defaultParams.apex))
 
     const vertices = []
     const indices = []
-    const normals = []
 
-    // Вершина — последняя вершина в массиве вершин
+    for (let p of base) vertices.push(p.x, p.y, p.z)
     const apexIndex = base.length
-    // Собираем позиции: сначала все точки основания, потом вершина
-    for (let i = 0; i < base.length; i++) {
-      vertices.push(base[i].x, base[i].y, base[i].z)
-    }
     vertices.push(apex.x, apex.y, apex.z)
 
-    // Создаём треугольники между соседями и вершиной
-    const closed = base.length > 2 && base[0].distanceTo(base[base.length - 1]) < 1e-6
+    const closed = base.length > 2 &&
+      base[0].distanceTo(base[base.length - 1]) < 1e-6
+
     const segCount = closed ? base.length : base.length - 1
+
     for (let i = 0; i < segCount; i++) {
       const a = i
       const b = (i + 1) % base.length
@@ -95,47 +96,41 @@ export class ConicalSurfaceShape extends BaseShape {
   }
 
   createUnfold2D() {
-    // Простая развёртка: для каждого сегмента основания создаём треугольник с основанием = длина сегмента,
-    // высотой = расстояние апекса до середины сегмента (приближённо — длина наклонного ребра).
-    const baseRaw = this.params.basePolyline && this.params.basePolyline.length >= 2 ? this.params.basePolyline : this.defaultParams.basePolyline
-    const base = this._asVector3Array(baseRaw)
+    const base = this._toVec3Array(
+      this.params.basePolyline?.length >= 2
+        ? this.params.basePolyline
+        : this.defaultParams.basePolyline
+    )
+
     const apex = new THREE.Vector3(...(this.params.apex || this.defaultParams.apex))
 
     const group = new THREE.Group()
     const lineMat = this.getLineMaterial()
 
     let cursorX = 0
-    const triangles = []
-
-    const closed = base.length > 2 && base[0].distanceTo(base[base.length - 1]) < 1e-6
-    const segCount = closed ? base.length : base.length - 1
+    const segCount = base.length - 1
 
     for (let i = 0; i < segCount; i++) {
       const a = base[i]
-      const b = base[(i + 1) % base.length]
-      const segLen = a.distanceTo(b)
-      const mid = new THREE.Vector3().addVectors(a, b).multiplyScalar(0.5)
-      const slantA = apex.distanceTo(a)
-      const slantB = apex.distanceTo(b)
-      // приблизительная высота треугольника в развёртке:
-      const h = Math.max(slantA, slantB)
+      const b = base[i + 1]
 
-      // Треугольник будет с основанием вдоль X от cursorX до cursorX + segLen
+      const len = a.distanceTo(b)
+      const h = Math.max(apex.distanceTo(a), apex.distanceTo(b))
+
       const tri = [
         new THREE.Vector3(cursorX, 0, 0),
-        new THREE.Vector3(cursorX + segLen, 0, 0),
-        new THREE.Vector3(cursorX + segLen / 2, h, 0)
+        new THREE.Vector3(cursorX + len, 0, 0),
+        new THREE.Vector3(cursorX + len / 2, h, 0),
+        new THREE.Vector3(cursorX, 0, 0)
       ]
-      triangles.push(tri)
-      cursorX += segLen
-    }
 
-    // Рисуем треугольники (как линии)
-    triangles.forEach(tri => {
-      const closedTri = tri.concat(tri[0].clone())
-      const geom = new THREE.BufferGeometry().setFromPoints(closedTri)
-      group.add(new THREE.Line(geom, lineMat))
-    })
+      group.add(new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(tri),
+        lineMat
+      ))
+
+      cursorX += len
+    }
 
     return group
   }
