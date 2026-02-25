@@ -2,59 +2,71 @@
 import Scene3DViewport from './scenes/Scene3DViewport.vue'
 import Scene2DViewport from './scenes/Scene2DViewport.vue'
 import ViewCubeGizmo from './utils/ViewCubeGizmo.vue'
-import EditorToolbar from './panels/EditorToolbar.vue'
-import ParamPanel from './panels/ParamPanel.vue'
+import ToolbarPanel3D from './panels/ToolbarPanel3D.vue'
+import ToolbarPanel2D from './panels/ToolbarPanel2D.vue'
+import ToolbarBoard from './boards/ToolbarBoard.vue'
 </script>
 
 
 <template>
-  <div class="layout">
-    <EditorToolbar class="ui-layer" />
-    
-    <div class="main-container">
-      <div class="viewport-wrapper">
+  <div class="vertical-layout">
+
+    <div class="wrapper in-height">
+      <ToolbarBoard class="ui-layer" />
+    </div>
+    <div class="horizontal-layout">
+      <div class="wrapper">
         <Scene3DViewport class="scene-layer" />
         <div class="cube-wrapper ui-layer">
           <ViewCubeGizmo />
         </div>
-        <div class="param-panel-wrapper ui-layer" style="left:10px; bottom:10px;">
-          <ParamPanel />
+        <div class="ui-layer">
+          <ToolbarPanel3D />
         </div>
       </div>
-
-      <div class="viewport-wrapper">
+      <div class="wrapper">
         <Scene2DViewport />
+        <div class="ui-layer">
+          <ToolbarPanel2D />
+        </div>
       </div>
+      <div class="wrapper"></div>
     </div>
   </div>
 </template>
 
 
 <style scoped>
+/* @import './all.css'; */
 
-.layout {
+
+.vertical-layout {
   position: relative;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-.main-container {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr; /* Разделение 50/50 */
-  overflow: hidden;
+.horizontal-layout {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
 }
 
-
-.viewport-wrapper {
+.wrapper {
   position: relative;
   width: 100%;
   height: 100%;
   overflow: hidden;
   min-width: 0;
   min-height: 0;
+  border: 1px solid #222222;
+}
+
+.wrapper.in-height {
+  height: fit-content;
 }
 
 canvas {
@@ -64,7 +76,6 @@ canvas {
 }
 
 .ui-layer {
-  position: absolute;
   z-index: 10;
   pointer-events: none;
 }
@@ -73,11 +84,6 @@ canvas {
   pointer-events: auto;
 }
 
-/* Позиционирование тулбара */
-.layout > .ui-layer:first-child {
-  top: 0;
-  left: 0;
-}
 
 /* Позиционирование куба */
 .cube-wrapper {
@@ -94,5 +100,3 @@ canvas {
   z-index: 1;
 }
 </style>
-
-

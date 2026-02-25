@@ -17,6 +17,6 @@ import EditorLayout from '@/components/editor/EditorLayout.vue';
 <style scoped>
 .editor-wrapper {
   width: 100%;
-  height: 70vh;
+  height: 80vh;
 }
 </style>

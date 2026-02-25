@@ -13,14 +13,6 @@ const hasSelection = computed(() => {
 <template>
   <div class="toolbar">
     <div class="group">
-      <button @click="store.zoomIn">Zoom +</button>
-      <button @click="store.zoomOut">Zoom -</button>
-      <button @click="store.resetView">Reset</button>
-    </div>
-
-    <div class="divider"></div>
-
-    <div class="group">
       <button :disabled="!hasSelection" @click="store.deleteShape" title="Delete (Del)">Delete</button>
     </div>
 
@@ -30,11 +22,17 @@ const hasSelection = computed(() => {
       <button :disabled="!store.canUndo" @click="store.undo" title="Undo (Ctrl+Z)">Undo</button>
       <button :disabled="!store.canRedo" @click="store.redo" title="Redo (Ctrl+Shift+Z)">Redo</button>
     </div>
+
+    <div class="divider"></div>
+
+    <div class="group">
+      <button @click="store.addShape('cube')">Add Cube</button>
+      <button @click="store.addShape('roundedPrism')">Add Rounded Prism</button>
+    </div>
   </div>
 </template>
 
 <style scoped>
-/* Стили остаются старые, код стилей опущен для краткости, он есть в исходнике [cite: 92-113] */
 .toolbar {
   padding: 10px;
   display: flex;
