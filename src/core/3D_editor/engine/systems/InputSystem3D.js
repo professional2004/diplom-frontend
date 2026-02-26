@@ -141,7 +141,12 @@ export class InputSystem3D {
           this.dragObject.position,
           this.startPosition
         )
-        this.engine3D.registry.executeCommand(cmd) 
+        this.engine3D.registry.executeCommand(cmd)
+        
+        // Пробрасываем событие об обновлении параметров
+        if (this.engine3D.registry.shapeSystem) {
+          this.engine3D.registry.shapeSystem.notifyParamsChanged(this.dragObject)
+        }
       }
       this.isDragging = false
       this.dragObject = null

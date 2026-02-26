@@ -34,7 +34,7 @@ const store = useEditorStore()
           <ToolbarPanel2D />
         </div>
       </div>
-      <div class="wrapper">
+      <div class="wrapper scrolled">
         <div class="ui-layer" v-if="store.selectedShape">
           <ShapeChangeBoard />
         </div>
@@ -75,6 +75,11 @@ const store = useEditorStore()
 
 .wrapper.in-height {
   height: fit-content;
+  min-height: fit-content;
+}
+
+.wrapper.scrolled {
+  overflow: auto;
 }
 
 canvas {

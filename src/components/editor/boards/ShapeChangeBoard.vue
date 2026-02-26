@@ -24,6 +24,42 @@ const parameterDefinitions = computed(() => {
   return shapeInstance.value?.parameterDefinitions || {}
 })
 
+// Параметры геометрии (без трансформаций)
+const geometryParams = computed(() => {
+  const defs = parameterDefinitions.value
+  const result = {}
+  for (const [key, def] of Object.entries(defs)) {
+    if (!key.startsWith('pos') && !key.startsWith('rotation')) {
+      result[key] = def
+    }
+  }
+  return result
+})
+
+// Параметры позиции
+const positionParams = computed(() => {
+  const defs = parameterDefinitions.value
+  const result = {}
+  for (const key of ['posX', 'posY', 'posZ']) {
+    if (defs[key]) {
+      result[key] = defs[key]
+    }
+  }
+  return result
+})
+
+// Параметры ротации
+const rotationParams = computed(() => {
+  const defs = parameterDefinitions.value
+  const result = {}
+  for (const key of ['rotationX', 'rotationY', 'rotationZ']) {
+    if (defs[key]) {
+      result[key] = defs[key]
+    }
+  }
+  return result
+})
+
 // локальная копия параметров, с которой работает UI
 const editParams = ref({})
 
@@ -81,7 +117,8 @@ const applyChanges = () => {
         </button>
       </div>
       
-      <div v-for="(paramDef, paramKey) in parameterDefinitions" :key="paramKey" class="param-row">
+      <!-- Параметры геометрии фигуры -->
+      <div v-for="(paramDef, paramKey) in geometryParams" :key="paramKey" class="param-row">
         <label class="param-label">{{ paramDef.label }}</label>
 
         <template v-if="paramDef.type === 'number'">
@@ -116,6 +153,34 @@ const applyChanges = () => {
           />
         </template>
       </div>
+
+      <!-- Группа параметров позиции -->
+      <div v-if="Object.keys(positionParams).length > 0" class="param-group-section">
+        <div class="group-title">🎯 Позиция</div>
+        <div v-for="(paramDef, paramKey) in positionParams" :key="paramKey" class="param-row">
+          <label class="param-label">{{ paramDef.label }}</label>
+          <input 
+            type="number" 
+            v-model.number="editParams[paramKey]" 
+            :step="paramDef.step"
+            @input="markAsChanged" 
+          />
+        </div>
+      </div>
+
+      <!-- Группа параметров ротации -->
+      <div v-if="Object.keys(rotationParams).length > 0" class="param-group-section">
+        <div class="group-title">🔄 Поворот (рад)</div>
+        <div v-for="(paramDef, paramKey) in rotationParams" :key="paramKey" class="param-row">
+          <label class="param-label">{{ paramDef.label }}</label>
+          <input 
+            type="number" 
+            v-model.number="editParams[paramKey]" 
+            :step="paramDef.step"
+            @input="markAsChanged" 
+          />
+        </div>
+      </div>
     </div>
     
     <div v-else class="no-selection">
@@ -127,7 +192,7 @@ const applyChanges = () => {
 
 
 <style scoped>
-.shape-board { padding: 15px; background: #fff; height: 100%; display: flex; flex-direction: column; }
+.shape-board { padding: 15px; background: #fff; height: 100%; display: flex; flex-direction: column; overflow-y: auto; }
 .board-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .apply-btn { 
   padding: 8px 12px; background: #eee; border: 1px solid #ccc; cursor: pointer; border-radius: 4px; 
@@ -139,4 +204,19 @@ const applyChanges = () => {
 .vector-inputs { display: flex; gap: 8px; }
 .vec-coord input { width: 55px; padding: 3px; }
 .no-selection { color: #aaa; text-align: center; padding-top: 100px; }
+
+/* Стили для групп параметров */
+.param-group-section { 
+  margin-top: 20px; 
+  padding-top: 15px; 
+  border-top: 2px solid #e0e0e0;
+}
+.group-title { 
+  font-weight: bold; 
+  font-size: 0.9rem; 
+  color: #666; 
+  margin-bottom: 12px; 
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
 </style>

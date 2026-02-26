@@ -12,7 +12,13 @@ export class FlatSurfaceShape extends BaseShape {
         [1, -0.75],
         [1, 0.75],
         [-1, 0.75]
-      ]
+      ],
+      posX: 0,
+      posY: 0,
+      posZ: 0,
+      rotationX: -Math.PI / 2,
+      rotationY: 0,
+      rotationZ: 0
     }
   }
 
@@ -20,7 +26,13 @@ export class FlatSurfaceShape extends BaseShape {
     return {
       width: { label: 'Ширина', type: 'number', min: 0.001, step: 0.01 },
       height: { label: 'Высота', type: 'number', min: 0.001, step: 0.01 },
-      polygon: { label: 'Ограничивающий многоугольник', type: 'object' }
+      polygon: { label: 'Ограничивающий многоугольник', type: 'object' },
+      posX: { label: 'Позиция X', type: 'number', step: 0.1 },
+      posY: { label: 'Позиция Y', type: 'number', step: 0.1 },
+      posZ: { label: 'Позиция Z', type: 'number', step: 0.1 },
+      rotationX: { label: 'Поворот X (рад)', type: 'number', step: 0.1 },
+      rotationY: { label: 'Поворот Y (рад)', type: 'number', step: 0.1 },
+      rotationZ: { label: 'Поворот Z (рад)', type: 'number', step: 0.1 }
     }
   }
 
@@ -73,9 +85,17 @@ export class FlatSurfaceShape extends BaseShape {
     mesh.userData.params = this.params
     mesh.userData.selectable = true
 
-    // Кладем плоскость горизонтально (Y вверх)
-    mesh.rotation.x = -Math.PI / 2
-    mesh.position.y = 0
+    // Применяем позицию и ротацию
+    const posX = this.params.posX ?? 0
+    const posY = this.params.posY ?? 0
+    const posZ = this.params.posZ ?? 0
+    
+    const rotX = this.params.rotationX ?? -Math.PI / 2
+    const rotY = this.params.rotationY ?? 0
+    const rotZ = this.params.rotationZ ?? 0
+    
+    mesh.position.set(posX, posY, posZ)
+    mesh.rotation.set(rotX, rotY, rotZ, 'XYZ')
 
     return mesh
   }

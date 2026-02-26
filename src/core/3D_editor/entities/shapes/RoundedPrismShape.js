@@ -5,7 +5,18 @@ import { createMeshFromJscad } from '@/core/general/utils/JscadAdapter'
 
 export class RoundedPrismShape extends BaseShape {
   get defaultParams() {
-    return { width: 3, depth: 2, height: 4, radius: 0.5 }
+    return { 
+      width: 3, 
+      depth: 2, 
+      height: 4, 
+      radius: 0.5,
+      posX: 0,
+      posY: 0,
+      posZ: 0,
+      rotationX: 0,
+      rotationY: 0,
+      rotationZ: 0
+    }
   }
 
   get parameterDefinitions() {
@@ -13,7 +24,13 @@ export class RoundedPrismShape extends BaseShape {
       width: { label: 'Ширина', type: 'number', min: 0.1, step: 0.1 },
       depth: { label: 'Глубина', type: 'number', min: 0.1, step: 0.1 },
       height: { label: 'Высота', type: 'number', min: 0.1, step: 0.1 },
-      radius: { label: 'Радиус', type: 'number', min: 0.01, step: 0.05 }
+      radius: { label: 'Радиус', type: 'number', min: 0.01, step: 0.05 },
+      posX: { label: 'Позиция X', type: 'number', step: 0.1 },
+      posY: { label: 'Позиция Y', type: 'number', step: 0.1 },
+      posZ: { label: 'Позиция Z', type: 'number', step: 0.1 },
+      rotationX: { label: 'Поворот X (рад)', type: 'number', step: 0.1 },
+      rotationY: { label: 'Поворот Y (рад)', type: 'number', step: 0.1 },
+      rotationZ: { label: 'Поворот Z (рад)', type: 'number', step: 0.1 }
     }
   }
 
@@ -55,8 +72,18 @@ export class RoundedPrismShape extends BaseShape {
     mesh.userData.params = this.params
     mesh.userData.selectable = true
 
-    // Смещаем так, чтобы фигура стояла на "полу" (Y = 0)
-    mesh.position.y = height / 2
+    // Если posY не задан, ставим на "пол" (половина высоты)
+    const baseY = height / 2
+    const posX = this.params.posX ?? 0
+    const posY = this.params.posY ?? baseY
+    const posZ = this.params.posZ ?? 0
+    
+    const rotX = this.params.rotationX ?? 0
+    const rotY = this.params.rotationY ?? 0
+    const rotZ = this.params.rotationZ ?? 0
+
+    mesh.position.set(posX, posY, posZ)
+    mesh.rotation.set(rotX, rotY, rotZ, 'XYZ')
 
     return mesh
   }

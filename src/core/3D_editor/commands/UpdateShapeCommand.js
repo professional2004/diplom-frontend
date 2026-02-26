@@ -42,8 +42,18 @@ export class UpdateShapeCommand {
     }
     this.mesh.geometry = tempMesh.geometry
 
-    // 4. Некоторые фигуры «садятся» на пол по-разному – поправляем Y
-    this.mesh.position.y = tempMesh.position.y
+    // 4. Применяем позицию и ротацию из параметров
+    const posX = params.posX ?? 0
+    const posY = params.posY ?? tempMesh.position.y
+    const posZ = params.posZ ?? 0
+    
+    this.mesh.position.set(posX, posY, posZ)
+    
+    const rotX = params.rotationX ?? 0
+    const rotY = params.rotationY ?? 0
+    const rotZ = params.rotationZ ?? 0
+    
+    this.mesh.rotation.set(rotX, rotY, rotZ, 'XYZ')
 
     // 5. Удаляем материал временного меша, он нам не нужен
     if (tempMesh.material) {

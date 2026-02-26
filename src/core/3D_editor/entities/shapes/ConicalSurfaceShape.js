@@ -16,7 +16,14 @@ export class ConicalSurfaceShape extends BaseShape {
         [1.8, 0.5],
         [1.8, 1.5],
         [0, 1.5]
-      ]
+      ],
+      // Параметры позиции и ротации
+      posX: 0,
+      posY: 0,
+      posZ: 0,
+      rotationX: 0,
+      rotationY: 0,
+      rotationZ: 0
     }
   }
 
@@ -24,7 +31,15 @@ export class ConicalSurfaceShape extends BaseShape {
     return {
       basePolyline: { label: 'Ломаная основания', type: 'object' },
       apex: { label: 'Вершина (X,Y,Z)', type: 'object' },
-      polygon: { label: 'Ограничивающий многоугольник (X,Y)', type: 'object' }
+      polygon: { label: 'Ограничивающий многоугольник (X,Y)', type: 'object' },
+      // Параметры позиции
+      posX: { label: 'Позиция X', type: 'number', step: 0.1 },
+      posY: { label: 'Позиция Y', type: 'number', step: 0.1 },
+      posZ: { label: 'Позиция Z', type: 'number', step: 0.1 },
+      // Параметры ротации (в радианах)
+      rotationX: { label: 'Поворот X (рад)', type: 'number', step: 0.1 },
+      rotationY: { label: 'Поворот Y (рад)', type: 'number', step: 0.1 },
+      rotationZ: { label: 'Поворот Z (рад)', type: 'number', step: 0.1 }
     }
   }
 
@@ -139,6 +154,9 @@ export class ConicalSurfaceShape extends BaseShape {
     mesh.userData.shapeType = 'conical'
     mesh.userData.params = this.params
     mesh.userData.selectable = true
+
+    // Применяем позицию и ротацию
+    this.applyTransformToMesh(mesh)
 
     return mesh
   }

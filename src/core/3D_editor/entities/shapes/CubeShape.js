@@ -5,14 +5,30 @@ import { createMeshFromJscad } from '@/core/general/utils/JscadAdapter'
 
 export class CubeShape extends BaseShape {
   get defaultParams() {
-    return { width: 2, height: 2, depth: 2 }
+    return { 
+      width: 2, 
+      height: 2, 
+      depth: 2,
+      posX: 0,
+      posY: 0,
+      posZ: 0,
+      rotationX: 0,
+      rotationY: 0,
+      rotationZ: 0
+    }
   }
 
   get parameterDefinitions() {
     return {
       width: { label: 'Ширина', type: 'number', min: 0.1, step: 0.1 },
       height: { label: 'Высота', type: 'number', min: 0.1, step: 0.1 },
-      depth: { label: 'Глубина', type: 'number', min: 0.1, step: 0.1 }
+      depth: { label: 'Глубина', type: 'number', min: 0.1, step: 0.1 },
+      posX: { label: 'Позиция X', type: 'number', step: 0.1 },
+      posY: { label: 'Позиция Y', type: 'number', step: 0.1 },
+      posZ: { label: 'Позиция Z', type: 'number', step: 0.1 },
+      rotationX: { label: 'Поворот X (рад)', type: 'number', step: 0.1 },
+      rotationY: { label: 'Поворот Y (рад)', type: 'number', step: 0.1 },
+      rotationZ: { label: 'Поворот Z (рад)', type: 'number', step: 0.1 }
     }
   }
 
@@ -29,8 +45,24 @@ export class CubeShape extends BaseShape {
     mesh.userData.params = this.params
     mesh.userData.selectable = true
 
-    // Ставим на "пол" (половина высоты)
-    mesh.position.y = height / 2
+    // Если позиция Y не задана в параметрах, ставим на "пол" (половина высоты)
+    const baseY = height / 2
+    const originalY = mesh.position.y
+    mesh.position.set(0, baseY, 0)
+
+    // Применяем позицию и ротацию
+    // Но сохраняем оригинальное Y если posY не задан
+    const posX = this.params.posX ?? 0
+    const posY = this.params.posY ?? baseY
+    const posZ = this.params.posZ ?? 0
+    
+    mesh.position.set(posX, posY, posZ)
+    
+    const rotX = this.params.rotationX ?? 0
+    const rotY = this.params.rotationY ?? 0
+    const rotZ = this.params.rotationZ ?? 0
+    mesh.rotation.set(rotX, rotY, rotZ, 'XYZ')
+
     return mesh
   }
 

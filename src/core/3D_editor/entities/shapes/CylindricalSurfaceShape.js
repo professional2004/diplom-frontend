@@ -14,7 +14,13 @@ export class CylindricalSurfaceShape extends BaseShape {
         [1, -0.25],
         [1, 0.25],
         [0, 0.25]
-      ]
+      ],
+      posX: 0,
+      posY: 0,
+      posZ: 0,
+      rotationX: 0,
+      rotationY: 0,
+      rotationZ: 0
     }
   }
 
@@ -22,7 +28,13 @@ export class CylindricalSurfaceShape extends BaseShape {
     return {
       width: { label: 'Ширина (для отображения рамки)', type: 'number', min: 0.001, step: 0.01 },
       polyline: { label: 'Ломаная основания', type: 'object' },
-      polygon: { label: 'Ограничивающий многоугольник (u,v)', type: 'object' }
+      polygon: { label: 'Ограничивающий многоугольник (u,v)', type: 'object' },
+      posX: { label: 'Позиция X', type: 'number', step: 0.1 },
+      posY: { label: 'Позиция Y', type: 'number', step: 0.1 },
+      posZ: { label: 'Позиция Z', type: 'number', step: 0.1 },
+      rotationX: { label: 'Поворот X (рад)', type: 'number', step: 0.1 },
+      rotationY: { label: 'Поворот Y (рад)', type: 'number', step: 0.1 },
+      rotationZ: { label: 'Поворот Z (рад)', type: 'number', step: 0.1 }
     }
   }
 
@@ -106,6 +118,9 @@ export class CylindricalSurfaceShape extends BaseShape {
     mesh.userData.shapeType = 'cylindrical'
     mesh.userData.params = this.params
     mesh.userData.selectable = true
+
+    // Применяем позицию и ротацию
+    this.applyTransformToMesh(mesh)
 
     return mesh
   }

@@ -101,6 +101,9 @@ export class SyncSystem {
         // завернём в UnfoldDetail (или используем вашу обёртку)
         const unfoldDetail = new UnfoldDetail(clone, obj3D.uuid)
 
+        // Восстанавливаем сохраненные параметры позиции и ротации, если они были
+        unfoldDetail.applyStoredTransform()
+
         // Добавляем в 2D-сцену
         this.engine2D.sceneSystem2D.add(unfoldDetail.mesh)
 
