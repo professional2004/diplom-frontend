@@ -80,53 +80,28 @@ export const useEditorStore = defineStore('editor', {
       if (!engine || !this.selectedShape) return
       const cmd = new DeleteShapeCommand(engine.sceneSystem3D, engine.selectionSystem3D, this.selectedShape)
       EngineRegistry.executeCommand(cmd)
+
+      // После удаления сбрасываем текущее выделение в сторе. Событие
+      // 'selection:changed' не всегда пробрасывается внутри команды,
+      // поэтому делаем это здесь вручную.
+      this.selectedShape = null
+      this.selectedShapeParams = null
     },
 
     updateShapeParams(newParams) {
       const engine = EngineRegistry.engine3D
       if (!engine || !this.selectedShape) return
-      
+      // создаём команду, которая сам заботится об откате/повторении и о синхронизации 2D
       const cmd = new UpdateShapeCommand(engine, this.selectedShape, newParams)
       EngineRegistry.executeCommand(cmd)
+      // Состояние `selectedShapeParams` обновится по событию 'params:changed'
+      // emited внутри команды, но сбросить флаг выделения здесь не нужно.
     },
 
-    updateSelectedShape() {
-      const engine = EngineRegistry.engine3D
-      const oldMesh = this.selectedShape
-      if (!oldMesh) return
+    // NOTE: метод updateSelectedShape удалён – теперь изменения выполняются
+    // исключительно через UpdateShapeCommand. Ранний вариант оставлен в
+    // репозитории истории на случай отката.
 
-      // Получаем экземпляр класса фигуры (owner), который мы добавили в шаге 1
-      const shapeOwner = oldMesh.userData.owner
-      if (!shapeOwner) {
-        console.error("Не удалось найти логический объект фигуры в userData.owner")
-        return
-      }
-
-      // 1. Создаем новый меш с обновленными параметрами
-      const newMesh = shapeOwner.createMesh()
-
-      // 2. Копируем трансформации (позицию и поворот) от старого объекта
-      newMesh.position.copy(oldMesh.position)
-      newMesh.rotation.copy(oldMesh.rotation)
-      newMesh.scale.copy(oldMesh.scale)
-
-      // 3. Безопасная замена в сцене
-      if (engine && typeof engine.replaceObject === 'function') {
-        engine.replaceObject(oldMesh, newMesh)
-      } else {
-        // Если engine.replaceObject не найден, пробуем напрямую через родителя
-        if (oldMesh.parent) {
-          oldMesh.parent.add(newMesh)
-          oldMesh.parent.remove(oldMesh)
-        }
-      }
-
-      // 4. Обновляем выделение, чтобы панель параметров не закрылась
-      this.selectedShape = newMesh
-      
-      // 5. Вызываем обновление развертки (если есть такой метод)
-      if (this.updateUnfold) this.updateUnfold()
-    },
 
     undo() {
       EngineRegistry.historySystem.undo()

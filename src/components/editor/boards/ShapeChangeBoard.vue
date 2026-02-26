@@ -6,6 +6,8 @@ import Polyline2DEditor from '../utils/Polyline2DEditor.vue'
 const editorStore = useEditorStore()
 const hasUnsavedChanges = ref(false)
 
+// активная фигура (логический объект) – используется для определения
+// описания параметров и названия. Не содержит сами значения.
 const shapeInstance = computed(() => {
   const selected = editorStore.selectedShape
   return selected?.userData?.owner || selected
@@ -20,22 +22,46 @@ const parameterDefinitions = computed(() => {
   return shapeInstance.value?.parameterDefinitions || {}
 })
 
-// Если выбрали другую фигуру, сбрасываем флаг изменений
-watch(() => editorStore.selectedShape, () => {
-  hasUnsavedChanges.value = false
-})
+// локальная копия параметров, с которой работает UI
+const editParams = ref({})
+
+// при смене выделенной фигуры синхронизируем копию
+watch(
+  () => editorStore.selectedShape,
+  (shape) => {
+    hasUnsavedChanges.value = false
+    if (shape && shape.userData && shape.userData.params) {
+      // делаем неглубокую копию, т.к. значения могут быть объектами/массивами
+      editParams.value = JSON.parse(JSON.stringify(shape.userData.params))
+    } else {
+      editParams.value = {}
+    }
+  },
+  { immediate: true }
+)
+
+// если параметры изменились извне (undo/redo) и пользователь не в середине редактирования,
+// подхватим новые значения
+watch(
+  () => editorStore.selectedShapeParams,
+  (p) => {
+    if (!hasUnsavedChanges.value && p) {
+      editParams.value = JSON.parse(JSON.stringify(p))
+    }
+  }
+)
 
 const markAsChanged = () => {
   hasUnsavedChanges.value = true
 }
 
 const applyChanges = () => {
-  if (editorStore.updateSelectedShape) {
-    // ВАЖНО: Вызываем обновление в сторе
-    editorStore.updateSelectedShape()
-    hasUnsavedChanges.value = false
-  }
+  if (!editorStore.selectedShape) return
+  // Передаем копию, чтобы команда могла сравнить старое и новое состояние
+  editorStore.updateShapeParams(editParams.value)
+  hasUnsavedChanges.value = false
 }
+
 </script>
 
 
@@ -60,7 +86,7 @@ const applyChanges = () => {
         <template v-if="paramDef.type === 'number'">
           <input 
             type="number" 
-            v-model.number="shapeInstance.params[paramKey]" 
+            v-model.number="editParams[paramKey]" 
             :min="paramDef.min" 
             :step="paramDef.step"
             @input="markAsChanged" 
@@ -73,7 +99,7 @@ const applyChanges = () => {
                 <span>{{ ['X','Y','Z'][n-1] }}:</span>
                 <input 
                   type="number" 
-                  v-model.number="shapeInstance.params[paramKey][n-1]" 
+                  v-model.number="editParams[paramKey][n-1]" 
                   step="0.1" 
                   @input="markAsChanged"
                 />
@@ -82,7 +108,7 @@ const applyChanges = () => {
           
           <Polyline2DEditor 
             v-else
-            v-model="shapeInstance.params[paramKey]"
+            v-model="editParams[paramKey]"
             :label="paramDef.label"
             :is-polygon="paramKey.toLowerCase().includes('polygon')"
             @change="markAsChanged"

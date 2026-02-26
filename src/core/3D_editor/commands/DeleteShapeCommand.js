@@ -1,8 +1,7 @@
 export class DeleteShapeCommand {
-  constructor(sceneSystem, selectionSystem, mesh, store = null) {
+  constructor(sceneSystem, selectionSystem, mesh) {
     this.sceneSystem = sceneSystem
     this.selectionSystem = selectionSystem
-    this.store = store
     this.mesh = mesh
     this.is3DCommand = true 
     
@@ -19,15 +18,13 @@ export class DeleteShapeCommand {
     // Удаляем фигуру со сцены
     this.sceneSystem.remove(this.mesh)
     
-    // Очищаем выделение если удаляемая фигура была выбрана
+    // Очищаем выделение, если удаляемая фигура была выбрана
     if (this.selectionSystem.getSelected() === this.mesh) {
       this.selectionSystem.clear()
-      
-      // Обновляем store для реактивности UI
-      if (this.store) {
-        this.store.updateSelectedShape(null)
-      }
     }
+
+    // при необходимости UI-событие можно пробросить через registry из store
+    // но store.deleteShape теперь сам сбрасывает выбранную фигуру
   }
 
   undo() {
