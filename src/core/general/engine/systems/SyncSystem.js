@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import EngineRegistry from '@/core/general/engine/EngineRegistry'
 import { ShapeRegistry } from '@/core/3D_editor/entities/ShapeRegistry'
 import { UnfoldDetail } from '@/core/2D_editor/entities/UnfoldDetail'
 
@@ -28,12 +29,19 @@ export class SyncSystem {
       this._removeAllUnfolds()
       this.nextOffsetX = 0
 
-      const meshes = []
-      threeScene.traverse((obj) => {
-        if (obj.isMesh && obj.userData?.selectable && obj.userData?.shapeType) {
-          meshes.push(obj)
-        }
-      })
+      // используем ShapeSystem, если он доступен; это быстрее и точнее
+      let meshes = []
+      if (EngineRegistry && EngineRegistry.shapeSystem) {
+        meshes = Array.from(EngineRegistry.shapeSystem.entities.values())
+          .map(ent => ent.mesh)
+          .filter(m => m && m.userData?.selectable && m.userData?.shapeType)
+      } else {
+        threeScene.traverse((obj) => {
+          if (obj.isMesh && obj.userData?.selectable && obj.userData?.shapeType) {
+            meshes.push(obj)
+          }
+        })
+      }
 
       for (const mesh of meshes) {
         this._createUnfoldForShape(mesh)

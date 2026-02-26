@@ -8,9 +8,16 @@ export const useEditorStore = defineStore('editor', {
   state: () => ({
     canUndo: false,
     canRedo: false,
-    selectedShape: null,
+    // храним только uuid выбранной фигуры; сам объект хранится в ShapeSystem
+    selectedShapeId: null,
     selectedShapeParams: null
   }),
+  getters: {
+    selectedShape(state) {
+      if (!state.selectedShapeId) return null
+      return EngineRegistry.shapeSystem.getById(state.selectedShapeId)
+    }
+  },
 
   actions: {
 
@@ -38,16 +45,25 @@ export const useEditorStore = defineStore('editor', {
 
     // Подписываемся на события ядра один раз
     setupListeners() {
-      EngineRegistry.emitter.on('selection:changed', (shape) => {
-        this.selectedShape = shape
+      EngineRegistry.emitter.on('selection:changed', (entity) => {
+        this.selectedShapeId = entity ? entity.id : null
         // Обновляем параметры при клике на новую фигуру
-        this.selectedShapeParams = shape ? { ...shape.userData.params } : null 
+        this.selectedShapeParams = entity && entity.mesh && entity.mesh.userData
+          ? { ...entity.mesh.userData.params }
+          : null 
       })
       
       // Слушаем изменения после Undo/Redo или редактирования
-      EngineRegistry.emitter.on('params:changed', (shape) => {
-        if (this.selectedShape === shape) {
-          this.selectedShapeParams = { ...shape.userData.params }
+      EngineRegistry.emitter.on('params:changed', (payload) => {
+        // payload может быть shape-entity или просто mesh (для обратной совместимости)
+        let ent = null
+        if (payload && payload.mesh) {
+          ent = payload
+        } else if (payload && payload.uuid) {
+          ent = EngineRegistry.shapeSystem.getByMesh(payload)
+        }
+        if (ent && this.selectedShapeId && ent.id === this.selectedShapeId) {
+          this.selectedShapeParams = { ...ent.mesh.userData.params }
         }
       })
       
@@ -77,25 +93,30 @@ export const useEditorStore = defineStore('editor', {
 
     deleteShape() {
       const engine = EngineRegistry.engine3D
-      if (!engine || !this.selectedShape) return
-      const cmd = new DeleteShapeCommand(engine.sceneSystem3D, engine.selectionSystem3D, this.selectedShape)
+      if (!engine || !this.selectedShapeId) return
+      const cmd = new DeleteShapeCommand(
+        engine.sceneSystem3D,
+        engine.selectionSystem3D,
+        this.selectedShape
+      )
       EngineRegistry.executeCommand(cmd)
 
       // После удаления сбрасываем текущее выделение в сторе. Событие
       // 'selection:changed' не всегда пробрасывается внутри команды,
       // поэтому делаем это здесь вручную.
-      this.selectedShape = null
+      this.selectedShapeId = null
       this.selectedShapeParams = null
     },
 
+
+
     updateShapeParams(newParams) {
       const engine = EngineRegistry.engine3D
-      if (!engine || !this.selectedShape) return
-      // создаём команду, которая сам заботится об откате/повторении и о синхронизации 2D
+      if (!engine || !this.selectedShapeId) return
+      // передаем entity, чтобы команда могла взять mesh и owner из неё
       const cmd = new UpdateShapeCommand(engine, this.selectedShape, newParams)
       EngineRegistry.executeCommand(cmd)
-      // Состояние `selectedShapeParams` обновится по событию 'params:changed'
-      // emited внутри команды, но сбросить флаг выделения здесь не нужно.
+      // selectedShapeParams обновится при событии params:changed
     },
 
     // NOTE: метод updateSelectedShape удалён – теперь изменения выполняются

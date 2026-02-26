@@ -1,21 +1,17 @@
 import { ShapeRegistry } from '@/core/3D_editor/entities/ShapeRegistry'
 
 export class UpdateShapeCommand {
-  /**
-   * @param {Engine3D} engine  полный 3D‑движок (нужен для доступа к registry)
-   * @param {THREE.Mesh} mesh   меш, параметры которого изменяются
-   * @param {Object} newParams  новая конфигурация фигуры
-   */
-  constructor(engine, mesh, newParams) {
+  constructor(engine, meshOrEntity, newParams) {
     this.engine = engine
-    this.mesh = mesh
+    // payload может быть либо THREE.Mesh либо shape-entity {id, mesh, owner}
+    this.mesh = meshOrEntity && meshOrEntity.mesh ? meshOrEntity.mesh : meshOrEntity
 
     // Сохраняем старые параметры до того, как UI начнёт их мутировать.
     // В идеале объекты параметров не должны меняться напрямую, но мы
     // копируем чтобы гарантировать корректную отмену.
-    this.oldParams = mesh.userData.params ? { ...mesh.userData.params } : {}
+    this.oldParams = this.mesh.userData.params ? { ...this.mesh.userData.params } : {}
     this.newParams = { ...newParams }
-    this.shapeType = mesh.userData.shapeType
+    this.shapeType = this.mesh.userData.shapeType
 
     // Флаг заставит EngineRegistry автоматически вызвать syncSystem.rebuildAllFrom3D()
     this.is3DCommand = true 
@@ -54,7 +50,11 @@ export class UpdateShapeCommand {
       tempMesh.material.dispose()
     }
 
-    // 6. Пробрасываем событие, чтобы редактор обновил панель параметров
-    this.engine.registry.emitUIUpdate('params:changed', this.mesh)
+    // 6. Пробрасываем событие через ShapeSystem (отдаёт entity вместо "сырого" меша)
+    if (this.engine && this.engine.registry && this.engine.registry.shapeSystem) {
+      this.engine.registry.shapeSystem.notifyParamsChanged(this.mesh)
+    } else {
+      this.engine.registry.emitUIUpdate('params:changed', this.mesh)
+    }
   }
 }

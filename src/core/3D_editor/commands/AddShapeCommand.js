@@ -1,4 +1,5 @@
 import { ShapeRegistry } from '@/core/3D_editor/entities/ShapeRegistry'
+import EngineRegistry from '@/core/general/engine/EngineRegistry'
 
 export class AddShapeCommand {
   constructor(sceneSystem, shapeType, params = {}) {
@@ -18,6 +19,9 @@ export class AddShapeCommand {
       // Рандомная позиция, чтобы не накладывались
       this.mesh.position.x = (Math.random() - 0.5) * 5
       this.mesh.position.z = (Math.random() - 0.5) * 5
+
+      // после создания зарегистрируемся в ShapeSystem
+      EngineRegistry.shapeSystem.register(this.mesh)
     }
     this.sceneSystem.add(this.mesh)
   }
@@ -25,6 +29,7 @@ export class AddShapeCommand {
   undo() {
     if (this.mesh) {
       this.sceneSystem.remove(this.mesh)
+      EngineRegistry.shapeSystem.unregister(this.mesh)
     }
   }
 }

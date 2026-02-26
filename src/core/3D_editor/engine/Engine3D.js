@@ -13,6 +13,8 @@ export class Engine3D {
 
     this.renderSystem3D = new RenderSystem3D(container)
     this.sceneSystem3D = new SceneSystem3D()
+    // пригодится для регистрации/удаления мешей
+    this.sceneSystem3D.registry = registry
     this.cameraSystem3D = new CameraSystem3D(container)
     this.inputSystem3D = new InputSystem3D(container)
     this.selectionSystem3D = new SelectionSystem3D()

@@ -9,8 +9,10 @@ const hasUnsavedChanges = ref(false)
 // активная фигура (логический объект) – используется для определения
 // описания параметров и названия. Не содержит сами значения.
 const shapeInstance = computed(() => {
-  const selected = editorStore.selectedShape
-  return selected?.userData?.owner || selected
+  const ent = editorStore.selectedShape
+  if (!ent) return null
+  // owner обычно содержит методы и определения параметров
+  return ent.owner || (ent.mesh ? ent.mesh.userData.owner : null)
 })
 
 const shapeName = computed(() => {
@@ -28,11 +30,10 @@ const editParams = ref({})
 // при смене выделенной фигуры синхронизируем копию
 watch(
   () => editorStore.selectedShape,
-  (shape) => {
+  (ent) => {
     hasUnsavedChanges.value = false
-    if (shape && shape.userData && shape.userData.params) {
-      // делаем неглубокую копию, т.к. значения могут быть объектами/массивами
-      editParams.value = JSON.parse(JSON.stringify(shape.userData.params))
+    if (ent && ent.mesh && ent.mesh.userData && ent.mesh.userData.params) {
+      editParams.value = JSON.parse(JSON.stringify(ent.mesh.userData.params))
     } else {
       editParams.value = {}
     }

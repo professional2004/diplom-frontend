@@ -66,7 +66,18 @@ export class SceneSystem3D {
     this.scene.add(this.ground)
   }
 
-  add(obj) { this.scene.add(obj) }
+  add(obj) {
+    this.scene.add(obj)
+    // если наша система знает о ShapeSystem - зарегистрируем
+    try {
+      const registry = this.registry || (this.scene && this.scene.registry)
+      if (registry && registry.shapeSystem && obj && obj.isMesh && obj.userData?.shapeType) {
+        registry.shapeSystem.register(obj)
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
   remove(obj) { this.scene.remove(obj) }
   traverse(cb) { this.scene.traverse(cb) }
 

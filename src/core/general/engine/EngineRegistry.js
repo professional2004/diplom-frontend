@@ -1,5 +1,6 @@
 import { HistorySystem } from './systems/HistorySystem'
 import { SyncSystem } from './systems/SyncSystem'
+import { ShapeSystem } from './systems/ShapeSystem'
 import { Engine3D } from '@/core/3D_editor/engine/Engine3D'
 import { Engine2D } from '@/core/2D_editor/engine/Engine2D'
 
@@ -31,6 +32,7 @@ class EngineRegistry {
     // Глобальные системы инициализируются здесь
     this.historySystem = new HistorySystem()
     this.syncSystem = new SyncSystem()
+    this.shapeSystem = new ShapeSystem(this)
     
     this.emitter = new SimpleEmitter()
   }

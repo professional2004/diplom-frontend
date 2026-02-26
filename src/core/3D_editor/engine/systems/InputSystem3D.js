@@ -81,7 +81,9 @@ export class InputSystem3D {
       }
 
       this.engine3D.selectionSystem3D.setSelected(this.dragObject)
-      this.engine3D.registry.emitUIUpdate('selection:changed', this.dragObject)
+      // отдаем логический объект из ShapeSystem
+      const ent = this.engine3D.registry.shapeSystem.getByMesh(this.dragObject)
+      this.engine3D.registry.emitUIUpdate('selection:changed', ent)
 
       this.dragPlane.setFromNormalAndCoplanarPoint(
         new THREE.Vector3(0, 1, 0),

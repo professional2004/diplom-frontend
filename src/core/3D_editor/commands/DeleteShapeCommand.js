@@ -1,20 +1,25 @@
+import EngineRegistry from '@/core/general/engine/EngineRegistry'
+
 export class DeleteShapeCommand {
-  constructor(sceneSystem, selectionSystem, mesh) {
+  constructor(sceneSystem, selectionSystem, meshOrEntity) {
     this.sceneSystem = sceneSystem
     this.selectionSystem = selectionSystem
-    this.mesh = mesh
+    this.mesh = meshOrEntity && meshOrEntity.mesh ? meshOrEntity.mesh : meshOrEntity
     this.is3DCommand = true 
     
     // Сохраняем данные фигуры для восстановления
-    this.shapeType = mesh.userData.shapeType
-    this.params = mesh.userData.params ? { ...mesh.userData.params } : {}
-    this.position = mesh.position.clone()
-    this.rotation = mesh.rotation.clone()
-    this.scale = mesh.scale.clone()
-    this.materialColor = mesh.material?.color?.getHex?.() || 0xffffff
+    this.shapeType = this.mesh.userData.shapeType
+    this.params = this.mesh.userData.params ? { ...this.mesh.userData.params } : {}
+    this.position = this.mesh.position.clone()
+    this.rotation = this.mesh.rotation.clone()
+    this.scale = this.mesh.scale.clone()
+    this.materialColor = this.mesh.material?.color?.getHex?.() || 0xffffff
   }
 
   execute() {
+    // перед удалением удаляем из реестра
+    EngineRegistry.shapeSystem.unregister(this.mesh)
+
     // Удаляем фигуру со сцены
     this.sceneSystem.remove(this.mesh)
     
@@ -22,14 +27,16 @@ export class DeleteShapeCommand {
     if (this.selectionSystem.getSelected() === this.mesh) {
       this.selectionSystem.clear()
     }
-
-    // при необходимости UI-событие можно пробросить через registry из store
-    // но store.deleteShape теперь сам сбрасывает выбранную фигуру
   }
 
   undo() {
     // Восстанавливаем фигуру со сцены с сохраненными параметрами
     this.sceneSystem.add(this.mesh)
+
+    // при возвращении необходимо снова зарегистрировать объект
+    if (EngineRegistry && EngineRegistry.shapeSystem) {
+      EngineRegistry.shapeSystem.register(this.mesh)
+    }
     
     // Восстанавливаем трансформацию
     this.mesh.position.copy(this.position)
