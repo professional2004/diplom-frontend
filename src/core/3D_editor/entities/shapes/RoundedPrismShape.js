@@ -49,6 +49,8 @@ export class RoundedPrismShape extends BaseShape {
 
     const mesh = createMeshFromJscad(jscadGeom, this.getStandardMaterial())
 
+    mesh.userData.owner = this 
+
     mesh.userData.shapeType = 'roundedPrism'
     mesh.userData.params = this.params
     mesh.userData.selectable = true

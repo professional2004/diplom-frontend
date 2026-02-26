@@ -66,6 +66,9 @@ export class FlatSurfaceShape extends BaseShape {
     mat.side = THREE.DoubleSide // Важно, чтобы поверхность была видна с обеих сторон
 
     const mesh = new THREE.Mesh(geom, mat)
+
+    mesh.userData.owner = this 
+    
     mesh.userData.shapeType = 'flat'
     mesh.userData.params = this.params
     mesh.userData.selectable = true

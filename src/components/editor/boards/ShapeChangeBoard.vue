@@ -1,255 +1,115 @@
 <script setup>
-import { ref, watch, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useEditorStore } from '@/stores/editorStore'
-import { ShapeRegistry } from '@/core/3D_editor/entities/ShapeRegistry'
+import Polyline2DEditor from '../utils/Polyline2DEditor.vue'
 
-const store = useEditorStore()
+const editorStore = useEditorStore()
+const hasUnsavedChanges = ref(false)
 
-// Локальная копия параметров для редактирования без мгновенного влияния на сцену
-const localParams = ref({})
-
-// Схема свойств выбранной фигуры
-const schema = computed(() => {
-  if (!store.selectedShape) return null
-  const type = store.selectedShape.userData.shapeType
-  const instance = ShapeRegistry.create(type, {})
-  return instance.parameterDefinitions
+const shapeInstance = computed(() => {
+  const selected = editorStore.selectedShape
+  return selected?.userData?.owner || selected
 })
 
-// При смене выбранной фигуры обновляем локальную копию параметров
-watch(
-  () => store.selectedShapeParams,
-  (newVal) => {
-    if (newVal) {
-      // Глубокое копирование для безопасного редактирования массивов и объектов
-      localParams.value = JSON.parse(JSON.stringify(newVal))
-    } else {
-      localParams.value = {}
-    }
-  },
-  { immediate: true, deep: true }
-)
+const shapeName = computed(() => {
+  if (!shapeInstance.value) return ''
+  return shapeInstance.value.userData?.shapeType || shapeInstance.value.constructor.name
+})
+
+const parameterDefinitions = computed(() => {
+  return shapeInstance.value?.parameterDefinitions || {}
+})
+
+// Если выбрали другую фигуру, сбрасываем флаг изменений
+watch(() => editorStore.selectedShape, () => {
+  hasUnsavedChanges.value = false
+})
+
+const markAsChanged = () => {
+  hasUnsavedChanges.value = true
+}
 
 const applyChanges = () => {
-  if (!store.selectedShape) return
-  // Отправляем измененные параметры через стор и Command-паттерн
-  store.updateShapeParams(JSON.parse(JSON.stringify(localParams.value)))
-}
-
-// Утилиты для определения типа данных в object
-const isSinglePoint = (arr) => Array.isArray(arr) && arr.length > 0 && typeof arr[0] === 'number'
-const isPointArray = (arr) => Array.isArray(arr) && (arr.length === 0 || Array.isArray(arr[0]))
-
-const addPoint = (key) => {
-  const arr = localParams.value[key]
-  if (arr.length > 0) {
-    // Копируем последнюю точку массива
-    arr.push([...arr[arr.length - 1]])
-  } else {
-    // Если массив пуст, смотрим на название (polygon обычно 2D, остальные 3D)
-    const is2D = key.toLowerCase().includes('polygon')
-    arr.push(is2D ? [0, 0] : [0, 0, 0])
+  if (editorStore.updateSelectedShape) {
+    // ВАЖНО: Вызываем обновление в сторе
+    editorStore.updateSelectedShape()
+    hasUnsavedChanges.value = false
   }
-}
-
-const removePoint = (key, index) => {
-  localParams.value[key].splice(index, 1)
 }
 </script>
 
+
+
 <template>
-  <div class="shape-board" v-if="schema && store.selectedShapeParams">
-    <div class="header">Свойства фигуры</div>
-    
-    <div class="params-list">
-      <div v-for="(def, key) in schema" :key="key" class="param-group">
-        <label :title="def.label" class="param-title">{{ def.label }}</label>
+  <div class="shape-board">
+    <div v-if="shapeInstance" class="params-container">
+      <div class="board-header">
+        <h3>{{ shapeName }}</h3>
+        <button 
+          @click="applyChanges" 
+          class="apply-btn"
+          :class="{ 'needs-update': hasUnsavedChanges }"
+        >
+          Обновить модель
+        </button>
+      </div>
+      
+      <div v-for="(paramDef, paramKey) in parameterDefinitions" :key="paramKey" class="param-row">
+        <label class="param-label">{{ paramDef.label }}</label>
 
-        <div v-if="def.type === 'number'" class="param-content">
-          <input
-            type="number"
-            :min="def.min"
-            :step="def.step || 0.1"
-            v-model.number="localParams[key]"
-            class="input-number"
+        <template v-if="paramDef.type === 'number'">
+          <input 
+            type="number" 
+            v-model.number="shapeInstance.params[paramKey]" 
+            :min="paramDef.min" 
+            :step="paramDef.step"
+            @input="markAsChanged" 
           />
-        </div>
+        </template>
 
-        <div v-else-if="def.type === 'object' && localParams[key]" class="param-content">
-          
-          <div v-if="isSinglePoint(localParams[key])" class="point-row">
-            <input 
-              v-for="(_, idx) in localParams[key]" 
-              :key="'sp'+idx" 
-              type="number" 
-              step="0.1" 
-              v-model.number="localParams[key][idx]" 
-              class="input-coord"
-            />
-          </div>
-
-          <div v-else-if="isPointArray(localParams[key])" class="point-array">
-            <div v-for="(point, ptIdx) in localParams[key]" :key="ptIdx" class="point-row">
-              <span class="pt-idx">{{ ptIdx + 1 }}.</span>
-              <input 
-                v-for="(_, coordIdx) in point" 
-                :key="'c'+coordIdx" 
-                type="number" 
-                step="0.1" 
-                v-model.number="point[coordIdx]" 
-                class="input-coord"
-              />
-              <button @click="removePoint(key, ptIdx)" class="btn-remove-pt" title="Удалить точку">×</button>
-            </div>
-            <button @click="addPoint(key)" class="btn-add-pt">+ Добавить точку</button>
+        <template v-else-if="paramDef.type === 'object'">
+          <div v-if="paramKey === 'apex'" class="vector-inputs">
+             <div v-for="n in 3" :key="n" class="vec-coord">
+                <span>{{ ['X','Y','Z'][n-1] }}:</span>
+                <input 
+                  type="number" 
+                  v-model.number="shapeInstance.params[paramKey][n-1]" 
+                  step="0.1" 
+                  @input="markAsChanged"
+                />
+             </div>
           </div>
           
-        </div>
+          <Polyline2DEditor 
+            v-else
+            v-model="shapeInstance.params[paramKey]"
+            :label="paramDef.label"
+            :is-polygon="paramKey.toLowerCase().includes('polygon')"
+            @change="markAsChanged"
+          />
+        </template>
       </div>
     </div>
-
-    <div class="actions">
-      <button class="btn-apply" @click="applyChanges">Применить изменения</button>
+    
+    <div v-else class="no-selection">
+      Выберите фигуру на сцене
     </div>
   </div>
 </template>
 
+
+
 <style scoped>
-.shape-board {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 260px;
-  max-height: 80vh; /* Чтобы меню не уходило за экран при больших массивах */
-  overflow-y: auto;
-  padding: 15px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  pointer-events: auto;
+.shape-board { padding: 15px; background: #fff; height: 100%; display: flex; flex-direction: column; }
+.board-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.apply-btn { 
+  padding: 8px 12px; background: #eee; border: 1px solid #ccc; cursor: pointer; border-radius: 4px; 
+  transition: all 0.3s;
 }
-
-/* Скроллбар для панели */
-.shape-board::-webkit-scrollbar { width: 6px; }
-.shape-board::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
-
-.header {
-  font-weight: bold;
-  font-size: 15px;
-  color: #333;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 8px;
-}
-
-.params-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.param-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.param-title {
-  font-size: 12px;
-  color: #555;
-  font-weight: 600;
-}
-
-.input-number {
-  width: 100%;
-  padding: 6px;
-  font-size: 13px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-/* Стили для редактирования точек */
-.point-array {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  background: #f9f9f9;
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #eee;
-}
-
-.point-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.pt-idx {
-  font-size: 11px;
-  color: #888;
-  width: 18px;
-}
-
-.input-coord {
-  flex: 1;
-  width: 0; /* чтобы flex работал равномерно */
-  padding: 4px;
-  font-size: 12px;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-}
-
-.btn-remove-pt {
-  background: #ff4d4f;
-  color: white;
-  border: none;
-  border-radius: 3px;
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  line-height: 1;
-}
-.btn-remove-pt:hover { background: #ff7875; }
-
-.btn-add-pt {
-  margin-top: 4px;
-  background: transparent;
-  border: 1px dashed #aaa;
-  color: #666;
-  padding: 4px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 11px;
-}
-.btn-add-pt:hover { background: #eee; }
-
-/* Кнопка Применить */
-.actions {
-  margin-top: 5px;
-  border-top: 1px solid #ddd;
-  padding-top: 15px;
-}
-
-.btn-apply {
-  width: 100%;
-  background: #1890ff;
-  color: white;
-  border: none;
-  padding: 8px;
-  border-radius: 4px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-apply:hover {
-  background: #40a9ff;
-}
+.apply-btn.needs-update { background: #4caf50; color: white; border-color: #388e3c; font-weight: bold; box-shadow: 0 0 10px rgba(76, 175, 80, 0.4); }
+.param-row { margin-bottom: 15px; border-bottom: 1px solid #f5f5f5; padding-bottom: 15px; }
+.param-label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 0.85rem; color: #444; }
+.vector-inputs { display: flex; gap: 8px; }
+.vec-coord input { width: 55px; padding: 3px; }
+.no-selection { color: #aaa; text-align: center; padding-top: 100px; }
 </style>

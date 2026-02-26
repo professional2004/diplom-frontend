@@ -100,6 +100,9 @@ export class CylindricalSurfaceShape extends BaseShape {
     mat.side = THREE.DoubleSide
 
     const mesh = new THREE.Mesh(geom, mat)
+
+    mesh.userData.owner = this 
+    
     mesh.userData.shapeType = 'cylindrical'
     mesh.userData.params = this.params
     mesh.userData.selectable = true

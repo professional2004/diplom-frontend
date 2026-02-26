@@ -27,17 +27,17 @@ export const useEditorStore = defineStore('editor', {
 
     // --- Методы управления 2D камерой ---
     zoomIn2D() {
-      EngineRegistry.engine2D.cameraSystem2D.zoom(0.9)
+      EngineRegistry.engine2D.cameraSystem2D.zoom(1.1)
     },
     zoomOut2D() {
-      EngineRegistry.engine2D.cameraSystem2D.zoom(1.1)
+      EngineRegistry.engine2D.cameraSystem2D.zoom(0.9)
     },
     reset2D() {
       EngineRegistry.engine2D.cameraSystem2D.reset()
     },
 
     // Подписываемся на события ядра один раз
-setupListeners() {
+    setupListeners() {
       EngineRegistry.emitter.on('selection:changed', (shape) => {
         this.selectedShape = shape
         // Обновляем параметры при клике на новую фигуру
@@ -88,6 +88,44 @@ setupListeners() {
       
       const cmd = new UpdateShapeCommand(engine, this.selectedShape, newParams)
       EngineRegistry.executeCommand(cmd)
+    },
+
+    updateSelectedShape() {
+      const engine = EngineRegistry.engine3D
+      const oldMesh = this.selectedShape
+      if (!oldMesh) return
+
+      // Получаем экземпляр класса фигуры (owner), который мы добавили в шаге 1
+      const shapeOwner = oldMesh.userData.owner
+      if (!shapeOwner) {
+        console.error("Не удалось найти логический объект фигуры в userData.owner")
+        return
+      }
+
+      // 1. Создаем новый меш с обновленными параметрами
+      const newMesh = shapeOwner.createMesh()
+
+      // 2. Копируем трансформации (позицию и поворот) от старого объекта
+      newMesh.position.copy(oldMesh.position)
+      newMesh.rotation.copy(oldMesh.rotation)
+      newMesh.scale.copy(oldMesh.scale)
+
+      // 3. Безопасная замена в сцене
+      if (engine && typeof engine.replaceObject === 'function') {
+        engine.replaceObject(oldMesh, newMesh)
+      } else {
+        // Если engine.replaceObject не найден, пробуем напрямую через родителя
+        if (oldMesh.parent) {
+          oldMesh.parent.add(newMesh)
+          oldMesh.parent.remove(oldMesh)
+        }
+      }
+
+      // 4. Обновляем выделение, чтобы панель параметров не закрылась
+      this.selectedShape = newMesh
+      
+      // 5. Вызываем обновление развертки (если есть такой метод)
+      if (this.updateUnfold) this.updateUnfold()
     },
 
     undo() {

@@ -133,6 +133,8 @@ export class ConicalSurfaceShape extends BaseShape {
     const mat = this.getStandardMaterial()
     mat.side = THREE.DoubleSide
     const mesh = new THREE.Mesh(geom, mat)
+
+    mesh.userData.owner = this 
     
     mesh.userData.shapeType = 'conical'
     mesh.userData.params = this.params

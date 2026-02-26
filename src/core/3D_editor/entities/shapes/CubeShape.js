@@ -22,6 +22,8 @@ export class CubeShape extends BaseShape {
     const jscadGeom = primitives.cuboid({ size: [width, height, depth] })
     const mesh = createMeshFromJscad(jscadGeom, this.getStandardMaterial())
 
+    mesh.userData.owner = this 
+
     // Сохраняем тип и параметры для восстановления/развертки
     mesh.userData.shapeType = 'cube'
     mesh.userData.params = this.params
