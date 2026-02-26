@@ -52,6 +52,45 @@ export class CylindricalSurfaceShape extends BaseShape {
     return { lens, total: acc }
   }
 
+  // Метод, который разрезает массив треугольников вертикальной линией X = L
+  _sliceTriangles(triangles, L) {
+    const out = []
+    
+    for (let i = 0; i < triangles.length; i++) {
+      const tri = triangles[i]
+      
+      const aL = tri[0].x < L
+      const bL = tri[1].x < L
+      const cL = tri[2].x < L
+
+      // Если треугольник полностью по одну из сторон от линии реза — сохраняем как есть
+      if ((aL && bL && cL) || (!aL && !bL && !cL)) {
+        out.push(tri)
+        continue
+      }
+
+      // Если треугольник пересекает линию реза, определяем изолированную вершину
+      let v0, v1, v2
+      if (bL === cL) { v0 = tri[0]; v1 = tri[1]; v2 = tri[2] }
+      else if (aL === cL) { v0 = tri[1]; v1 = tri[2]; v2 = tri[0] }
+      else { v0 = tri[2]; v1 = tri[0]; v2 = tri[1] }
+
+      // Находим точки пересечения ребер с линией X = L
+      const t1 = (L - v0.x) / (v1.x - v0.x)
+      const i1 = { x: L, y: v0.y + t1 * (v1.y - v0.y) }
+
+      const t2 = (L - v0.x) / (v2.x - v0.x)
+      const i2 = { x: L, y: v0.y + t2 * (v2.y - v0.y) }
+
+      // Разбиваем исходный треугольник пересекающий линию на 3 новых
+      out.push([v0, i1, i2])
+      out.push([v1, v2, i2])
+      out.push([v1, i2, i1])
+    }
+    
+    return out
+  }
+
   createMesh() {
     const polyline2D = this.params.polyline?.length >= 2
       ? this.params.polyline
@@ -62,7 +101,7 @@ export class CylindricalSurfaceShape extends BaseShape {
 
     const polygonRaw = this.params.polygon || this.defaultParams.polygon
 
-    // Создаем базовую плоскую геометрию из многоугольника
+    // 1. Создаем плоскую геометрию
     const shape = new THREE.Shape()
     if (polygonRaw.length >= 3) {
       shape.moveTo(polygonRaw[0][0], polygonRaw[0][1])
@@ -72,40 +111,86 @@ export class CylindricalSurfaceShape extends BaseShape {
       shape.closePath()
     }
 
-    // Триангулируем многоугольник в UV пространстве
-    const geom = new THREE.ShapeGeometry(shape)
-    const posAttribute = geom.attributes.position
+    const geom2D = new THREE.ShapeGeometry(shape)
+    const pos2D = geom2D.attributes.position
+    const index2D = geom2D.index
 
-    // Искривляем каждую вершину: заворачиваем 2D координаты в 3D цилиндр
-    for (let i = 0; i < posAttribute.count; i++) {
-      const u = posAttribute.getX(i) // расстояние по кривой
-      const v = posAttribute.getY(i) // высота
+    // 2. Извлекаем сырые треугольники из полигона (в координатах u, v)
+    let triangles = []
+    if (index2D) {
+      for (let i = 0; i < index2D.count; i += 3) {
+        const a = index2D.getX(i)
+        const b = index2D.getX(i + 1)
+        const c = index2D.getX(i + 2)
+        triangles.push([
+          { x: pos2D.getX(a), y: pos2D.getY(a) },
+          { x: pos2D.getX(b), y: pos2D.getY(b) },
+          { x: pos2D.getX(c), y: pos2D.getY(c) }
+        ])
+      }
+    } else {
+      for (let i = 0; i < pos2D.count; i += 3) {
+        triangles.push([
+          { x: pos2D.getX(i), y: pos2D.getY(i) },
+          { x: pos2D.getX(i + 1), y: pos2D.getY(i + 1) },
+          { x: pos2D.getX(i + 2), y: pos2D.getY(i + 2) }
+        ])
+      }
+    }
 
-      // Ищем нужный сегмент ломаной
+    // 3. Разрезаем все треугольники по линиям изгиба цилиндрической поверхности
+    // Это ключевой шаг для математической точности
+    for (let i = 1; i < lens.length - 1; i++) {
+        triangles = this._sliceTriangles(triangles, lens[i])
+    }
+
+    // 4. Формируем финальную 3D геометрию
+    const positions = new Float32Array(triangles.length * 9)
+    let pIdx = 0
+
+    for (let i = 0; i < triangles.length; i++) {
+      const tri = triangles[i]
+
+      // Поскольку мы разрезали треугольники по изгибам, каждый треугольник
+      // теперь гарантированно лежит только внутри ОДНОГО прямого сегмента ломаной.
+      // Найдем этот сегмент по центру масс треугольника по оси X (u).
+      const cx = (tri[0].x + tri[1].x + tri[2].x) / 3
+      
       let sec = 0
       for (let j = 0; j < lens.length - 1; j++) {
-        if (u >= lens[j] && u <= lens[j+1]) {
+        if (cx >= lens[j] && cx <= lens[j+1]) {
           sec = j
           break
         }
-        if (u > lens[j+1]) sec = j
+        if (cx > lens[j+1]) sec = j
       }
 
       const L0 = lens[sec]
       const L1 = lens[sec + 1]
-      const t = (L1 - L0) > 0 ? Math.max(0, Math.min(1, (u - L0) / (L1 - L0))) : 0
-
+      const lenSec = L1 - L0
       const p0 = polyline[sec]
       const p1 = polyline[sec + 1]
 
-      // Интерполируем позицию на плоскости (X, Z)
-      const x = p0.x + (p1.x - p0.x) * t
-      const z = p0.z + (p1.z - p0.z) * t
-      const y = v // v соответствует высоте по оси Y
+      // Сворачиваем каждый вертекс треугольника в 3D
+      for (let vIdx = 0; vIdx < 3; vIdx++) {
+        const pt = tri[vIdx]
+        
+        // Ограничиваем t краями сегмента, чтобы избежать микро-погрешностей при float
+        const t = lenSec > 0 ? Math.max(0, Math.min(1, (pt.x - L0) / lenSec)) : 0
 
-      posAttribute.setXYZ(i, x, y, z)
+        const x = p0.x + (p1.x - p0.x) * t
+        const z = p0.z + (p1.z - p0.z) * t
+        const y = pt.y 
+
+        positions[pIdx++] = x
+        positions[pIdx++] = y
+        positions[pIdx++] = z
+      }
     }
 
+    const geom = new THREE.BufferGeometry()
+    geom.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    
     geom.computeVertexNormals()
 
     const mat = this.getStandardMaterial()
@@ -114,12 +199,10 @@ export class CylindricalSurfaceShape extends BaseShape {
     const mesh = new THREE.Mesh(geom, mat)
 
     mesh.userData.owner = this 
-    
     mesh.userData.shapeType = 'cylindrical'
     mesh.userData.params = this.params
     mesh.userData.selectable = true
 
-    // Применяем позицию и ротацию
     this.applyTransformToMesh(mesh)
 
     return mesh
@@ -139,7 +222,8 @@ export class CylindricalSurfaceShape extends BaseShape {
     }
 
     // 2. Вспомогательные линии (ось "позвоночника" развертки и засечки сегментов)
-    const polyline = this._toVec3Array(this.params.polyline?.length >= 2 ? this.params.polyline : this.defaultParams.polyline)
+    const polyline2D = this.params.polyline?.length >= 2 ? this.params.polyline : this.defaultParams.polyline
+    const polyline = this._toVec3Array(polyline2D)
     const { total, lens } = this._computeArcLengths(polyline)
     const faintMat = new THREE.LineBasicMaterial({ color: 0xcccccc })
     
