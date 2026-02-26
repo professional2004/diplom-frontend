@@ -115,17 +115,6 @@ export class FlatSurfaceShape extends BaseShape {
       group.add(line)
     }
 
-    // Рамка ограничивающего прямоугольника (вспомогательная)
-    const hw = width / 2, hh = height / 2
-    const rectPts = [
-      new THREE.Vector3(-hw, -hh, 0),
-      new THREE.Vector3(hw, -hh, 0),
-      new THREE.Vector3(hw, hh, 0),
-      new THREE.Vector3(-hw, hh, 0),
-      new THREE.Vector3(-hw, -hh, 0)
-    ]
-    group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(rectPts), new THREE.LineBasicMaterial({ color: 0x999999 })))
-
     return group
   }
 }

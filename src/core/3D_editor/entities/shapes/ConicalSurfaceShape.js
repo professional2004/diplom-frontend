@@ -216,17 +216,6 @@ export class ConicalSurfaceShape extends BaseShape {
       group.add(new THREE.Line(geo, mat))
     }
 
-    const faintMat = new THREE.LineBasicMaterial({ color: 0xcccccc })
-    const apexPt = new THREE.Vector3(0, 0, 0)
-    const baseGeoPoints = P2D.map(p => new THREE.Vector3(p.x, p.y, 0))
-    const baseGeo = new THREE.BufferGeometry().setFromPoints(baseGeoPoints)
-    group.add(new THREE.Line(baseGeo, faintMat))
-
-    for (let i = 0; i < P2D.length; i++) {
-      const lineGeo = new THREE.BufferGeometry().setFromPoints([apexPt, new THREE.Vector3(P2D[i].x, P2D[i].y, 0)])
-      group.add(new THREE.Line(lineGeo, faintMat))
-    }
-
     return group
   }
 }

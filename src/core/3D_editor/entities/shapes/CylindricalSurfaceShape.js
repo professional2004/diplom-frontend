@@ -212,31 +212,12 @@ export class CylindricalSurfaceShape extends BaseShape {
     const group = new THREE.Group()
     const mat = this.getLineMaterial()
 
-    // 1. Отрисовываем сам обрезающий многоугольник (это и есть точная развертка)
     const polygonRaw = this.params.polygon || this.defaultParams.polygon
     if (polygonRaw.length >= 3) {
       const points = polygonRaw.map(p => new THREE.Vector3(p[0], p[1], 0))
       points.push(points[0].clone())
       const geo = new THREE.BufferGeometry().setFromPoints(points)
       group.add(new THREE.Line(geo, mat))
-    }
-
-    // 2. Вспомогательные линии (ось "позвоночника" развертки и засечки сегментов)
-    const polyline2D = this.params.polyline?.length >= 2 ? this.params.polyline : this.defaultParams.polyline
-    const polyline = this._toVec3Array(polyline2D)
-    const { total, lens } = this._computeArcLengths(polyline)
-    const faintMat = new THREE.LineBasicMaterial({ color: 0xcccccc })
-    
-    group.add(new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(total, 0, 0)]), 
-      faintMat
-    ))
-
-    for (let L of lens) {
-      group.add(new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(L, -0.1, 0), new THREE.Vector3(L, 0.1, 0)]), 
-        faintMat
-      ))
     }
 
     return group
