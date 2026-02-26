@@ -26,8 +26,6 @@ const hasSelection = computed(() => {
     <div class="divider"></div>
 
     <div class="group">
-      <button @click="store.addShape('cube')">Add Cube</button>
-      <button @click="store.addShape('roundedPrism')">Add Rounded Prism</button>
       <button @click="store.addShape('conical')">Add Conical Surface</button>
       <button @click="store.addShape('cylindrical')">Add Cylindrical Surface</button>
       <button @click="store.addShape('flat')">Add Flat Surface</button>
