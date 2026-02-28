@@ -6,10 +6,7 @@ export class ShapeSystem {
     this.entities = new Map()
   }
 
-  /**
-   * Entity object stored in the system.
-   * { id: string, mesh: THREE.Mesh, owner: Object }
-   */
+  // Entity object stored in the system { id: string, mesh: THREE.Mesh, owner: Object }
 
   register(mesh) {
     if (!mesh || !mesh.uuid) return null
@@ -33,9 +30,7 @@ export class ShapeSystem {
     return this.entities.get(mesh.uuid) || null
   }
 
-  /**
-   * helper used when a mesh's parameters have been changed, emits event
-   */
+  // helper used when a mesh's parameters have been changed, emits event
   notifyParamsChanged(mesh) {
     const ent = this.getByMesh(mesh)
     this.registry.emitUIUpdate('params:changed', ent)

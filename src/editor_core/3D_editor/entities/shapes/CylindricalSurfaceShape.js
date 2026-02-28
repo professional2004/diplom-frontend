@@ -1,7 +1,10 @@
 import * as THREE from 'three'
-import { BaseShape } from '../BaseShape'
 
-export class CylindricalSurfaceShape extends BaseShape {
+export class CylindricalSurfaceShape {
+  constructor(params = {}) {
+    this.params = { ...this.defaultParams, ...params }
+  }
+
   get defaultParams() {
     return {
       width: 0.5,
@@ -221,5 +224,120 @@ export class CylindricalSurfaceShape extends BaseShape {
     }
 
     return group
+  }
+
+
+  // Вспомогательный метод для проецирования одной 2D точки в 3D
+  _mapPointTo3D(u, v, lens, polyline) {
+    let sec = 0
+    for (let j = 0; j < lens.length - 1; j++) {
+      if (u >= lens[j] && u <= lens[j+1]) {
+        sec = j
+        break
+      }
+      if (u > lens[j+1]) sec = j
+    }
+
+    const L0 = lens[sec]
+    const L1 = lens[sec + 1]
+    const lenSec = L1 - L0
+    const p0 = polyline[sec]
+    const p1 = polyline[sec + 1]
+
+    const t = lenSec > 0 ? Math.max(0, Math.min(1, (u - L0) / lenSec)) : 0
+
+    return new THREE.Vector3(
+      p0.x + (p1.x - p0.x) * t,
+      v,
+      p0.z + (p1.z - p0.z) * t
+    )
+  }
+
+  getBoundaryEdges() {
+    const polyline2D = this.params.polyline?.length >= 2 ? this.params.polyline : this.defaultParams.polyline
+    const polyline = this._toVec3Array(polyline2D)
+    const { lens } = this._computeArcLengths(polyline)
+    const polygonRaw = this.params.polygon || this.defaultParams.polygon
+    
+    const edges = []
+    if (polygonRaw.length < 3) return edges
+
+    for (let i = 0; i < polygonRaw.length; i++) {
+      const start2D = polygonRaw[i]
+      const end2D = polygonRaw[(i + 1) % polygonRaw.length]
+      
+      const u1 = start2D[0], v1 = start2D[1]
+      const u2 = end2D[0], v2 = end2D[1]
+      
+      const minU = Math.min(u1, u2)
+      const maxU = Math.max(u1, u2)
+      const points2D = [{ u: u1, v: v1, t: 0 }]
+      
+      // Ищем пересечения отрезка с вертикальными линиями сгиба
+      for (let j = 1; j < lens.length - 1; j++) {
+        const L = lens[j]
+        // 1e-6 предотвращает баги с плавающей запятой на границах
+        if (L > minU + 1e-6 && L < maxU - 1e-6) {
+          const t = (L - u1) / (u2 - u1)
+          const v = v1 + t * (v2 - v1)
+          points2D.push({ u: L, v: v, t: t })
+        }
+      }
+      
+      points2D.push({ u: u2, v: v2, t: 1 })
+      points2D.sort((a, b) => a.t - b.t) // Упорядочиваем по направлению от start к end
+      
+      // Конвертируем все 2D узлы ребра в 3D полилинию
+      const points3D = points2D.map(p => this._mapPointTo3D(p.u, p.v, lens, polyline))
+      
+      // Считаем истинную 3D длину
+      let length = 0
+      for (let k = 0; k < points3D.length - 1; k++) {
+        length += points3D[k].distanceTo(points3D[k+1])
+      }
+
+      edges.push({
+        id: `cyl_edge_${i}`,
+        index: i,
+        points3D: points3D,
+        length: length
+      })
+    }
+    return edges
+  }
+  
+  
+  // --------- общие для shapes методы ----------
+
+  // Применяет позицию и ротацию к меше на основе параметров
+  applyTransformToMesh(mesh) {
+    if (!mesh) return
+
+    // Применяем позицию
+    const posX = this.params.posX ?? 0
+    const posY = this.params.posY ?? mesh.position.y // сохраняем оригинальное Y если не заданы параметры
+    const posZ = this.params.posZ ?? 0
+
+    mesh.position.set(posX, posY, posZ)
+
+    // Применяем ротацию
+    const rotX = this.params.rotationX ?? 0
+    const rotY = this.params.rotationY ?? 0
+    const rotZ = this.params.rotationZ ?? 0
+
+    mesh.rotation.set(rotX, rotY, rotZ, 'XYZ')
+  }
+
+  // Вспомогательный метод для материалов
+  getStandardMaterial() {
+    return new THREE.MeshStandardMaterial({ 
+      color: Math.random() * 0xffffff,
+      metalness: 0.1,
+      roughness: 0.5
+    })
+  }
+
+  getLineMaterial() {
+    return new THREE.LineBasicMaterial({ color: 0x333333 })
   }
 }

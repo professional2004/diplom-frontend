@@ -1,7 +1,10 @@
 import * as THREE from 'three'
-import { BaseShape } from '../BaseShape'
 
-export class FlatSurfaceShape extends BaseShape {
+export class FlatSurfaceShape {
+  constructor(params = {}) {
+    this.params = { ...this.defaultParams, ...params }
+  }
+
   get defaultParams() {
     return {
       width: 2,
@@ -116,5 +119,66 @@ export class FlatSurfaceShape extends BaseShape {
     }
 
     return group
+  }
+
+  getBoundaryEdges() {
+    const { width, height } = this.params
+    const polygonRaw = (this.params.polygon || []).slice()
+    const polygon = this._normalizePolygon(polygonRaw, width, height)
+    const edges = []
+    
+    if (!polygon || polygon.length < 3) return edges
+
+    for (let i = 0; i < polygon.length; i++) {
+      const nextI = (i + 1) % polygon.length
+      
+      // Создаем 3D точки (в локальной системе координат плоскости)
+      const p1 = new THREE.Vector3(polygon[i][0], polygon[i][1], 0)
+      const p2 = new THREE.Vector3(polygon[nextI][0], polygon[nextI][1], 0)
+      
+      edges.push({
+        id: `flat_edge_${i}`,
+        index: i,
+        points3D: [p1, p2],
+        length: p1.distanceTo(p2)
+      })
+    }
+    
+    return edges
+  }
+  
+  
+  // --------- общие для shapes методы ----------
+
+  // Применяет позицию и ротацию к меше на основе параметров
+  applyTransformToMesh(mesh) {
+    if (!mesh) return
+
+    // Применяем позицию
+    const posX = this.params.posX ?? 0
+    const posY = this.params.posY ?? mesh.position.y // сохраняем оригинальное Y если не заданы параметры
+    const posZ = this.params.posZ ?? 0
+
+    mesh.position.set(posX, posY, posZ)
+
+    // Применяем ротацию
+    const rotX = this.params.rotationX ?? 0
+    const rotY = this.params.rotationY ?? 0
+    const rotZ = this.params.rotationZ ?? 0
+
+    mesh.rotation.set(rotX, rotY, rotZ, 'XYZ')
+  }
+
+  // Вспомогательный метод для материалов
+  getStandardMaterial() {
+    return new THREE.MeshStandardMaterial({ 
+      color: Math.random() * 0xffffff,
+      metalness: 0.1,
+      roughness: 0.5
+    })
+  }
+
+  getLineMaterial() {
+    return new THREE.LineBasicMaterial({ color: 0x333333 })
   }
 }

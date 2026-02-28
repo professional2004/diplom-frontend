@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
-import EngineRegistry from '@/core/general/engine/EngineRegistry'
-import { AddShapeCommand } from '@/core/3D_editor/commands/AddShapeCommand'
-import { DeleteShapeCommand } from '@/core/3D_editor/commands/DeleteShapeCommand'
-import { UpdateShapeCommand } from '@/core/3D_editor/commands/UpdateShapeCommand'
+import EngineRegistry from '@/editor_core/general/engine/EngineRegistry'
+import { AddShapeCommand } from '@/editor_core/3D_editor/commands/AddShapeCommand'
+import { DeleteShapeCommand } from '@/editor_core/3D_editor/commands/DeleteShapeCommand'
+import { UpdateShapeCommand } from '@/editor_core/3D_editor/commands/UpdateShapeCommand'
 
 export const useEditorStore = defineStore('editor', {
   state: () => ({

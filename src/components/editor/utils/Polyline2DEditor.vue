@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
-import Polyline2DEditorClass from '@/core/general/utils/Polyline2DEditor.js'
+import Polyline2DEditorClass from '@/editor_core/general/utils/Polyline2DEditor.js'
 
 const props = defineProps({
   modelValue: { type: Array, default: () => [] },

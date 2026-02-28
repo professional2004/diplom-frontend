@@ -1,7 +1,10 @@
 import * as THREE from 'three'
-import { BaseShape } from '../BaseShape'
 
-export class ConicalSurfaceShape extends BaseShape {
+export class ConicalSurfaceShape {
+  constructor(params = {}) {
+    this.params = { ...this.defaultParams, ...params }
+  }
+
   get defaultParams() {
     return {
       basePolyline: [
@@ -217,5 +220,149 @@ export class ConicalSurfaceShape extends BaseShape {
     }
 
     return group
+  }
+
+
+
+  // Пересечение отрезка (p1, p2) с лучом из (0,0) в направлении rayDir
+  _intersectSegmentRay(p1, p2, rayDir) {
+    const dx = p2.x - p1.x
+    const dy = p2.y - p1.y
+    const Rx = rayDir.x, Ry = rayDir.y
+    const denom = dx * Ry - dy * Rx
+    
+    if (Math.abs(denom) < 1e-10) return null
+    
+    const s = (p1.y * Rx - p1.x * Ry) / denom
+    if (s > 1e-6 && s < 1 - 1e-6) {
+      // Проверяем, лежит ли пересечение на положительной стороне луча
+      const tx = Rx !== 0 ? (p1.x + s * dx) / Rx : (p1.y + s * dy) / Ry
+      if (tx > 0) return { x: p1.x + s * dx, y: p1.y + s * dy, t: s }
+    }
+    return null
+  }
+
+  // Маппинг точки, которая гарантированно лежит внутри сектора sec
+  _mapPointTo3DCone(px, py, sec, P2D, base, apex) {
+    const ray1 = P2D[sec]
+    const ray2 = P2D[sec + 1]
+    const det = ray1.x * ray2.y - ray1.y * ray2.x
+    
+    if (Math.abs(det) < 1e-10) return apex.clone() // fallback
+
+    const u = (px * ray2.y - py * ray2.x) / det
+    const v = (ray1.x * py - ray1.y * px) / det
+
+    const v0 = new THREE.Vector3().subVectors(base[sec], apex)
+    const v1 = new THREE.Vector3().subVectors(base[sec + 1], apex)
+
+    const p3D = new THREE.Vector3().copy(apex)
+    p3D.addScaledVector(v0, u)
+    p3D.addScaledVector(v1, v)
+    
+    return p3D
+  }
+
+  getBoundaryEdges() {
+    const { base, apex, P2D } = this._computeUnroll()
+    const polygonRaw = this.params.polygon || this.defaultParams.polygon
+    
+    const edges = []
+    if (polygonRaw.length < 3) return edges
+
+    for (let i = 0; i < polygonRaw.length; i++) {
+      const p1 = new THREE.Vector2(polygonRaw[i][0], polygonRaw[i][1])
+      const p2 = new THREE.Vector2(
+        polygonRaw[(i + 1) % polygonRaw.length][0], 
+        polygonRaw[(i + 1) % polygonRaw.length][1]
+      )
+      
+      const points2D = [{ x: p1.x, y: p1.y, t: 0 }]
+      
+      // Ищем пересечения с лучами секторов конуса
+      for (let j = 1; j < P2D.length - 1; j++) {
+        const intersection = this._intersectSegmentRay(p1, p2, P2D[j])
+        if (intersection) {
+          points2D.push(intersection)
+        }
+      }
+      
+      points2D.push({ x: p2.x, y: p2.y, t: 1 })
+      points2D.sort((a, b) => a.t - b.t)
+      
+      const points3D = []
+      
+      // Мапим каждую точку в 3D, определяя её сектор по средней точке микро-отрезка
+      for (let k = 0; k < points2D.length; k++) {
+        const pt = points2D[k]
+        
+        // Для определения сектора берем точку чуть сдвинутую вперед по направлению отрезка 
+        // (или саму точку, если она последняя, но сдвинутую назад)
+        const checkT = k < points2D.length - 1 ? pt.t + 1e-5 : pt.t - 1e-5
+        const midX = p1.x + checkT * (p2.x - p1.x)
+        const midY = p1.y + checkT * (p2.y - p1.y)
+        
+        let targetSec = 0
+        for (let s = 0; s < P2D.length - 1; s++) {
+          const crossCur = P2D[s].x * midY - P2D[s].y * midX
+          const crossNext = P2D[s+1].x * midY - P2D[s+1].y * midX
+          // Точка между лучами, если векторные произведения имеют разные знаки
+          if (crossCur >= -1e-8 && crossNext <= 1e-8) {
+            targetSec = s
+            break
+          }
+        }
+        
+        points3D.push(this._mapPointTo3DCone(pt.x, pt.y, targetSec, P2D, base, apex))
+      }
+      
+      let length = 0
+      for (let k = 0; k < points3D.length - 1; k++) {
+        length += points3D[k].distanceTo(points3D[k+1])
+      }
+
+      edges.push({
+        id: `conic_edge_${i}`,
+        index: i,
+        points3D: points3D,
+        length: length
+      })
+    }
+    return edges
+  }
+
+
+  // --------- общие для shapes методы ----------
+
+  // Применяет позицию и ротацию к меше на основе параметров
+  applyTransformToMesh(mesh) {
+    if (!mesh) return
+
+    // Применяем позицию
+    const posX = this.params.posX ?? 0
+    const posY = this.params.posY ?? mesh.position.y // сохраняем оригинальное Y если не заданы параметры
+    const posZ = this.params.posZ ?? 0
+
+    mesh.position.set(posX, posY, posZ)
+
+    // Применяем ротацию
+    const rotX = this.params.rotationX ?? 0
+    const rotY = this.params.rotationY ?? 0
+    const rotZ = this.params.rotationZ ?? 0
+
+    mesh.rotation.set(rotX, rotY, rotZ, 'XYZ')
+  }
+
+  // Вспомогательный метод для материалов
+  getStandardMaterial() {
+    return new THREE.MeshStandardMaterial({ 
+      color: Math.random() * 0xffffff,
+      metalness: 0.1,
+      roughness: 0.5
+    })
+  }
+
+  getLineMaterial() {
+    return new THREE.LineBasicMaterial({ color: 0x333333 })
   }
 }

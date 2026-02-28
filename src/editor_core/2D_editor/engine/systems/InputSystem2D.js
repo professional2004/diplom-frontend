@@ -1,6 +1,6 @@
 import * as THREE from 'three'
-import { MoveUnfoldDetailCommand } from '@/core/2D_editor/commands/MoveUnfoldDetailCommand'
-import { RotateUnfoldDetailCommand } from '@/core/2D_editor/commands/RotateUnfoldDetailCommand'
+import { MoveUnfoldDetailCommand } from '@/editor_core/2D_editor/commands/MoveUnfoldDetailCommand'
+import { RotateUnfoldDetailCommand } from '@/editor_core/2D_editor/commands/RotateUnfoldDetailCommand'
 
 export class InputSystem2D {
   constructor(container) {

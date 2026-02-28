@@ -1,4 +1,4 @@
-import EngineRegistry from '@/core/general/engine/EngineRegistry'
+import EngineRegistry from '@/editor_core/general/engine/EngineRegistry'
 
 export class DeleteShapeCommand {
   constructor(sceneSystem, selectionSystem, meshOrEntity) {

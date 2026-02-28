@@ -1,9 +1,9 @@
-import { SceneSystem3D } from '@/core/3D_editor/engine/systems/SceneSystem3D'
-import { RenderSystem3D } from '@/core/3D_editor/engine/systems/RenderSystem3D'
-import { CameraSystem3D } from '@/core/3D_editor/engine/systems/CameraSystem3D'
-import { InputSystem3D } from '@/core/3D_editor/engine/systems/InputSystem3D'
-import { SelectionSystem3D } from '@/core/3D_editor/engine/systems/SelectionSystem3D'
-import { ViewCubeGizmo } from '@/core/3D_editor/utils/ViewCubeGizmo'
+import { SceneSystem3D } from '@/editor_core/3D_editor/engine/systems/SceneSystem3D'
+import { RenderSystem3D } from '@/editor_core/3D_editor/engine/systems/RenderSystem3D'
+import { CameraSystem3D } from '@/editor_core/3D_editor/engine/systems/CameraSystem3D'
+import { InputSystem3D } from '@/editor_core/3D_editor/engine/systems/InputSystem3D'
+import { SelectionSystem3D } from '@/editor_core/3D_editor/engine/systems/SelectionSystem3D'
+import { ViewCubeGizmo } from '@/editor_core/3D_editor/utils/ViewCubeGizmo'
 
 export class Engine3D {
   constructor(container, registry) {

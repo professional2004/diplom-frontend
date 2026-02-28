@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useEditorStore } from '@/stores/editorStore'
-import { ViewCubeGizmo } from '@/core/3D_editor/utils/ViewCubeGizmo'
+import { ViewCubeGizmo } from '@/editor_core/3D_editor/utils/ViewCubeGizmo'
 
 const containerRef = ref(null)
 const store = useEditorStore()

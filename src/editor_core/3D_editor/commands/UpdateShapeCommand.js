@@ -1,4 +1,4 @@
-import { ShapeRegistry } from '@/core/3D_editor/entities/ShapeRegistry'
+import { ShapeRegistry } from '@/editor_core/3D_editor/entities/ShapeRegistry'
 
 export class UpdateShapeCommand {
   constructor(engine, meshOrEntity, newParams) {
