@@ -7,7 +7,8 @@ export class SyncSystem {
   constructor() {
     this.engine2D = null
     this.engine3D = null
-    this.trackedShapes = new Map() 
+    this.trackedShapes = new Map()  // uuid: [unfoldMeshes]
+    this.unfoldParamsCache = new Map()  // uuid: [{posX, posY, rotation}, ...]
     this.nextOffsetX = 0
   }
 
@@ -52,7 +53,9 @@ export class SyncSystem {
   }
 
   _removeAllUnfolds() {
+    // Сохраняем параметры разверток перед удалением
     for (const [uuid, unfoldMeshes] of this.trackedShapes.entries()) {
+      const paramsArray = []
       for (const m of unfoldMeshes) {
         try {
           this.engine2D.sceneSystem2D.remove(m)
@@ -63,6 +66,20 @@ export class SyncSystem {
         if (this.engine2D.selectionSystem2D?.selected === m) {
           this.engine2D.selectionSystem2D.clear()
         }
+        
+        // Сохраняем параметры в кэш
+        if (m.userData?.unfoldParams) {
+          paramsArray.push({ ...m.userData.unfoldParams })
+        }
+        
+        // Удаляем из UnfoldSystem
+        if (m.userData?.unfoldId) {
+          EngineRegistry.unfoldSystem?.remove(m.userData.unfoldId)
+        }
+      }
+      // Кэшируем параметры по UUID фигуры
+      if (paramsArray.length > 0) {
+        this.unfoldParamsCache.set(uuid, paramsArray)
       }
     }
     this.trackedShapes.clear()
@@ -89,8 +106,11 @@ export class SyncSystem {
       const gap = 5
       const unfoldMeshes = []
 
+      // Восстанавливаем сохраненные параметры из кэша, если есть
+      const cachedParams = this.unfoldParamsCache.get(obj3D.uuid) || []
+
       // Позиционируем и добавляем в 2D-сцену
-      clones.forEach(clone => {
+      clones.forEach((clone, index) => {
         // нормализуем центр относительно центра развёртки
         clone.position.x -= center.x
         clone.position.y -= center.y
@@ -101,17 +121,30 @@ export class SyncSystem {
         // завернём в UnfoldDetail (или используем вашу обёртку)
         const unfoldDetail = new UnfoldDetail(clone, obj3D.uuid)
 
-        // Восстанавливаем сохраненные параметры позиции и ротации, если они были
-        unfoldDetail.applyStoredTransform()
+        // Восстанавливаем сохраненные параметры позиции и ротации из кэша, если они есть
+        if (cachedParams[index]) {
+          clone.userData.unfoldParams = { ...cachedParams[index] }
+          unfoldDetail.applyStoredTransform()
+        }
 
         // Добавляем в 2D-сцену
         this.engine2D.sceneSystem2D.add(unfoldDetail.mesh)
+        
+        // Создаем и добавляем невидимую плоскость для лучшего выделения
+        const selectionPlane = unfoldDetail.createInvisibleSelectionPlane()
+        if (selectionPlane) {
+          this.engine2D.sceneSystem2D.add(selectionPlane)
+        }
+        
+        // Регистрируем в UnfoldSystem
+        EngineRegistry.unfoldSystem.add(unfoldDetail)
 
         unfoldMeshes.push(unfoldDetail.mesh)
       })
 
-      // Запоминаем
+      // Запоминаем и очищаем кэш для этой фигуры
       this.trackedShapes.set(obj3D.uuid, unfoldMeshes)
+      this.unfoldParamsCache.delete(obj3D.uuid)
       this.nextOffsetX += width + gap
     } catch (e) {
       console.warn('[SyncSystem] createUnfoldForShape failed for', obj3D.userData?.shapeType, e)
