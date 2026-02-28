@@ -7,9 +7,7 @@ export class SelectionSystem3D {
     this.originalMaterials = new Map()
   }
 
-  /**
-   * Устанавливает выбранный объект и применяет подсветку
-   */
+  // Устанавливает выбранный объект и применяет подсветку
   setSelected(object) {
     // Восстанавливаем материал предыдущей выбранной фигуры
     if (this.selected && this.selected !== object) {
@@ -25,9 +23,7 @@ export class SelectionSystem3D {
     }
   }
 
-  /**
-   * Устанавливает объект под курсором (hover)
-   */
+  // Устанавливает объект под курсором (hover)
   setHovered(object) {
     // Восстанавливаем материал предыдущей наведенной фигуры (если это не текущая выбранная)
     if (this.hovered && this.hovered !== object && this.hovered !== this.selected) {
@@ -42,9 +38,7 @@ export class SelectionSystem3D {
     }
   }
 
-  /**
-   * Очищает выделение
-   */
+  // Очищает выделение
   clear() {
     if (this.selected) {
       this.restoreOriginalMaterial(this.selected)
@@ -56,9 +50,7 @@ export class SelectionSystem3D {
     }
   }
 
-  /**
-   * Применяет материал при выборе (ярко выделенный)
-   */
+  // Применяет материал при выборе (ярко выделенный)
   applySelectMaterial(object) {
     if (!object.material) return
 
@@ -72,9 +64,7 @@ export class SelectionSystem3D {
     object.material.emissiveIntensity = 0.8
   }
 
-  /**
-   * Применяет материал при наведении (слегка выделенный)
-   */
+  // Применяет материал при наведении (слегка выделенный)
   applyHoverMaterial(object) {
     if (!object.material) return
 
@@ -88,9 +78,7 @@ export class SelectionSystem3D {
     object.material.emissiveIntensity = 0.5
   }
 
-  /**
-   * Восстанавливает исходный материал
-   */
+  // Восстанавливает исходный материал
   restoreOriginalMaterial(object) {
     if (!object.material) return
 
@@ -101,16 +89,12 @@ export class SelectionSystem3D {
     }
   }
 
-  /**
-   * Возвращает текущий выбранный объект
-   */
+  // Возвращает текущий выбранный объект
   getSelected() {
     return this.selected
   }
 
-  /**
-   * Возвращает текущий наведенный объект
-   */
+  // Возвращает текущий наведенный объект
   getHovered() {
     return this.hovered
   }

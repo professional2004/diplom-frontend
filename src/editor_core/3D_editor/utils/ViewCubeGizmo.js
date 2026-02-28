@@ -68,16 +68,6 @@ export class ViewCubeGizmo {
     return new THREE.MeshBasicMaterial({ map: texture })
   }
 
-  // Вызывается в основном цикле loop()
-  // update() {
-  //   // Синхронизируем положение камеры гизмо с вектором взгляда основной камеры
-  //   const eye = new THREE.Vector3()
-  //   eye.subVectors(this.mainCamera.position, this.mainControls.target).normalize()
-    
-  //   this.camera.position.copy(eye.multiplyScalar(3))
-  //   this.camera.lookAt(0, 0, 0)
-  // }
-
   update() {
     // Проверка: если камера или контроллеры еще не подтянулись, выходим из метода
     if (!this.mainCamera || !this.mainControls || !this.mainControls.target) {

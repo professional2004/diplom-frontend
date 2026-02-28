@@ -108,8 +108,6 @@ export const useEditorStore = defineStore('editor', {
       this.selectedShapeParams = null
     },
 
-
-
     updateShapeParams(newParams) {
       const engine = EngineRegistry.engine3D
       if (!engine || !this.selectedShapeId) return
@@ -118,11 +116,6 @@ export const useEditorStore = defineStore('editor', {
       EngineRegistry.executeCommand(cmd)
       // selectedShapeParams обновится при событии params:changed
     },
-
-    // NOTE: метод updateSelectedShape удалён – теперь изменения выполняются
-    // исключительно через UpdateShapeCommand. Ранний вариант оставлен в
-    // репозитории истории на случай отката.
-
 
     undo() {
       EngineRegistry.historySystem.undo()

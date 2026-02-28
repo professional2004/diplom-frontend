@@ -4,7 +4,7 @@ export class RenderSystem2D {
   constructor(container) {
     this.renderer = new THREE.WebGLRenderer({ antialias: true })
     
-    // ИСПРАВЛЕНИЕ: Жестко фиксируем стили канваса, чтобы он не "распирал" родителя
+    // Жестко фиксируем стили канваса, чтобы он не "распирал" родителя
     const canvas = this.renderer.domElement
     canvas.style.position = 'absolute'
     canvas.style.top = '0'

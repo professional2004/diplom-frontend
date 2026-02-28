@@ -1,12 +1,5 @@
 import * as THREE from 'three'
 
-// Lightweight 2D polyline/polygon editor based on Three.js.
-// Every instance creates its own scene, camera, renderer and input
-// handlers. You may have many editors on the page without collisions.
-// The API is intentionally small and mirrors the behaviour of the
-// original SVG-based component so it can be used as a drop-in
-// replacement from Vue.
-
 export default class Polyline2DEditor {
   constructor(container, options = {}) {
     if (!container) {
@@ -30,9 +23,8 @@ export default class Polyline2DEditor {
     this._render()
   }
 
-  // ------------------------------------------------------------------
   // public API
-  // ------------------------------------------------------------------
+
   setPoints(points) {
     // update from outside without firing change event
     this.points = Array.isArray(points) ? points.slice() : []
@@ -71,9 +63,9 @@ export default class Polyline2DEditor {
     }
   }
 
-  // ------------------------------------------------------------------
+
   // internal helpers
-  // ------------------------------------------------------------------
+
   _initScene() {
     // scene & camera
     this.scene = new THREE.Scene()
