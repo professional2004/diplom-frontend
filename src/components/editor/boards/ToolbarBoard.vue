@@ -26,6 +26,18 @@ const hasSelection = computed(() => {
     <div class="divider"></div>
 
     <div class="group">
+      <button 
+        @click="store.toggleConnectMode" 
+        :class="{ 'active-mode': store.isConnectingMode }"
+        title="Связать края фигур"
+      >
+        {{ store.isConnectingMode ? 'Cancel Connection' : 'Connect Edges' }}
+      </button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="group">
       <button @click="store.addShape('conical')">Add Conical Surface</button>
       <button @click="store.addShape('cylindrical')">Add Cylindrical Surface</button>
       <button @click="store.addShape('flat')">Add Flat Surface</button>
@@ -53,4 +65,12 @@ button {
 }
 button:hover { background: #f0f0f0; }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
+/* Стиль для активной кнопки режима */
+button.active-mode {
+  background: #e3f2fd;
+  border-color: #2196f3;
+  color: #0d47a1;
+  font-weight: bold;
+  box-shadow: inset 0 0 5px rgba(33, 150, 243, 0.2);
+}
 </style>

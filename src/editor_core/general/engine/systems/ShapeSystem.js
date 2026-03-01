@@ -35,4 +35,26 @@ export class ShapeSystem {
     const ent = this.getByMesh(mesh)
     this.registry.emitUIUpdate('params:changed', ent)
   }
+
+  // Метод для тихого обновления параметров из Солвера (без вызова новой команды History)
+  updateShapeParamsSilent(id, params) {
+    const ent = this.getById(id)
+    if (!ent || !ent.mesh) return
+
+    // 1. Обновляем данные
+    ent.mesh.userData.params = { ...params }
+    if (ent.owner && ent.owner.params) {
+      ent.owner.params = { ...params }
+    }
+
+    // 2. Обновляем трансформации (для связей "ребро к ребру" геометрию перестраивать не нужно, только позицию и поворот)
+    ent.mesh.position.set(params.posX || 0, params.posY || 0, params.posZ || 0)
+    ent.mesh.rotation.set(params.rotationX || 0, params.rotationY || 0, params.rotationZ || 0, 'XYZ')
+
+    // 3. Обновляем мировые матрицы для последующих расчетов зависимостей
+    ent.mesh.updateMatrixWorld(true)
+
+    // 4. Оповещаем UI, чтобы правая панель (ShapeChangeBoard) обновила цифры
+    this.notifyParamsChanged(ent.mesh)
+  }
 }

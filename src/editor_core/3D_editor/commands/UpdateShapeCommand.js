@@ -63,6 +63,11 @@ export class UpdateShapeCommand {
     // 6. Пробрасываем событие через ShapeSystem (отдаёт entity вместо "сырого" меша)
     if (this.engine && this.engine.registry && this.engine.registry.shapeSystem) {
       this.engine.registry.shapeSystem.notifyParamsChanged(this.mesh)
+      
+      // Запускаем каскадное обновление зависимостей (Потомков)
+      if (this.engine.registry.connectionSystem) {
+        this.engine.registry.connectionSystem.updateDependencies(this.mesh.uuid)
+      }
     } else {
       this.engine.registry.emitUIUpdate('params:changed', this.mesh)
     }

@@ -14,9 +14,19 @@ export class DeleteShapeCommand {
     this.rotation = this.mesh.rotation.clone()
     this.scale = this.mesh.scale.clone()
     this.materialColor = this.mesh.material?.color?.getHex?.() || 0xffffff
+
+    // Массив для хранения разорванных связей (для возможности Undo)
+    this.deletedConnections = []
   }
 
   execute() {
+    // Сохраняем и удаляем связи перед удалением фигуры
+    if (EngineRegistry.connectionSystem) {
+      const connections = EngineRegistry.connectionSystem.connections
+      this.deletedConnections = connections.filter(c => c.parentId === this.mesh.uuid || c.childId === this.mesh.uuid)
+      EngineRegistry.connectionSystem.removeConnectionsForShape(this.mesh.uuid)
+    }
+
     // перед удалением удаляем из реестра
     EngineRegistry.shapeSystem.unregister(this.mesh)
 
@@ -42,5 +52,13 @@ export class DeleteShapeCommand {
     this.mesh.position.copy(this.position)
     this.mesh.rotation.copy(this.rotation)
     this.mesh.scale.copy(this.scale)
+
+    // Восстанавливаем связи при отмене удаления
+    if (EngineRegistry.connectionSystem && this.deletedConnections.length > 0) {
+      this.deletedConnections.forEach(conn => {
+        EngineRegistry.connectionSystem.addConnection(conn)
+      })
+      this.deletedConnections = []
+    }
   }
 }

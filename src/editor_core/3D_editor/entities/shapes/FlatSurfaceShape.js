@@ -181,4 +181,31 @@ export class FlatSurfaceShape {
   getLineMaterial() {
     return new THREE.LineBasicMaterial({ color: 0x333333 })
   }
+
+
+  // Получение конкретного ребра по индексу
+  getEdgeByIndex(index) {
+    const edges = this.getBoundaryEdges();
+    return edges.find(e => e.index === index) || null;
+  }
+
+  // Получение ребра в мировых координатах (с учетом позиции и поворота фигуры)
+  getWorldEdge(index, mesh) {
+    const edge = this.getEdgeByIndex(index);
+    if (!edge || !mesh) return null;
+
+    // Обновляем матрицы меша перед вычислениями
+    mesh.updateMatrixWorld(true);
+
+    const worldPoints = edge.points3D.map(p => {
+      const wp = p.clone();
+      wp.applyMatrix4(mesh.matrixWorld);
+      return wp;
+    });
+
+    return {
+      ...edge,
+      points3D: worldPoints
+    };
+  }
 }

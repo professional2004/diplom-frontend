@@ -154,6 +154,10 @@ const applyChanges = () => {
         </template>
       </div>
 
+      <div v-if="editorStore.isShapeChild" class="locked-warning">
+        🔒 Позиция и поворот заблокированы, так как эта фигура привязана к другой.
+      </div>
+
       <!-- Группа параметров позиции -->
       <div v-if="Object.keys(positionParams).length > 0" class="param-group-section">
         <div class="group-title">🎯 Позиция</div>
@@ -164,6 +168,7 @@ const applyChanges = () => {
             v-model.number="editParams[paramKey]" 
             :step="paramDef.step"
             @input="markAsChanged" 
+            :disabled="editorStore.isShapeChild" 
           />
         </div>
       </div>
@@ -172,12 +177,13 @@ const applyChanges = () => {
       <div v-if="Object.keys(rotationParams).length > 0" class="param-group-section">
         <div class="group-title">🔄 Поворот (рад)</div>
         <div v-for="(paramDef, paramKey) in rotationParams" :key="paramKey" class="param-row">
-          <label class="param-label">{{ paramDef.label }}</label>
+            <label class="param-label">{{ paramDef.label }}</label>
           <input 
             type="number" 
             v-model.number="editParams[paramKey]" 
             :step="paramDef.step"
             @input="markAsChanged" 
+            :disabled="editorStore.isShapeChild" 
           />
         </div>
       </div>
@@ -218,5 +224,22 @@ const applyChanges = () => {
   margin-bottom: 12px; 
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+/* Стили для предупреждения о блокировке */
+.locked-warning {
+  background: #fff3cd;
+  color: #856404;
+  padding: 10px;
+  border-radius: 4px;
+  margin-top: 20px;
+  font-size: 0.85rem;
+  border: 1px solid #ffeeba;
+  text-align: center;
+}
+input:disabled {
+  background-color: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+  border-color: #ddd;
 }
 </style>
