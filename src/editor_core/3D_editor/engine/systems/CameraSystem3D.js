@@ -5,7 +5,10 @@ export class CameraSystem3D {
   constructor(domElement, options = {}) {
     if (!domElement) { throw new Error('[CameraSystem.js] domElement is requireв')}
     const { fov = 45, near = 0.1, far = 1000 } = options
-    this.camera = new THREE.PerspectiveCamera(fov, domElement.clientWidth / domElement.clientHeight, near, far)
+    const width = domElement.clientWidth || 1
+    const height = domElement.clientHeight || 1
+    const aspect = (width && height) ? (width / height) : 1
+    this.camera = new THREE.PerspectiveCamera(fov, aspect, near, far)
     
     // начальное состояние
     this.initial = {

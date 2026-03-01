@@ -3,6 +3,7 @@ import EngineRegistry from '@/editor_core/general/engine/EngineRegistry'
 import { AddShapeCommand } from '@/editor_core/3D_editor/commands/AddShapeCommand'
 import { DeleteShapeCommand } from '@/editor_core/3D_editor/commands/DeleteShapeCommand'
 import { UpdateShapeCommand } from '@/editor_core/3D_editor/commands/UpdateShapeCommand'
+import { projectSerializationService } from '@/services/projectSerializationService'
 
 export const useEditorStore = defineStore('editor', {
   state: () => ({
@@ -13,7 +14,9 @@ export const useEditorStore = defineStore('editor', {
     selectedShapeParams: null,
     // Состояния для системы связей
     isConnectingMode: false,
-    connections: [] 
+    connections: [],
+    // Project state
+    currentCanvas: null
   }),
   getters: {
     selectedShape(state) {
@@ -153,6 +156,46 @@ export const useEditorStore = defineStore('editor', {
       const h = EngineRegistry.historySystem
       this.canUndo = !!(h && h.history && h.index >= 0)
       this.canRedo = !!(h && h.history && h.index < (h.history.length - 1))
+    },
+
+    setCurrentCanvas(canvas) {
+      this.currentCanvas = canvas
+    },
+
+    async saveProjectToJSON() {
+      return projectSerializationService.serializeProject()
+    },
+
+    async loadProjectFromJSON(jsonString) {
+      return projectSerializationService.deserializeProject(jsonString)
+    },
+
+    async generatePreview() {
+      if (!this.currentCanvas) {
+        return null
+      }
+      return projectSerializationService.generatePreview(this.currentCanvas)
+    },
+
+    clearCurrentProject() {
+      this.selectedShapeId = null
+      this.selectedShapeParams = null
+      this.isConnectingMode = false
+      this.connections = []
+      this.currentCanvas = null
+      
+      // Очищаем системы от предыдущего проекта
+      if (EngineRegistry.shapeSystem) EngineRegistry.shapeSystem.entities.clear()
+      if (EngineRegistry.unfoldSystem) EngineRegistry.unfoldSystem.clear()
+      if (EngineRegistry.historySystem) EngineRegistry.historySystem.clear()
+      if (EngineRegistry.connectionSystem) EngineRegistry.connectionSystem.connections = []
+      
+      // Если есть 3D сцена - удаляем с нее все пользовательские меши
+      if (EngineRegistry.engine3D && EngineRegistry.engine3D.sceneSystem3D) {
+        // Вызываем кастомный метод очистки, или если его нет:
+        // EngineRegistry.engine3D.sceneSystem3D.scene.clear() 
+        // (убедись что не удаляешь базовый свет/сетку, в зависимости от твоей реализации core)
+      }
     }
   }
 })
