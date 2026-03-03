@@ -6,6 +6,7 @@ import { SelectionSystem2D } from './systems/SelectionSystem2D'
 
 export class Engine2D {
   constructor(container, registry) {
+    console.log('[->] Engine2D: constructor')
     this.registry = registry
     this.engine3D = null
     
@@ -35,6 +36,7 @@ export class Engine2D {
 
 
   set3DEngine(engine3D) {
+    console.log('[->] Engine2D: set3DEngine()')
     this.engine3D = engine3D
     try {
       if (engine3D?.sceneSystem3D?.grid) {
@@ -44,6 +46,7 @@ export class Engine2D {
   }
 
   loop() {
+    // console.log('[->] Engine2D: loop()')
     if (!this.running) return
     for (const system of this.systems) {
       if (typeof system.update === 'function') system.update(this)
@@ -52,6 +55,7 @@ export class Engine2D {
   }
 
   dispose() {
+    console.log('[->] Engine2D: dispose()')
     this.running = false
     this.sceneSystem2D.dispose()
     this.cameraSystem2D.dispose()

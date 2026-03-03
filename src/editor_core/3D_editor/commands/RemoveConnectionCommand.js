@@ -2,6 +2,7 @@ import EngineRegistry from '@/editor_core/general/engine/EngineRegistry'
 
 export class RemoveConnectionCommand {
   constructor(connectionId) {
+    console.log('[->] RemoveConnectionCommand: constructor')
     this.connectionId = connectionId
     this.is3DCommand = true
     
@@ -10,6 +11,7 @@ export class RemoveConnectionCommand {
   }
 
   execute() {
+    console.log('[->] RemoveConnectionCommand: execute()')
     if (EngineRegistry.connectionSystem) {
       // Ищем связь перед удалением, чтобы сохранить её для отмены
       const connections = EngineRegistry.connectionSystem.connections
@@ -22,6 +24,7 @@ export class RemoveConnectionCommand {
   }
 
   undo() {
+    console.log('[->] RemoveConnectionCommand: undo()')
     if (EngineRegistry.connectionSystem && this.savedConnection) {
       // Восстанавливаем сохраненную связь
       EngineRegistry.connectionSystem.addConnection(this.savedConnection)

@@ -9,6 +9,7 @@ const router = useRouter();
 const auth = useAuthStore();
 
 const handleLogin = async () => {
+  console.log('[vue] Login: handleLogin()')
   try {
     await auth.login({
       email: email.value,

@@ -5,6 +5,7 @@ import { UnfoldDetail } from '@/editor_core/2D_editor/entities/UnfoldDetail'
 
 export class SyncSystem {
   constructor() {
+    console.log('[->] SyncSystem: constructor')
     this.engine2D = null
     this.engine3D = null
     this.trackedShapes = new Map()  // uuid: [unfoldMeshes]
@@ -13,6 +14,7 @@ export class SyncSystem {
   }
 
   setEngines({ engine2D, engine3D }) {
+    console.log('[->] SyncSystem: setEngines()')
     this.engine2D = engine2D
     this.engine3D = engine3D
     // Выполняем первичную синхронизацию, если сцена не пуста
@@ -22,6 +24,7 @@ export class SyncSystem {
 
   // Полная перестройка: очищаем все 2D-развёртки и создаём заново по текущей 3D-сцене
   rebuildAllFrom3D() {
+    console.log('[->] SyncSystem: rebuildAllFrom3D()')
     if (!this.engine2D || !this.engine3D) return
     try {
       const threeScene = this.engine3D.sceneSystem3D.scene
@@ -53,6 +56,7 @@ export class SyncSystem {
   }
 
   _removeAllUnfolds() {
+    console.log('[->] SyncSystem: _removeAllUnfolds()')
     // Сохраняем параметры разверток перед удалением
     for (const [uuid, unfoldMeshes] of this.trackedShapes.entries()) {
       const paramsArray = []
@@ -88,6 +92,7 @@ export class SyncSystem {
 
 
   _createUnfoldForShape(obj3D) {
+    console.log('[->] SyncSystem: _createUnfoldForShape()')
     try {
       // создаём экземпляр формы по реестру
       const shapeInstance = ShapeRegistry.create(obj3D.userData.shapeType, obj3D.userData.params)
@@ -153,6 +158,7 @@ export class SyncSystem {
 
 
   dispose() {
+    console.log('[->] SyncSystem: dispose()')
     this._removeAllUnfolds()
     this.engine2D = null
     this.engine3D = null

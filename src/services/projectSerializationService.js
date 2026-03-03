@@ -9,6 +9,7 @@ export const projectSerializationService = {
    * Serialize current editor state to JSON string
    */
   serializeProject() {
+    console.log('[->] projectSerializationService: serializeProject()')
     const data = {
       version: '1.0',
       shapes: [],
@@ -58,6 +59,7 @@ export const projectSerializationService = {
    * Deserialize JSON string to editor state
    */
   async deserializeProject(jsonString) {
+    console.log('[->] projectSerializationService: deserializeProject()')
     try {
       // Handle empty project
       if (!jsonString || jsonString === '{}' || jsonString.trim() === '') {
@@ -132,6 +134,7 @@ export const projectSerializationService = {
    * Create a shape from serialized data
    */
   async _createShapeFromData(shapeData) {
+    console.log('[->] projectSerializationService: _createShapeFromData()')
     // Create shape instance
     const shape = ShapeRegistry.create(shapeData.type, shapeData.params)
     
@@ -161,6 +164,7 @@ export const projectSerializationService = {
    * Apply unfold parameters to restore unfolding state
    */
   _applyUnfoldParameters(unfoldData) {
+    console.log('[->] projectSerializationService: _applyUnfoldParameters()')
     const unfold = EngineRegistry.unfoldSystem.getById(unfoldData.id)
     
     if (unfold) {
@@ -178,6 +182,7 @@ export const projectSerializationService = {
    * Take a canvas screenshot for project preview
    */
   async generatePreview(canvas) {
+    console.log('[->] projectSerializationService: generatePreview()')
     if (!canvas) {
       return null
     }

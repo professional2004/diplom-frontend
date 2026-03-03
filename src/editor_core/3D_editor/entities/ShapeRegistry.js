@@ -8,6 +8,7 @@ export const ShapeRegistry = {
   flat: FlatSurfaceShape,
 
   create(type, params) {
+    console.log('[->] ShapeRegistry: create()')
     const ClassRef = this[type]
     if (!ClassRef) throw new Error(`Unknown shape type: ${type}`)
     return new ClassRef(params)

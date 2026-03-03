@@ -9,6 +9,7 @@ const hasUnsavedChanges = ref(false)
 // активная фигура (логический объект) – используется для определения
 // описания параметров и названия. Не содержит сами значения.
 const shapeInstance = computed(() => {
+  console.log('[vue] ShapeChangeBoard: shapeInstance()')
   const ent = editorStore.selectedShape
   if (!ent) return null
   // owner обычно содержит методы и определения параметров
@@ -16,16 +17,19 @@ const shapeInstance = computed(() => {
 })
 
 const shapeName = computed(() => {
+  console.log('[vue] ShapeChangeBoard: shapeName()')
   if (!shapeInstance.value) return ''
   return shapeInstance.value.userData?.shapeType || shapeInstance.value.constructor.name
 })
 
 const parameterDefinitions = computed(() => {
+  console.log('[vue] ShapeChangeBoard: parameterDefinitions()')
   return shapeInstance.value?.parameterDefinitions || {}
 })
 
 // Параметры геометрии (без трансформаций)
 const geometryParams = computed(() => {
+  console.log('[vue] ShapeChangeBoard: geometryParams()')
   const defs = parameterDefinitions.value
   const result = {}
   for (const [key, def] of Object.entries(defs)) {
@@ -38,6 +42,7 @@ const geometryParams = computed(() => {
 
 // Параметры позиции
 const positionParams = computed(() => {
+  console.log('[vue] ShapeChangeBoard: positionParams()')
   const defs = parameterDefinitions.value
   const result = {}
   for (const key of ['posX', 'posY', 'posZ']) {
@@ -50,6 +55,7 @@ const positionParams = computed(() => {
 
 // Параметры ротации
 const rotationParams = computed(() => {
+  console.log('[vue] ShapeChangeBoard: rotationParams()')
   const defs = parameterDefinitions.value
   const result = {}
   for (const key of ['rotationX', 'rotationY', 'rotationZ']) {
@@ -89,10 +95,12 @@ watch(
 )
 
 const markAsChanged = () => {
+  console.log('[vue] ShapeChangeBoard: markAsChanged()')
   hasUnsavedChanges.value = true
 }
 
 const applyChanges = () => {
+  console.log('[vue] ShapeChangeBoard: applyChanges()')
   if (!editorStore.selectedShape) return
   // Передаем копию, чтобы команда могла сравнить старое и новое состояние
   editorStore.updateShapeParams(editParams.value)

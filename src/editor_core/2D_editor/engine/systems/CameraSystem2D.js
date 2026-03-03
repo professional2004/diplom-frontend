@@ -3,6 +3,7 @@ import { MapControls } from 'three/examples/jsm/controls/MapControls'
 
 export class CameraSystem2D {
   constructor(container) {
+    console.log('[->] CameraSystem2D: container')
     // Безопасное вычисление соотношения сторон
     const w = container.clientWidth || 1
     const h = container.clientHeight || 1
@@ -28,11 +29,13 @@ export class CameraSystem2D {
   }
 
   update() {
+    // console.log('[->] CameraSystem2D: update()')
     // при enableDamping=false вызов update всё ещё безопасен, просто ничего не сглаживает
     this.controls.update()
   }
 
   setAspect(width, height) {
+    console.log('[->] CameraSystem2D: setAspect()')
     const safeWidth = width || 1
     const safeHeight = height || 1
     const aspect = safeWidth / safeHeight
@@ -47,6 +50,7 @@ export class CameraSystem2D {
   }
 
   zoom(factor = 1.1) {
+    console.log('[->] CameraSystem2D: zoom()')
     const newZoom = Math.min(this.controls.maxZoom, Math.max(this.controls.minZoom, this.camera.zoom * factor))
     this.camera.zoom = newZoom
     this.camera.updateProjectionMatrix()
@@ -54,6 +58,7 @@ export class CameraSystem2D {
   }
 
   reset() {
+    console.log('[->] CameraSystem2D: reset()')
     this.camera.position.copy(this.initial.position)
     this.camera.zoom = this.initial.zoom
     this.camera.updateProjectionMatrix()
@@ -62,6 +67,7 @@ export class CameraSystem2D {
   }
 
   dispose() {
+    console.log('[->] CameraSystem2D: dispose()')
     this.controls.dispose()
   }
 }

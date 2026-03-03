@@ -2,6 +2,7 @@ import * as THREE from 'three'
 
 export class RenderSystem2D {
   constructor(container) {
+    console.log('[->] RenderSystem2D: container')
     this.renderer = new THREE.WebGLRenderer({ antialias: true })
     
     // Жестко фиксируем стили канваса, чтобы он не "распирал" родителя
@@ -34,17 +35,20 @@ export class RenderSystem2D {
   }
 
   update(engine2D) {
+    // console.log('[->] RenderSystem2D: update()')
     if (engine2D?.sceneSystem2D?.scene && engine2D?.cameraSystem2D?.camera) {
       this.renderer.render(engine2D.sceneSystem2D.scene, engine2D.cameraSystem2D.camera)
     }
   }
 
   setSize(w, h) {
+    console.log('[->] RenderSystem2D: setSize()')
     // Не забываем передать false и сюда
     this.renderer.setSize(w, h, false)
   }
 
   dispose() {
+    console.log('[->] RenderSystem2D: dispose()')
     this.resizeObserver.disconnect()
     this.renderer.dispose()
   }

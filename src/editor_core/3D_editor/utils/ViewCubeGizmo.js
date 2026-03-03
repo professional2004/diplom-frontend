@@ -2,6 +2,7 @@ import * as THREE from 'three'
 
 export class ViewCubeGizmo {
   constructor(mainCamera, mainControls) {
+    console.log('[->] ViewCubeGizmo: constructor')
     this.mainCamera = mainCamera
     this.mainControls = mainControls
 
@@ -26,6 +27,7 @@ export class ViewCubeGizmo {
   }
 
   createCube() {
+    console.log('[->] ViewCubeGizmo: createCube()')
     const geometry = new THREE.BoxGeometry(1.6, 1.6, 1.6)
     const colors = [0xff4444, 0xcc0000, 0x44ff44, 0x00cc00, 0x4444ff, 0x0000cc]
     const labels = ['Right', 'Left', 'Top', 'Bottom', 'Front', 'Back']
@@ -46,6 +48,7 @@ export class ViewCubeGizmo {
   }
 
   createFaceMaterial(text, color) {
+    console.log('[->] ViewCubeGizmo: createFaceMaterial()')
     const canvas = document.createElement('canvas')
     canvas.width = 128
     canvas.height = 128
@@ -69,6 +72,7 @@ export class ViewCubeGizmo {
   }
 
   update() {
+    // console.log('[->] ViewCubeGizmo: update()')
     // Проверка: если камера или контроллеры еще не подтянулись, выходим из метода
     if (!this.mainCamera || !this.mainControls || !this.mainControls.target) {
       return;
@@ -93,6 +97,7 @@ export class ViewCubeGizmo {
 
   // Метод отрисовки, вызываемый из RenderSystem3D
   render(renderer) {
+    // console.log('[->] ViewCubeGizmo: render()')
     const size = renderer.getSize(new THREE.Vector2())
     
     // Отрисовываем Гизмо в углу (Viewport)
@@ -110,6 +115,7 @@ export class ViewCubeGizmo {
 
   // Метод обработки клика. Вызывается из InputSystem3D
   handlePointer(clientX, clientY, container) {
+    console.log('[->] ViewCubeGizmo: handlePointer()')
     const rect = container.getBoundingClientRect()
     
     // Проверяем, попал ли клик в область Гизмо (правый верхний угол)
@@ -138,6 +144,7 @@ export class ViewCubeGizmo {
   }
 
   snapCameraToDirection(direction) {
+    console.log('[->] ViewCubeGizmo: snapCameraToDirection()')
     // В идеале здесь должна быть анимация (Tween), 
     // но для начала просто переставляем камеру:
     const dist = this.mainCamera.position.distanceTo(this.mainControls.target)
@@ -148,6 +155,7 @@ export class ViewCubeGizmo {
   }
 
   dispose() {
+    console.log('[->] ViewCubeGizmo: dispose()')
     this.scene.clear()
     this.cube.geometry.dispose()
     this.cube.material.forEach(m => m.map.dispose())

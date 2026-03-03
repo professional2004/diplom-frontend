@@ -1,5 +1,6 @@
 export class MoveShapeCommand {
   constructor(mesh, newPosition, oldPosition) {
+    console.log('[->] MoveShapeCommand: constructor')
     this.mesh = mesh
     this.newPosition = newPosition.clone()
     this.oldPosition = oldPosition.clone()
@@ -12,6 +13,7 @@ export class MoveShapeCommand {
   }
 
   execute() {
+    console.log('[->] MoveShapeCommand: execute()')
     if (this.mesh) {
       this.mesh.position.copy(this.newPosition)
       
@@ -30,6 +32,7 @@ export class MoveShapeCommand {
   }
 
   undo() {
+    console.log('[->] MoveShapeCommand: undo()')
     if (this.mesh) {
       this.mesh.position.copy(this.oldPosition)
       

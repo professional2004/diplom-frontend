@@ -1,5 +1,6 @@
 export class RotateUnfoldDetailCommand {
   constructor(mesh, newRotation, oldRotation) {
+    console.log('[->] RotateUnfoldDetailCommand: constructor')
     this.mesh = mesh
     this.newRotation = newRotation
     this.oldRotation = oldRotation
@@ -9,6 +10,7 @@ export class RotateUnfoldDetailCommand {
   }
 
   execute() {
+    console.log('[->] RotateUnfoldDetailCommand: execute()')
     if (this.mesh) {
       this.mesh.rotation.z = this.newRotation
 
@@ -22,6 +24,7 @@ export class RotateUnfoldDetailCommand {
   }
 
   undo() {
+    console.log('[->] RotateUnfoldDetailCommand: undo()')
     if (this.mesh) {
       this.mesh.rotation.z = this.oldRotation
       

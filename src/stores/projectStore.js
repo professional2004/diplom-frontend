@@ -13,10 +13,12 @@ export const useProjectStore = defineStore('project', {
 
   getters: {
     projectsByCategory: (state) => (categoryId) => {
+      console.log('[store] projectStore: projectsByCategory()')
       return state.projects.filter(p => p.categoryId === categoryId)
     },
     
     getCategoryName: (state) => (categoryId) => {
+      console.log('[store] projectStore: getCategoryName()')
       const category = state.categories.find(c => c.id === categoryId)
       return category ? category.name : 'Без категории'
     }
@@ -24,6 +26,7 @@ export const useProjectStore = defineStore('project', {
 
   actions: {
     async fetchProjectsAndCategories() {
+      console.log('[store] projectStore: fetchProjectsAndCategories()')
       this.isLoading = true
       const notify = useNotificationStore()
       try {
@@ -42,6 +45,7 @@ export const useProjectStore = defineStore('project', {
     },
 
     async createProject(name, description = '') {
+      console.log('[store] projectStore: createProject()')
       const notify = useNotificationStore()
       try {
         const { data } = await projectsApi.createProject(name, description)
@@ -82,6 +86,7 @@ export const useProjectStore = defineStore('project', {
     },
 
     async fetchProject(projectId) {
+      console.log('[store] projectStore: fetchProject()')
       this.isLoading = true
       const notify = useNotificationStore()
       try {
@@ -100,6 +105,7 @@ export const useProjectStore = defineStore('project', {
     },
 
     async saveProject(projectId, projectData, preview) {
+      console.log('[store] projectStore: saveProject()')
       this.isSaving = true
       const notify = useNotificationStore()
       try {
@@ -135,6 +141,7 @@ export const useProjectStore = defineStore('project', {
     },
 
     async renameProject(projectId, name) {
+      console.log('[store] projectStore: renameProject()')
       const notify = useNotificationStore()
       try {
         const { data } = await projectsApi.renameProject(projectId, name)
@@ -165,6 +172,7 @@ export const useProjectStore = defineStore('project', {
     },
 
     async changeProjectCategory(projectId, categoryId) {
+      console.log('[store] projectStore: changeProjectCategory()')
       const notify = useNotificationStore()
       try {
         const { data } = await projectsApi.changeProjectCategory(projectId, categoryId)
@@ -197,6 +205,7 @@ export const useProjectStore = defineStore('project', {
     },
 
     async duplicateProject(projectId) {
+      console.log('[store] projectStore: duplicateProject()')
       const notify = useNotificationStore()
       try {
         const { data } = await projectsApi.duplicateProject(projectId)
@@ -216,6 +225,7 @@ export const useProjectStore = defineStore('project', {
     },
 
     async deleteProject(projectId) {
+      console.log('[store] projectStore: deleteProject()')
       const notify = useNotificationStore()
       try {
         await projectsApi.deleteProject(projectId)
@@ -242,6 +252,7 @@ export const useProjectStore = defineStore('project', {
     },
 
     clearCurrentProject() {
+      console.log('[store] projectStore: clearCurrentProject()')
       this.currentProject = null
     }
   }

@@ -2,6 +2,7 @@ import { ShapeRegistry } from '@/editor_core/3D_editor/entities/ShapeRegistry'
 
 export class UpdateShapeCommand {
   constructor(engine, meshOrEntity, newParams) {
+    console.log('[->] UpdateShapeCommand: constructor')
     this.engine = engine
     // payload может быть либо THREE.Mesh либо shape-entity {id, mesh, owner}
     this.mesh = meshOrEntity && meshOrEntity.mesh ? meshOrEntity.mesh : meshOrEntity
@@ -18,14 +19,17 @@ export class UpdateShapeCommand {
   }
 
   execute() {
+    console.log('[->] UpdateShapeCommand: execute()')
     this._applyParams(this.newParams)
   }
 
   undo() {
+    console.log('[->] UpdateShapeCommand: undo()')
     this._applyParams(this.oldParams)
   }
 
   _applyParams(params) {
+    console.log('[->] UpdateShapeCommand: _applyParams()')
     // 1. Обновляем параметры на меше и у логического владельца (если есть)
     this.mesh.userData.params = { ...params }
     if (this.mesh.userData.owner && this.mesh.userData.owner.params) {

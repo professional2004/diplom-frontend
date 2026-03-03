@@ -15,6 +15,7 @@ const canvasContainer = ref(null)
 let editorInstance = null
 
 const createEditor = () => {
+  console.log('[vue] Polyline2DEditor: createEditor()')
   if (!canvasContainer.value) return
   editorInstance = new Polyline2DEditorClass(canvasContainer.value, {
     points: props.modelValue,
@@ -57,6 +58,7 @@ onBeforeUnmount(() => {
 })
 
 const resetPoints = () => {
+  console.log('[vue] Polyline2DEditor: resetPoints()')
   if (editorInstance) {
     editorInstance.resetPoints()
   } else {

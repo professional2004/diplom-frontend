@@ -7,6 +7,7 @@ import { ViewCubeGizmo } from '@/editor_core/3D_editor/utils/ViewCubeGizmo'
 
 export class Engine3D {
   constructor(container, registry) {
+    console.log('[->] Engine3D: constructor')
     if (!container) throw new Error('[Engine.js] Engine requires container DOM element')
     
     this.registry = registry
@@ -45,6 +46,7 @@ export class Engine3D {
   }
 
   loop() {
+    // console.log('[->] Engine3D: loop()')
     if (!this.running) return
     for (const system of this.systems) {
       if (typeof system.update === 'function') system.update(this)
@@ -53,6 +55,7 @@ export class Engine3D {
   }
 
   dispose() {
+    console.log('[->] Engine3D: dispose()')
     this.running = false
     this.systems.forEach(system => system.dispose?.())
     this.sceneSystem3D.scene?.clear?.()

@@ -2,6 +2,7 @@ import * as THREE from 'three'
 
 export class SceneSystem2D {
   constructor() {
+    console.log('[->] SceneSystem2D: constructor')
     this.scene = new THREE.Scene()
     this.scene.background = new THREE.Color(0xf0f0f0)
 
@@ -14,6 +15,7 @@ export class SceneSystem2D {
 
 
   matchGridFrom(gridHelper3D) {
+    console.log('[->] SceneSystem2D: matchGridFrom()')
     if (!gridHelper3D) return
 
     const size = gridHelper3D.userData?.gridSize ?? 100
@@ -31,6 +33,7 @@ export class SceneSystem2D {
 
 
   _createGrid(size, divisions) {
+    console.log('[->] SceneSystem2D: _createGrid()')
     // Очистка старой сетки
     if (this.grid) {
       this.scene.remove(this.grid)
@@ -52,10 +55,18 @@ export class SceneSystem2D {
   }
 
 
-  add(obj) { this.unfoldObjects.add(obj) }
-  remove(obj) { this.unfoldObjects.remove(obj) }
+  add(obj) { 
+    console.log('[->] SceneSystem2D: add()')
+    this.unfoldObjects.add(obj) 
+  }
+
+  remove(obj) { 
+    console.log('[->] SceneSystem2D: remove()')
+    this.unfoldObjects.remove(obj) 
+  }
   
   clearUnfolds() {
+    console.log('[->] SceneSystem2D: clearUnfolds()')
     // Очищаем только детали, оставляя сетку и свет
     while (this.unfoldObjects.children.length > 0) {
       const child = this.unfoldObjects.children[0]
@@ -66,6 +77,7 @@ export class SceneSystem2D {
   }
 
 dispose() {
+    console.log('[->] SceneSystem2D: dispose()')
     this.clearUnfolds()
     if (this.grid) {
       this.grid.geometry.dispose()

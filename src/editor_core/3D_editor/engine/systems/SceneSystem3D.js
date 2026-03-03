@@ -2,6 +2,7 @@ import * as THREE from 'three'
 
 export class SceneSystem3D {
   constructor(options = {}) {
+    console.log('[->] SceneSystem3D: constructor')
     this.scene = new THREE.Scene()
     this.scene.background = new THREE.Color(options.backgroundColor ?? 0xe2e2e2)
 
@@ -22,6 +23,7 @@ export class SceneSystem3D {
   }
 
   initGrid(size, divisions) {
+    console.log('[->] SceneSystem3D: initGrid()')
     if (this.grid) this.remove(this.grid)
 
     this.grid = new THREE.GridHelper(size, divisions, 0x444444, 0x222222)
@@ -36,6 +38,7 @@ export class SceneSystem3D {
   }
 
   _initGround(size, visible) {
+    console.log('[->] SceneSystem3D: _initGround()')
     const geo = new THREE.PlaneGeometry(size * 2, size * 2)
     const mat = new THREE.MeshStandardMaterial({ color: 0xfafafa, side: THREE.DoubleSide })
     this.ground = new THREE.Mesh(geo, mat)
@@ -45,6 +48,7 @@ export class SceneSystem3D {
   }
 
   add(obj) {
+    console.log('[->] SceneSystem3D: add()')
     this.scene.add(obj)
     // если наша система знает о ShapeSystem - зарегистрируем
     try {
@@ -56,10 +60,18 @@ export class SceneSystem3D {
       // ignore
     }
   }
-  remove(obj) { this.scene.remove(obj) }
-  traverse(cb) { this.scene.traverse(cb) }
+  remove(obj) { 
+    console.log('[->] SceneSystem3D: remove()')
+    this.scene.remove(obj) 
+  }
+
+  traverse(cb) { 
+    console.log('[->] SceneSystem3D: traverse()')
+    this.scene.traverse(cb) 
+  }
 
   dispose() {
+    console.log('[->] SceneSystem3D: dispose()')
     this.scene.traverse((obj) => {
       if (obj.geometry) obj.geometry.dispose()
       if (obj.material) {

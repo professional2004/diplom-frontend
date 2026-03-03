@@ -9,20 +9,20 @@ const store = useEditorStore()
 onMounted(() => {
   if (canvasRef.value) {
     store.init3D(canvasRef.value)
-    // after engine initialized, register renderer canvas for preview
-    try {
-      const canvas = EngineRegistry.engine3D?.renderSystem3D?.domElement || null
-      if (canvas) store.setCurrentCanvas(canvas)
-    } catch (e) {
-      console.warn('[Scene3DViewport] failed to set current canvas for preview', e)
-    }
+    // // after engine initialized, register renderer canvas for preview
+    // try {
+    //   const canvas = EngineRegistry.engine3D?.renderSystem3D?.domElement || null
+    //   if (canvas) store.setCurrentCanvas(canvas)
+    // } catch (e) {
+    //   console.warn('[Scene3DViewport] failed to set current canvas for preview', e)
+    // }
   }
 })
 
-onUnmounted(() => {
-  // clear current canvas when viewport is destroyed
-  try { store.setCurrentCanvas(null) } catch (e) {}
-})
+// onUnmounted(() => {
+//   // clear current canvas when viewport is destroyed
+//   try { store.setCurrentCanvas(null) } catch (e) {}
+// })
 </script>
 
 <template>

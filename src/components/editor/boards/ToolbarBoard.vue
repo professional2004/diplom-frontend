@@ -6,6 +6,7 @@ const store = useEditorStore()
 
 // Вычисляемое свойство для проверки наличия выбранной фигуры
 const hasSelection = computed(() => {
+  console.log('[vue] ToolbarBoard: hasSelection()')
   return store.selectedShape !== null
 })
 </script>

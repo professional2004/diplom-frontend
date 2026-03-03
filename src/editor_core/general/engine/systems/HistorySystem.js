@@ -1,10 +1,12 @@
 export class HistorySystem {
   constructor() {
+    console.log('[->] HistorySystem: constructor')
     this.history = []
     this.index = -1
   }
 
   execute(command) {
+    console.log('[->] HistorySystem: execute()')
     // Защита: иногда instance может быть не полностью инициализирован
     if (!Array.isArray(this.history)) {
       this.history = []
@@ -33,6 +35,7 @@ export class HistorySystem {
 
   
   undo() {
+    console.log('[->] HistorySystem: undo()')
     if (!Array.isArray(this.history)) return
     if (this.index >= 0) {
       const command = this.history[this.index]
@@ -46,6 +49,7 @@ export class HistorySystem {
   }
 
   redo() {
+    console.log('[->] HistorySystem: redo()')
     if (!Array.isArray(this.history)) return
     if (this.index < this.history.length - 1) {
       this.index++
@@ -59,6 +63,7 @@ export class HistorySystem {
   }
 
   clear() {
+    console.log('[->] HistorySystem: clear()')
     this.history = []
     this.index = -1
   }

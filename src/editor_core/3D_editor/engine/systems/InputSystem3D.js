@@ -5,6 +5,7 @@ import { AddConnectionCommand } from '@/editor_core/3D_editor/commands/AddConnec
 
 export class InputSystem3D {
   constructor(container) {
+    console.log('[->] InputSystem3D: constructor')
     this.container = container
     this.engine3D = null  // Ссылка на движок будет установлена позже
     this.store = null  // Ссылка на Pinia store для обновления UI
@@ -42,6 +43,7 @@ export class InputSystem3D {
   }
 
   setEngine(engine3D) {
+    console.log('[->] InputSystem3D: setEngine()')
     this.engine3D = engine3D
     // Добавляем группу хелперов на сцену
     if (this.engine3D && this.engine3D.sceneSystem3D) {
@@ -56,16 +58,19 @@ export class InputSystem3D {
   }
 
   setStore(store) {
+    console.log('[->] InputSystem3D: setStore()')
     this.store = store
   }
 
   updateMouse(event) {
+    console.log('[->] InputSystem3D: updateMouse()')
     const rect = this.container.getBoundingClientRect()
     this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
     this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
   }
 
   onPointerDown(event) {
+    console.log('[->] InputSystem3D: onPointerDown()')
     if (!this.engine3D) return
 
     if (this.engine3D.viewCubeGizmo) {
@@ -147,6 +152,7 @@ export class InputSystem3D {
   }
 
   onPointerMove(event) {
+    console.log('[->] InputSystem3D: onPointerMove()')
     if (!this.engine3D) return
     this.updateMouse(event)
 
@@ -192,6 +198,7 @@ export class InputSystem3D {
   }
 
   onPointerUp() {
+    console.log('[->] InputSystem3D: onPointerUp()')
     if (this.isDragging && this.dragObject) {
       if (!this.dragObject.position.equals(this.startPosition)) {
         const cmd = new MoveShapeCommand(
@@ -215,6 +222,7 @@ export class InputSystem3D {
   }
 
   onKeyDown(event) {
+    console.log('[->] InputSystem3D: onKeyDown()')
     if (!this.engine3D) return
     if (event.key === 'Delete' || event.key === 'Backspace') {
       if (this.engine3D.selectionSystem3D.getSelected()) {
@@ -233,6 +241,7 @@ export class InputSystem3D {
   }
 
   dispose() {
+    console.log('[->] InputSystem3D: dispose()')
     this.container.removeEventListener('pointerdown', this.onPointerDown)
     this.container.removeEventListener('pointermove', this.onPointerMove)
     this.container.removeEventListener('pointerup', this.onPointerUp)
@@ -244,6 +253,7 @@ export class InputSystem3D {
 
   // Вычисляет ближайшее ребро к точке клика
   _getClosestEdge(hitPoint, mesh) {
+    console.log('[->] InputSystem3D: _getClosestEdge()')
     const ent = this.engine3D.registry.shapeSystem.getByMesh(mesh)
     if (!ent || !ent.owner) return null
 
@@ -279,6 +289,7 @@ export class InputSystem3D {
 
   // Отрисовывает подсветку для выбранного и наведенного ребра
   _drawHelperLines() {
+    console.log('[->] InputSystem3D: _drawHelperLines()')
     this.helpersGroup.clear()
 
     // Функция создания линии
@@ -309,6 +320,7 @@ export class InputSystem3D {
   }
 
   _resetConnectingMode() {
+    console.log('[->] InputSystem3D: _resetConnectingMode()')
     this.isConnectingMode = false
     this.connectionStep = 0
     this.parentEdgeData = null

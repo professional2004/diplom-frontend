@@ -3,6 +3,7 @@ import EngineRegistry from '@/editor_core/general/engine/EngineRegistry'
 
 export class AddShapeCommand {
   constructor(sceneSystem, shapeType, params = {}) {
+    console.log('[->] AddShapeCommand: constructor')
     this.sceneSystem = sceneSystem
     this.shapeType = shapeType
     this.params = params
@@ -11,6 +12,7 @@ export class AddShapeCommand {
   }
 
   execute() {
+    console.log('[->] AddShapeCommand: execute()')
     if (!this.mesh) {
       // Используем Registry для создания логики
       const shapeInstance = ShapeRegistry.create(this.shapeType, this.params)
@@ -27,6 +29,7 @@ export class AddShapeCommand {
   }
 
   undo() {
+    console.log('[->] AddShapeCommand: undo()')
     if (this.mesh) {
       this.sceneSystem.remove(this.mesh)
       EngineRegistry.shapeSystem.unregister(this.mesh)

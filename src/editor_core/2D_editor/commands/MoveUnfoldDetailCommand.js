@@ -1,5 +1,6 @@
 export class MoveUnfoldDetailCommand {
   constructor(mesh, newPosition, oldPosition) {
+    console.log('[->] MoveUnfoldDetailCommand: constructor')
     this.mesh = mesh
     this.newPosition = newPosition.clone()
     this.oldPosition = oldPosition.clone()
@@ -14,6 +15,7 @@ export class MoveUnfoldDetailCommand {
   }
 
   execute() {
+    console.log('[->] MoveUnfoldDetailCommand: execute()')
     if (this.mesh) {
       this.mesh.position.copy(this.newPosition)
 
@@ -37,6 +39,7 @@ export class MoveUnfoldDetailCommand {
   }
 
   undo() {
+    console.log('[->] MoveUnfoldDetailCommand: undo()')
     if (this.mesh) {
       this.mesh.position.copy(this.oldPosition)
       

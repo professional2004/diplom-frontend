@@ -1,5 +1,6 @@
 export class SelectionSystem3D {
   constructor() {
+    console.log('[->] SelectionSystem3D: constructor')
     this.selected = null
     this.hovered = null
     
@@ -9,6 +10,7 @@ export class SelectionSystem3D {
 
   // Устанавливает выбранный объект и применяет подсветку
   setSelected(object) {
+    console.log('[->] SelectionSystem3D: setSelected()')
     // Восстанавливаем материал предыдущей выбранной фигуры
     if (this.selected && this.selected !== object) {
       this.restoreOriginalMaterial(this.selected)
@@ -25,6 +27,7 @@ export class SelectionSystem3D {
 
   // Устанавливает объект под курсором (hover)
   setHovered(object) {
+    console.log('[->] SelectionSystem3D: setHovered()')
     // Восстанавливаем материал предыдущей наведенной фигуры (если это не текущая выбранная)
     if (this.hovered && this.hovered !== object && this.hovered !== this.selected) {
       this.restoreOriginalMaterial(this.hovered)
@@ -40,6 +43,7 @@ export class SelectionSystem3D {
 
   // Очищает выделение
   clear() {
+    console.log('[->] SelectionSystem3D: clear()')
     if (this.selected) {
       this.restoreOriginalMaterial(this.selected)
       this.selected = null
@@ -52,6 +56,7 @@ export class SelectionSystem3D {
 
   // Применяет материал при выборе (ярко выделенный)
   applySelectMaterial(object) {
+    console.log('[->] SelectionSystem3D: applySelectMaterial()')
     if (!object.material) return
 
     // Сохраняем исходный материал, если еще не сохранили
@@ -66,6 +71,7 @@ export class SelectionSystem3D {
 
   // Применяет материал при наведении (слегка выделенный)
   applyHoverMaterial(object) {
+    console.log('[->] SelectionSystem3D: applyHoverMaterial()')
     if (!object.material) return
 
     // Сохраняем исходный материал, если еще не сохранили
@@ -80,6 +86,7 @@ export class SelectionSystem3D {
 
   // Восстанавливает исходный материал
   restoreOriginalMaterial(object) {
+    console.log('[->] SelectionSystem3D: restoreOriginalMaterial()')
     if (!object.material) return
 
     const original = this.originalMaterials.get(object)
@@ -91,19 +98,23 @@ export class SelectionSystem3D {
 
   // Возвращает текущий выбранный объект
   getSelected() {
+    console.log('[->] SelectionSystem3D: getSelected()')
     return this.selected
   }
 
   // Возвращает текущий наведенный объект
   getHovered() {
+    console.log('[->] SelectionSystem3D: getHovered()')
     return this.hovered
   }
 
   update() {
+    // console.log('[->] SelectionSystem3D: update()')
     // пассивно — пока оставляем пустым
   }
 
   dispose() {
+    console.log('[->] SelectionSystem3D: dispose()')
     // Очищаем сохраненные материалы при удалении
     this.originalMaterials.clear()
   }

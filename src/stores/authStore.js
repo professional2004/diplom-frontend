@@ -12,6 +12,7 @@ export const useAuthStore = defineStore('auth', {
 
   actions: {
     async fetchUser() {
+      console.log('[store] authStore: fetchUser()')
       this.isLoading = true
       try {
         const { data } = await api.get('/api/auth/me')
@@ -27,6 +28,7 @@ export const useAuthStore = defineStore('auth', {
 
 
     async login(credentials) {
+      console.log('[store] authStore: login()')
       const notify = useNotificationStore()
       try {
         await api.post('/api/auth/login', credentials)
@@ -47,6 +49,7 @@ export const useAuthStore = defineStore('auth', {
 
 
     async logout() {
+      console.log('[store] authStore: logout()')
       const notify = useNotificationStore()
       try {
         await api.post('/api/auth/logout')
@@ -62,6 +65,7 @@ export const useAuthStore = defineStore('auth', {
 
 
     async deleteAccount() {
+      console.log('[store] authStore: deleteAccount()')
       const notify = useNotificationStore()
       try {
         await api.delete('/api/auth/delete-account');

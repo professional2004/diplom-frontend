@@ -2,6 +2,7 @@ import EngineRegistry from '@/editor_core/general/engine/EngineRegistry'
 
 export class DeleteShapeCommand {
   constructor(sceneSystem, selectionSystem, meshOrEntity) {
+    console.log('[->] DeleteShapeCommand: constructor')
     this.sceneSystem = sceneSystem
     this.selectionSystem = selectionSystem
     this.mesh = meshOrEntity && meshOrEntity.mesh ? meshOrEntity.mesh : meshOrEntity
@@ -20,6 +21,7 @@ export class DeleteShapeCommand {
   }
 
   execute() {
+    console.log('[->] DeleteShapeCommand: execute()')
     // Сохраняем и удаляем связи перед удалением фигуры
     if (EngineRegistry.connectionSystem) {
       const connections = EngineRegistry.connectionSystem.connections
@@ -40,6 +42,7 @@ export class DeleteShapeCommand {
   }
 
   undo() {
+    console.log('[->] DeleteShapeCommand: undo()')
     // Восстанавливаем фигуру со сцены с сохраненными параметрами
     this.sceneSystem.add(this.mesh)
 

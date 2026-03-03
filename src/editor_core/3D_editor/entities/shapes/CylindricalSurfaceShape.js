@@ -2,10 +2,12 @@ import * as THREE from 'three'
 
 export class CylindricalSurfaceShape {
   constructor(params = {}) {
+    console.log('[->] CylindricalSurfaceShape: constructor')
     this.params = { ...this.defaultParams, ...params }
   }
 
   get defaultParams() {
+    console.log('[->] CylindricalSurfaceShape: get defaultParams()')
     return {
       width: 0.5,
       polyline: [
@@ -28,6 +30,7 @@ export class CylindricalSurfaceShape {
   }
 
   get parameterDefinitions() {
+    console.log('[->] CylindricalSurfaceShape: get parameterDefinitions()')
     return {
       width: { label: 'Ширина (для отображения рамки)', type: 'number', min: 0.001, step: 0.01 },
       polyline: { label: 'Ломаная основания', type: 'object' },
@@ -42,10 +45,12 @@ export class CylindricalSurfaceShape {
   }
 
   _toVec3Array(polyline) {
+    console.log('[->] CylindricalSurfaceShape: _toVec3Array()')
     return polyline.map(p => new THREE.Vector3(p[0], 0, p[1]))
   }
 
   _computeArcLengths(pts) {
+    console.log('[->] CylindricalSurfaceShape: _computeArcLengths()')
     const lens = [0]
     let acc = 0
     for (let i = 1; i < pts.length; i++) {
@@ -57,6 +62,7 @@ export class CylindricalSurfaceShape {
 
   // Метод, который разрезает массив треугольников вертикальной линией X = L
   _sliceTriangles(triangles, L) {
+    console.log('[->] CylindricalSurfaceShape: _sliceTriangles()')
     const out = []
     
     for (let i = 0; i < triangles.length; i++) {
@@ -95,6 +101,7 @@ export class CylindricalSurfaceShape {
   }
 
   createMesh() {
+    console.log('[->] CylindricalSurfaceShape: createMesh()')
     const polyline2D = this.params.polyline?.length >= 2
       ? this.params.polyline
       : this.defaultParams.polyline
@@ -212,6 +219,7 @@ export class CylindricalSurfaceShape {
   }
 
   createUnfold2D() {
+    console.log('[->] CylindricalSurfaceShape: createUnfold2D()')
     const group = new THREE.Group()
     const mat = this.getLineMaterial()
 
@@ -229,6 +237,7 @@ export class CylindricalSurfaceShape {
 
   // Вспомогательный метод для проецирования одной 2D точки в 3D
   _mapPointTo3D(u, v, lens, polyline) {
+    console.log('[->] CylindricalSurfaceShape: _mapPointTo3D()')
     let sec = 0
     for (let j = 0; j < lens.length - 1; j++) {
       if (u >= lens[j] && u <= lens[j+1]) {
@@ -254,6 +263,7 @@ export class CylindricalSurfaceShape {
   }
 
   getBoundaryEdges() {
+    console.log('[->] CylindricalSurfaceShape: getBoundaryEdges()')
     const polyline2D = this.params.polyline?.length >= 2 ? this.params.polyline : this.defaultParams.polyline
     const polyline = this._toVec3Array(polyline2D)
     const { lens } = this._computeArcLengths(polyline)
@@ -311,6 +321,7 @@ export class CylindricalSurfaceShape {
 
   // Применяет позицию и ротацию к меше на основе параметров
   applyTransformToMesh(mesh) {
+    console.log('[->] CylindricalSurfaceShape: applyTransformToMesh()')
     if (!mesh) return
 
     // Применяем позицию
@@ -330,6 +341,7 @@ export class CylindricalSurfaceShape {
 
   // Вспомогательный метод для материалов
   getStandardMaterial() {
+    console.log('[->] CylindricalSurfaceShape: getStandardMaterial()')
     return new THREE.MeshStandardMaterial({ 
       color: Math.random() * 0xffffff,
       metalness: 0.1,
@@ -338,18 +350,21 @@ export class CylindricalSurfaceShape {
   }
 
   getLineMaterial() {
+    console.log('[->] CylindricalSurfaceShape: getLineMaterial()')
     return new THREE.LineBasicMaterial({ color: 0x333333 })
   }
 
 
   // Получение конкретного ребра по индексу
   getEdgeByIndex(index) {
+    console.log('[->] CylindricalSurfaceShape: getEdgeByIndex()')
     const edges = this.getBoundaryEdges();
     return edges.find(e => e.index === index) || null;
   }
 
   // Получение ребра в мировых координатах (с учетом позиции и поворота фигуры)
   getWorldEdge(index, mesh) {
+    console.log('[->] CylindricalSurfaceShape: getWorldEdge()')
     const edge = this.getEdgeByIndex(index);
     if (!edge || !mesh) return null;
 

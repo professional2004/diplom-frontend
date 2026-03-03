@@ -21,6 +21,7 @@ onMounted(async () => {
 })
 
 const loadProjects = async () => {
+  console.log('[vue] Home: loadProjects()')
   try {
     await projectStore.fetchProjectsAndCategories()
     if (projectStore.categories.length > 0) {
@@ -32,6 +33,7 @@ const loadProjects = async () => {
 }
 
 const filteredProjects = computed(() => {
+  console.log('[vue] Home: filteredProjects()')
   if (!selectedCategoryId.value) {
     return projectStore.projects
   }
@@ -39,6 +41,7 @@ const filteredProjects = computed(() => {
 })
 
 const handleCreateProject = async () => {
+  console.log('[vue] Home: handleCreateProject()')
   if (!newProjectName.value.trim()) {
     alert('Пожалуйста, введите название проекта')
     return
@@ -66,10 +69,12 @@ const handleCreateProject = async () => {
 }
 
 const handleOpenProject = (projectId) => {
+  console.log('[vue] Home: handleOpenProject()')
   router.push({ name: 'project', params: { projectId } })
 }
 
 const handleDuplicateProject = async (projectId) => {
+  console.log('[vue] Home: handleDuplicateProject()')
   if (!confirm('Дублировать этот проект?')) return
   
   try {
@@ -80,6 +85,7 @@ const handleDuplicateProject = async (projectId) => {
 }
 
 const handleDeleteProject = async (projectId) => {
+  console.log('[vue] Home: handleDeleteProject()')
   if (!confirm('Вы уверены? Проект будет удален безвозвратно.')) return
   
   try {
@@ -90,6 +96,7 @@ const handleDeleteProject = async (projectId) => {
 }
 
 const handleLogout = async () => {
+  console.log('[vue] Home: handleLogout()')
   try {
     await auth.logout()
   } catch (error) {
@@ -98,6 +105,7 @@ const handleLogout = async () => {
 }
 
 const formatDate = (dateString) => {
+  console.log('[vue] Home: formatDate()')
   const date = new Date(dateString)
   return date.toLocaleDateString('ru-RU', {
     year: 'numeric',
@@ -109,6 +117,7 @@ const formatDate = (dateString) => {
 }
 
 const getPreviewUrl = (previewData) => {
+  console.log('[vue] Home: getPreviewUrl()')
   if (!previewData) return null
   
   // If it's a string (base64), use it directly

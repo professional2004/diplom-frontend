@@ -2,6 +2,7 @@ import * as THREE from 'three';
 
 export class ConnectionSystem {
   constructor(registry) {
+    console.log('[->] ConnectionSystem: constructor')
     this.registry = registry;
     // Хранилище связей. 
     // Структура: { id: string, type: 'EDGE_TO_EDGE' | 'SURFACE', parentId: string, parentEdgeIndex: number, childId: string, childEdgeIndex: number }
@@ -10,6 +11,7 @@ export class ConnectionSystem {
 
   // Добавление новой связи
   addConnection(connection) {
+    console.log('[->] ConnectionSystem: addConnection()')
     this.connections.push(connection);
     this.updateDependencies(connection.parentId);
     this.registry.emitUIUpdate('connections:changed', this.connections);
@@ -17,23 +19,27 @@ export class ConnectionSystem {
 
   // Удаление связи по ID
   removeConnection(id) {
+    console.log('[->] ConnectionSystem: removeConnection()')
     this.connections = this.connections.filter(c => c.id !== id);
     this.registry.emitUIUpdate('connections:changed', this.connections);
   }
 
   // Удаление всех связей, связанных с конкретной фигурой (вызывается при удалении фигуры)
   removeConnectionsForShape(shapeId) {
+    console.log('[->] ConnectionSystem: removeConnectionsForShape()')
     this.connections = this.connections.filter(c => c.parentId !== shapeId && c.childId !== shapeId);
     this.registry.emitUIUpdate('connections:changed', this.connections);
   }
 
   // Проверка, является ли фигура потомком (нужно для блокировки UI)
   isShapeChild(shapeId) {
+    console.log('[->] ConnectionSystem: isShapeChild()')
     return this.connections.some(c => c.childId === shapeId);
   }
 
   // Каскадное обновление всех потомков при изменении родителя
   updateDependencies(parentId) {
+    console.log('[->] ConnectionSystem: updateDependencies()')
     const childrenConnections = this.connections.filter(c => c.parentId === parentId);
     
     childrenConnections.forEach(conn => {
@@ -45,6 +51,7 @@ export class ConnectionSystem {
 
   // Основной "Солвер" (Решатель уравнений привязки)
   _solveConnection(conn) {
+    console.log('[->] ConnectionSystem: _solveConnection()')
     if (conn.type === 'EDGE_TO_EDGE') {
       this._solveEdgeToEdge(conn);
     }
@@ -52,6 +59,7 @@ export class ConnectionSystem {
   }
 
   _solveEdgeToEdge(conn) {
+    console.log('[->] ConnectionSystem: _solveEdgeToEdge()')
     const engine3D = this.registry.engine3D;
     if (!engine3D) return;
 

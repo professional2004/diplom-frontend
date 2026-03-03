@@ -2,10 +2,12 @@ import * as THREE from 'three'
 
 export class ConicalSurfaceShape {
   constructor(params = {}) {
+    console.log('[->] ConicalSurfaceShape: constructor')
     this.params = { ...this.defaultParams, ...params }
   }
 
   get defaultParams() {
+    console.log('[->] ConicalSurfaceShape: get defaultParams()')
     return {
       basePolyline: [
         [-1, 0],
@@ -25,6 +27,7 @@ export class ConicalSurfaceShape {
   }
 
   get parameterDefinitions() {
+    console.log('[->] ConicalSurfaceShape: get parameterDefinitions()')
     return {
       basePolyline: { label: 'Ломаная основания', type: 'object' },
       apex: { label: 'Вершина (X,Y,Z)', type: 'object' },
@@ -39,10 +42,12 @@ export class ConicalSurfaceShape {
   }
 
   _toVec3Array(poly) {
+    console.log('[->] ConicalSurfaceShape: _toVec3Array()')
     return poly.map(p => new THREE.Vector3(p[0], 0, p[1]))
   }
 
   _computeUnroll() {
+    console.log('[->] ConicalSurfaceShape: _computeUnroll()')
     const base2D = this.params.basePolyline?.length >= 2 ? this.params.basePolyline : this.defaultParams.basePolyline
     const base = this._toVec3Array(base2D)
     const apex = new THREE.Vector3(...(this.params.apex || this.defaultParams.apex))
@@ -69,6 +74,7 @@ export class ConicalSurfaceShape {
 
   // Алгоритм Сазерленда-Ходжмена для отсечения 2D-полигона лучом из начала координат (0,0)
   _clipAgainstRay(poly, ray, isLeft) {
+    console.log('[->] ConicalSurfaceShape: _clipAgainstRay()')
     if (poly.length < 3) return []
     const result = []
 
@@ -107,6 +113,7 @@ export class ConicalSurfaceShape {
   }
 
   createMesh() {
+    console.log('[->] ConicalSurfaceShape: createMesh()')
     const { base, apex, P2D } = this._computeUnroll()
     const polygonRaw = this.params.polygon || this.defaultParams.polygon
 
@@ -207,6 +214,7 @@ export class ConicalSurfaceShape {
   }
 
   createUnfold2D() {
+    console.log('[->] ConicalSurfaceShape: createUnfold2D()')
     const group = new THREE.Group()
     const { P2D } = this._computeUnroll()
     const mat = this.getLineMaterial()
@@ -226,6 +234,7 @@ export class ConicalSurfaceShape {
 
   // Пересечение отрезка (p1, p2) с лучом из (0,0) в направлении rayDir
   _intersectSegmentRay(p1, p2, rayDir) {
+    console.log('[->] ConicalSurfaceShape: _intersectSegmentRay()')
     const dx = p2.x - p1.x
     const dy = p2.y - p1.y
     const Rx = rayDir.x, Ry = rayDir.y
@@ -244,6 +253,7 @@ export class ConicalSurfaceShape {
 
   // Маппинг точки, которая гарантированно лежит внутри сектора sec
   _mapPointTo3DCone(px, py, sec, P2D, base, apex) {
+    console.log('[->] ConicalSurfaceShape: _mapPointTo3DCone()')
     const ray1 = P2D[sec]
     const ray2 = P2D[sec + 1]
     const det = ray1.x * ray2.y - ray1.y * ray2.x
@@ -264,6 +274,7 @@ export class ConicalSurfaceShape {
   }
 
   getBoundaryEdges() {
+    console.log('[->] ConicalSurfaceShape: getBoundaryEdges()')
     const { base, apex, P2D } = this._computeUnroll()
     const polygonRaw = this.params.polygon || this.defaultParams.polygon
     
@@ -336,6 +347,7 @@ export class ConicalSurfaceShape {
 
   // Применяет позицию и ротацию к меше на основе параметров
   applyTransformToMesh(mesh) {
+    console.log('[->] ConicalSurfaceShape: applyTransformToMesh()')
     if (!mesh) return
 
     // Применяем позицию
@@ -355,6 +367,7 @@ export class ConicalSurfaceShape {
 
   // Вспомогательный метод для материалов
   getStandardMaterial() {
+    console.log('[->] ConicalSurfaceShape: getStandardMaterial()')
     return new THREE.MeshStandardMaterial({ 
       color: Math.random() * 0xffffff,
       metalness: 0.1,
@@ -363,17 +376,20 @@ export class ConicalSurfaceShape {
   }
 
   getLineMaterial() {
+    console.log('[->] ConicalSurfaceShape: getLineMaterial()')
     return new THREE.LineBasicMaterial({ color: 0x333333 })
   }
 
   // Получение конкретного ребра по индексу
   getEdgeByIndex(index) {
+    console.log('[->] ConicalSurfaceShape: getEdgeByIndex()')
     const edges = this.getBoundaryEdges();
     return edges.find(e => e.index === index) || null;
   }
 
   // Получение ребра в мировых координатах (с учетом позиции и поворота фигуры)
   getWorldEdge(index, mesh) {
+    console.log('[->] ConicalSurfaceShape: getWorldEdge()')
     const edge = this.getEdgeByIndex(index);
     if (!edge || !mesh) return null;
 

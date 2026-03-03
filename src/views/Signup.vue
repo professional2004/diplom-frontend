@@ -8,6 +8,7 @@ const password = ref('');
 const router = useRouter();
 
 const handleRegister = async () => {
+  console.log('[vue] Signup: handleRegister()')
   try {
     await api.post('/api/auth/register', {
       email: email.value,

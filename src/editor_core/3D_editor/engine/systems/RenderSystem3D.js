@@ -2,6 +2,7 @@ import * as THREE from 'three'
 
 export class RenderSystem3D {
   constructor(container, options = {}) {
+    console.log('[->] RenderSystem3D: constructor')
     if (!container) throw new Error('[RenderSystem.js] container DOM element required')
 
     this.container = container
@@ -38,6 +39,7 @@ export class RenderSystem3D {
   }
 
   setSize(w, h) {
+    console.log('[->] RenderSystem3D: setSize()')
     this.width = w
     this.height = h
     // третий аргумент false — запретить three.js переписывать inline width/height
@@ -45,10 +47,12 @@ export class RenderSystem3D {
   }
 
   get domElement() {
+    console.log('[->] RenderSystem3D: get domElement()')
     return this.renderer.domElement
   }
   
   update(engine3D) {
+    // console.log('[->] RenderSystem3D: update()')
     const { sceneSystem3D, cameraSystem3D, viewCubeGizmo } = engine3D
 
     if (!sceneSystem3D?.scene || !cameraSystem3D?.camera) return;
@@ -67,10 +71,12 @@ export class RenderSystem3D {
   }
 
   render(scene, camera) {
+    console.log('[->] RenderSystem3D: render()')
     this.renderer.render(scene, camera)
   }
 
   dispose() {
+    console.log('[->] RenderSystem3D: dispose()')
     try {
       this.renderer.dispose()
       const gl = this.renderer.getContext && this.renderer.getContext()

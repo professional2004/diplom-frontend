@@ -2,6 +2,7 @@ import * as THREE from 'three'
 
 // Helper: extract [x, y, z] from JSCAD vertex (array or object)
 function extractCoords(vertex) {
+  console.log('[->] JscadAdapter: extractCoords()')
   if (Array.isArray(vertex)) {
     return vertex.slice(0, 3)
   }
@@ -19,6 +20,7 @@ function extractCoords(vertex) {
 
 // Convert a JSCAD geom3 object into a THREE.BufferGeometry
 export function jscadGeom3ToThreeGeometry(g3) {
+  console.log('[->] JscadAdapter: jscadGeom3ToThreeGeometry()')
   if (g3 == null) {
     throw new Error('No JSCAD geometry provided')
   }
@@ -77,6 +79,7 @@ export function jscadGeom3ToThreeGeometry(g3) {
 }
 
 export function createMeshFromJscad(g3, material = null) {
+  console.log('[->] JscadAdapter: createMeshFromJscad()')
   const geometry = jscadGeom3ToThreeGeometry(g3)
   const mat = material || new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff, metalness: 0.1, roughness: 0.5 })
   return new THREE.Mesh(geometry, mat)

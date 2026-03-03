@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
 export class CameraSystem3D {
   constructor(domElement, options = {}) {
+    console.log('[->] CameraSystem3D: constructor')
     if (!domElement) { throw new Error('[CameraSystem.js] domElement is requireв')}
     const { fov = 45, near = 0.1, far = 1000 } = options
     const width = domElement.clientWidth || 1
@@ -32,17 +33,20 @@ export class CameraSystem3D {
   }
 
   update() {
+    // console.log('[->] CameraSystem3D: update()')
     if (this.controls) this.controls.update()
     this.updateAnimation()
   }
 
   setAspect(width, height) {
+    console.log('[->] CameraSystem3D: setAspect()')
     if (!width || !height) return
     this.camera.aspect = width / height
     this.camera.updateProjectionMatrix()
   }
 
   zoom(factor = 1.1) {
+    console.log('[->] CameraSystem3D: zoom()')
     const dir = new THREE.Vector3()
     dir.subVectors(this.camera.position, this.controls.target).multiplyScalar(factor)
     this.camera.position.copy(this.controls.target).add(dir)
@@ -50,12 +54,14 @@ export class CameraSystem3D {
   }
 
   reset() {
+    console.log('[->] CameraSystem3D: reset()')
     this.camera.position.copy(this.initial.position)
     this.controls.target.copy(this.initial.target)
     this.controls.update()
   }
 
   flyTo(directionVector, duration = 600) {
+    console.log('[->] CameraSystem3D: flyTo()')
     // Устанавливаем камеру на направлении от target на текущую дистанцию
     if (!directionVector) return
     const distance = this.camera.position.distanceTo(this.controls.target)
@@ -64,6 +70,7 @@ export class CameraSystem3D {
   }
 
   startAnimation(targetPos, duration) {
+    console.log('[->] CameraSystem3D: startAnimation()')
     this.isAnimating = true
     this.startPos.copy(this.camera.position)
     this.targetPos.copy(targetPos)
@@ -73,6 +80,7 @@ export class CameraSystem3D {
   }
 
   updateAnimation() {
+    // console.log('[->] CameraSystem3D: updateAnimation()')
     if (!this.isAnimating) return
     const now = performance.now()
     const progress = Math.min((now - this.t0) / this.duration, 1)
@@ -86,6 +94,7 @@ export class CameraSystem3D {
   }
 
   dispose() {
+    console.log('[->] CameraSystem3D: dispose()')
     this.controls.dispose()
   }
 }

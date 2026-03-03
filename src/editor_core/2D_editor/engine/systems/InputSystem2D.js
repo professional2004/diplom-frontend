@@ -4,6 +4,7 @@ import { RotateUnfoldDetailCommand } from '@/editor_core/2D_editor/commands/Rota
 
 export class InputSystem2D {
   constructor(container) {
+    console.log('[->] InputSystem2D: constructor')
     this.container = container
     this.raycaster = new THREE.Raycaster()
     // Уменьшиваем толщину выделения для Line объектов
@@ -34,15 +35,20 @@ export class InputSystem2D {
     container.addEventListener('pointerup', this.onPointerUp)
   }
 
-  setEngine(engine2D) { this.engine2D = engine2D }
+  setEngine(engine2D) { 
+    console.log('[->] InputSystem2D: setEngine()')
+    this.engine2D = engine2D 
+  }
 
   updateMouse(event) {
+    console.log('[->] InputSystem2D: updateMouse()')
     const rect = this.container.getBoundingClientRect()
     this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
     this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
   }
 
   getIntersectedObject() {
+    console.log('[->] InputSystem2D: getIntersectedObject()')
     this.raycaster.setFromCamera(this.mouse, this.engine2D.cameraSystem2D.camera)
     const objects = this.engine2D.sceneSystem2D.unfoldObjects.children
     // Включаем рекурсивный поиск по дереву — нужно для корректной работы
@@ -72,6 +78,7 @@ export class InputSystem2D {
   }
 
   onPointerDown(event) {
+    console.log('[->] InputSystem2D: onPointerDown()')
     if (!this.engine2D) return
     this.updateMouse(event)
     this.mouseDown.copy(this.mouse)
@@ -104,6 +111,7 @@ export class InputSystem2D {
   }
 
   onPointerMove(event) {
+    console.log('[->] InputSystem2D: onPointerMove()')
     if (!this.engine2D) return
     this.updateMouse(event)
 
@@ -132,6 +140,7 @@ export class InputSystem2D {
   }
 
   onPointerUp() {
+    console.log('[->] InputSystem2D: onPointerUp()')
     if (this.isRotating && this.dragObject) {
       if (this.dragObject.rotation.z !== this.startRotation) {
         const cmd = new RotateUnfoldDetailCommand(
@@ -155,6 +164,7 @@ export class InputSystem2D {
   }
 
   dispose() {
+    console.log('[->] InputSystem2D: dispose()')
     this.container.removeEventListener('pointerdown', this.onPointerDown)
     this.container.removeEventListener('pointermove', this.onPointerMove)
     this.container.removeEventListener('pointerup', this.onPointerUp)

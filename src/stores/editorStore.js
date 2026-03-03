@@ -20,11 +20,13 @@ export const useEditorStore = defineStore('editor', {
   }),
   getters: {
     selectedShape(state) {
+      console.log('[store] editorStore: selectedShape()')
       if (!state.selectedShapeId) return null
       return EngineRegistry.shapeSystem.getById(state.selectedShapeId)
     },
     // Проверка, является ли выбранная фигура потомком в связи
     isShapeChild(state) {
+      console.log('[store] editorStore: isShapeChild()')
       if (!state.selectedShapeId) return false
       return state.connections.some(c => c.childId === state.selectedShapeId)
     }
@@ -34,28 +36,35 @@ export const useEditorStore = defineStore('editor', {
 
     // --- Методы управления 3D камерой ---
     zoomIn() {
+      console.log('[store] editorStore: zoomIn()')
       EngineRegistry.engine3D.cameraSystem3D.zoom(0.9)
     },
     zoomOut() {
+      console.log('[store] editorStore: zoomOut()')
       EngineRegistry.engine3D.cameraSystem3D.zoom(1.1)
     },
     resetView() {
+      console.log('[store] editorStore: resetView()')
       EngineRegistry.engine3D.cameraSystem3D.reset()
     },
 
     // --- Методы управления 2D камерой ---
     zoomIn2D() {
+      console.log('[store] editorStore: zoomIn2D()')
       EngineRegistry.engine2D.cameraSystem2D.zoom(1.1)
     },
     zoomOut2D() {
+      console.log('[store] editorStore: zoomOut2D()')
       EngineRegistry.engine2D.cameraSystem2D.zoom(0.9)
     },
     reset2D() {
+      console.log('[store] editorStore: reset2D()')
       EngineRegistry.engine2D.cameraSystem2D.reset()
     },
 
     // Подписываемся на события ядра один раз
     setupListeners() {
+      console.log('[store] editorStore: setupListeners()')
       EngineRegistry.emitter.on('selection:changed', (entity) => {
         this.selectedShapeId = entity ? entity.id : null
         // Обновляем параметры при клике на новую фигуру
@@ -93,21 +102,25 @@ export const useEditorStore = defineStore('editor', {
 
     // Метод переключения режима связывания
     toggleConnectMode() {
+      console.log('[store] editorStore: toggleConnectMode()')
       this.isConnectingMode = !this.isConnectingMode
       // Оповещаем InputSystem3D, что мы перешли в режим выбора ребер
       EngineRegistry.emitter.emit('mode:connecting', this.isConnectingMode)
     },
 
     init3D(container) {
+      console.log('[store] editorStore: init3D()')
       EngineRegistry.initEngine3D(container)
       this.setupListeners()
     },
 
     init2D(container) {
+      console.log('[store] editorStore: init2D()')
       EngineRegistry.initEngine2D(container)
     },
 
     addShape(type, params = {}) {
+      console.log('[store] editorStore: addShape()')
       const engine = EngineRegistry.engine3D
       if (!engine) return
       const cmd = new AddShapeCommand(engine.sceneSystem3D, type, params)
@@ -115,6 +128,7 @@ export const useEditorStore = defineStore('editor', {
     },
 
     deleteShape() {
+      console.log('[store] editorStore: deleteShape()')
       const engine = EngineRegistry.engine3D
       if (!engine || !this.selectedShapeId) return
       const cmd = new DeleteShapeCommand(
@@ -132,6 +146,7 @@ export const useEditorStore = defineStore('editor', {
     },
 
     updateShapeParams(newParams) {
+      console.log('[store] editorStore: updateShapeParams()')
       const engine = EngineRegistry.engine3D
       if (!engine || !this.selectedShapeId) return
       // передаем entity, чтобы команда могла взять mesh и owner из неё
@@ -141,36 +156,43 @@ export const useEditorStore = defineStore('editor', {
     },
 
     undo() {
+      console.log('[store] editorStore: undo()')
       EngineRegistry.historySystem.undo()
       EngineRegistry.emitter.emit('history:changed')
       EngineRegistry.syncSystem.rebuildAllFrom3D()
     },
 
     redo() {
+      console.log('[store] editorStore: redo()')
       EngineRegistry.historySystem.redo()
       EngineRegistry.emitter.emit('history:changed')
       EngineRegistry.syncSystem.rebuildAllFrom3D()
     },
 
     updateUndoRedo() {
+      console.log('[store] editorStore: updateUndoRedo()')
       const h = EngineRegistry.historySystem
       this.canUndo = !!(h && h.history && h.index >= 0)
       this.canRedo = !!(h && h.history && h.index < (h.history.length - 1))
     },
 
     setCurrentCanvas(canvas) {
+      console.log('[store] editorStore: setCurrentCanvas()')
       this.currentCanvas = canvas
     },
 
     async saveProjectToJSON() {
+      console.log('[store] editorStore: saveProjectToJSON()')
       return projectSerializationService.serializeProject()
     },
 
     async loadProjectFromJSON(jsonString) {
+      console.log('[store] editorStore: loadProjectFromJSON()')
       return projectSerializationService.deserializeProject(jsonString)
     },
 
     async generatePreview() {
+      console.log('[store] editorStore: generatePreview()')
       if (!this.currentCanvas) {
         return null
       }
@@ -178,6 +200,7 @@ export const useEditorStore = defineStore('editor', {
     },
 
     clearCurrentProject() {
+      console.log('[store] editorStore: clearCurrentProject()')
       this.selectedShapeId = null
       this.selectedShapeParams = null
       this.isConnectingMode = false

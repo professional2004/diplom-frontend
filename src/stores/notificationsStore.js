@@ -9,6 +9,7 @@ export const useNotificationStore = defineStore('notifications', {
 
   actions: {
     show({ type = 'info', message, timeout = 3000 }) {
+      console.log('[store] notificationsStore: show()')
       const id = nextId++
 
       this.notifications.push({ id, type, message })
@@ -21,6 +22,7 @@ export const useNotificationStore = defineStore('notifications', {
     },
 
     remove(id) {
+      console.log('[store] notificationsStore: remove()')
       this.notifications = this.notifications.filter(n => n.id !== id)
     }
   }

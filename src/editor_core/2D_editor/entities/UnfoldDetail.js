@@ -2,6 +2,7 @@ import * as THREE from 'three'
 
 export class UnfoldDetail {
   constructor(meshGroup, parentShapeId) {
+    console.log('[->] UnfoldDetail: constructor')
     this.mesh = meshGroup
     this.selectionPlane = null  // Будет установлена createInvisibleSelectionPlane()
     
@@ -31,6 +32,7 @@ export class UnfoldDetail {
 
   // Применяет сохраненные параметры позиции и ротации к меше
   applyStoredTransform() {
+    console.log('[->] UnfoldDetail: applyStoredTransform()')
     if (this.mesh.userData.unfoldParams) {
       const params = this.mesh.userData.unfoldParams
       this.mesh.position.set(params.posX ?? 0, params.posY ?? 0, 0)
@@ -40,6 +42,7 @@ export class UnfoldDetail {
 
   // Создает невидимую плоскость для улучшения выделения и перетаскивания
   createInvisibleSelectionPlane() {
+    console.log('[->] UnfoldDetail: createInvisibleSelectionPlane()')
     if (this.selectionPlane) return this.selectionPlane  // Уже создана
 
     // Вычисляем ограничивающий прямоугольник меша

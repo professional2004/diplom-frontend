@@ -11,6 +11,7 @@ const notify = useNotificationStore()
 const token = route.query.token
 
 async function handleResetPassword() {
+  console.log('[vue] ResetPassword: handleResetPassword()')
   try {
     await api.post('/api/auth/reset-password', {
       token,

@@ -2,6 +2,7 @@ import * as THREE from 'three'
 
 export default class Polyline2DEditor {
   constructor(container, options = {}) {
+    console.log('[->] Polyline2DEditor: constructor')
     if (!container) {
       throw new Error('Polyline2DEditor requires a DOM container')
     }
@@ -26,6 +27,7 @@ export default class Polyline2DEditor {
   // public API
 
   setPoints(points) {
+    console.log('[->] Polyline2DEditor: setPoints()')
     // update from outside without firing change event
     this.points = Array.isArray(points) ? points.slice() : []
     this.updateGeometry()
@@ -33,16 +35,19 @@ export default class Polyline2DEditor {
   }
 
   setPolygon(flag) {
+    console.log('[->] Polyline2DEditor: setPolygon()')
     this.isPolygon = !!flag
     this.updateGeometry()
     this._render()
   }
 
   getPoints() {
+    console.log('[->] Polyline2DEditor: getPoints()')
     return this.points.slice()
   }
 
   dispose() {
+    console.log('[->] Polyline2DEditor: dispose()')
     this.resizeObserver.disconnect()
     this._unbindEvents()
     // clean three objects
@@ -67,6 +72,7 @@ export default class Polyline2DEditor {
   // internal helpers
 
   _initScene() {
+    console.log('[->] Polyline2DEditor: _initScene()')
     // scene & camera
     this.scene = new THREE.Scene()
 
@@ -139,6 +145,7 @@ export default class Polyline2DEditor {
   }
 
   _bindEvents() {
+    console.log('[->] Polyline2DEditor: _bindEvents()')
     const canvas = this.renderer.domElement
     this._pointerDown = this._onPointerDown.bind(this)
     this._pointerMove = this._onPointerMove.bind(this)
@@ -156,6 +163,7 @@ export default class Polyline2DEditor {
   }
 
   _unbindEvents() {
+    console.log('[->] Polyline2DEditor: _unbindEvents()')
     const canvas = this.renderer.domElement
     canvas.removeEventListener('pointerdown', this._pointerDown)
     window.removeEventListener('pointermove', this._pointerMove)
@@ -166,6 +174,7 @@ export default class Polyline2DEditor {
   }
 
   _onPointerDown(e) {
+    console.log('[->] Polyline2DEditor: _onPointerDown()')
     if (e.button !== 0) {
       // for now only left-button interactions
     }
@@ -183,6 +192,7 @@ export default class Polyline2DEditor {
   }
 
   _onPointerMove(e) {
+    console.log('[->] Polyline2DEditor: _onPointerMove()')
     if (this._isDragging && this._dragIndex !== null) {
       const pos = this._getWorldCoords(e)
       this.points[this._dragIndex] = [pos.x, pos.y]
@@ -207,6 +217,7 @@ export default class Polyline2DEditor {
   }
 
   _onPointerUp() {
+    console.log('[->] Polyline2DEditor: _onPointerUp()')
     if (this._isDragging) {
       this._isDragging = false
       this._dragIndex = null
@@ -218,6 +229,7 @@ export default class Polyline2DEditor {
   }
 
   _onDblClick(e) {
+    console.log('[->] Polyline2DEditor: _onDblClick()')
     // use same logic for add/remove
     const pos = this._getWorldCoords(e)
     const hit = this._findPointIndexNear(pos)
@@ -229,6 +241,7 @@ export default class Polyline2DEditor {
   }
 
   _onWheel(e) {
+    console.log('[->] Polyline2DEditor: _onWheel()')
     e.preventDefault()
     const factor = 1 + (e.deltaY > 0 ? -0.1 : 0.1)
     this.camera.zoom = Math.max(0.1, Math.min(20, this.camera.zoom * factor))
@@ -237,6 +250,7 @@ export default class Polyline2DEditor {
   }
 
   _onCanvasPointerMove(e) {
+    console.log('[->] Polyline2DEditor: _onCanvasPointerMove()')
     // highlight hovered point and update cursor
     const pos = this._getWorldCoords(e)
     const hit = this._findPointIndexNear(pos)
@@ -263,6 +277,7 @@ export default class Polyline2DEditor {
   }
 
   _getWorldCoords(event) {
+    console.log('[->] Polyline2DEditor: _getWorldCoords()')
     const rect = this.renderer.domElement.getBoundingClientRect()
     const x = ((event.clientX - rect.left) / rect.width) * 2 - 1
     const y = -((event.clientY - rect.top) / rect.height) * 2 + 1
@@ -276,6 +291,7 @@ export default class Polyline2DEditor {
   }
 
   _findPointIndexNear(vec3) {
+    console.log('[->] Polyline2DEditor: _findPointIndexNear()')
     const threshold = 0.3
     for (let i = 0; i < this.points.length; i++) {
       const p = this.points[i]
@@ -289,6 +305,7 @@ export default class Polyline2DEditor {
   }
 
   addPoint(pt) {
+    console.log('[->] Polyline2DEditor: addPoint()')
     const newPt = [Math.round(pt[0] * 10) / 10, Math.round(pt[1] * 10) / 10]
 
     // If there are fewer than 2 points, just append
@@ -333,6 +350,7 @@ export default class Polyline2DEditor {
   }
 
   removePoint(idx) {
+    console.log('[->] Polyline2DEditor: removePoint()')
     const minCount = this.isPolygon ? 3 : 2
     if (this.points.length <= minCount) return
     this.points.splice(idx, 1)
@@ -342,6 +360,7 @@ export default class Polyline2DEditor {
   }
 
   resetPoints() {
+    console.log('[->] Polyline2DEditor: resetPoints()')
     this.points = [[-1, 0], [1, 0]]
     this.updateGeometry()
     this._render()
@@ -349,6 +368,7 @@ export default class Polyline2DEditor {
   }
 
   updateGeometry() {
+    console.log('[->] Polyline2DEditor: updateGeometry()')
     // rebuild line object
     if (this._lineObject) {
       this.scene.remove(this._lineObject)
@@ -374,10 +394,12 @@ export default class Polyline2DEditor {
   }
 
   _emitChange() {
+    console.log('[->] Polyline2DEditor: _emitChange()')
     this.onChange(this.points.slice())
   }
 
   _render() {
+    console.log('[->] Polyline2DEditor: _render()')
     this.renderer.render(this.scene, this.camera)
   }
 }

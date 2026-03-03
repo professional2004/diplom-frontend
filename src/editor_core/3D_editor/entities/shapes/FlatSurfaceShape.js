@@ -2,10 +2,12 @@ import * as THREE from 'three'
 
 export class FlatSurfaceShape {
   constructor(params = {}) {
+    console.log('[->] FlatSurfaceShape: constructor')
     this.params = { ...this.defaultParams, ...params }
   }
 
   get defaultParams() {
+    console.log('[->] FlatSurfaceShape: get defaultParams()')
     return {
       width: 2,
       height: 1.5,
@@ -26,6 +28,7 @@ export class FlatSurfaceShape {
   }
 
   get parameterDefinitions() {
+    console.log('[->] FlatSurfaceShape: get parameterDefinitions()')
     return {
       width: { label: 'Ширина', type: 'number', min: 0.001, step: 0.01 },
       height: { label: 'Высота', type: 'number', min: 0.001, step: 0.01 },
@@ -40,6 +43,7 @@ export class FlatSurfaceShape {
   }
 
   _normalizePolygon(polygon, width, height) {
+    console.log('[->] FlatSurfaceShape: _normalizePolygon()')
     const allBetween0and1 = polygon.every(p => p[0] >= 0 && p[0] <= 1 && p[1] >= 0 && p[1] <= 1)
     if (allBetween0and1) {
       return polygon.map(p => [
@@ -51,6 +55,7 @@ export class FlatSurfaceShape {
   }
 
   createMesh() {
+    console.log('[->] FlatSurfaceShape: createMesh()')
     const { width, height } = this.params
     const polygonRaw = (this.params.polygon || []).slice()
     const polygon = this._normalizePolygon(polygonRaw, width, height)
@@ -104,6 +109,7 @@ export class FlatSurfaceShape {
   }
 
   createUnfold2D() {
+    console.log('[->] FlatSurfaceShape: createUnfold2D()')
     const { width, height } = this.params
     const polygon = this._normalizePolygon(this.params.polygon || this.defaultParams.polygon, width, height)
 
@@ -122,6 +128,7 @@ export class FlatSurfaceShape {
   }
 
   getBoundaryEdges() {
+    console.log('[->] FlatSurfaceShape: getBoundaryEdges()')
     const { width, height } = this.params
     const polygonRaw = (this.params.polygon || []).slice()
     const polygon = this._normalizePolygon(polygonRaw, width, height)
@@ -152,6 +159,7 @@ export class FlatSurfaceShape {
 
   // Применяет позицию и ротацию к меше на основе параметров
   applyTransformToMesh(mesh) {
+    console.log('[->] FlatSurfaceShape: applyTransformToMesh()')
     if (!mesh) return
 
     // Применяем позицию
@@ -171,6 +179,7 @@ export class FlatSurfaceShape {
 
   // Вспомогательный метод для материалов
   getStandardMaterial() {
+    console.log('[->] FlatSurfaceShape: getStandardMaterial()')
     return new THREE.MeshStandardMaterial({ 
       color: Math.random() * 0xffffff,
       metalness: 0.1,
@@ -179,18 +188,21 @@ export class FlatSurfaceShape {
   }
 
   getLineMaterial() {
+    console.log('[->] FlatSurfaceShape: getLineMaterial()')
     return new THREE.LineBasicMaterial({ color: 0x333333 })
   }
 
 
   // Получение конкретного ребра по индексу
   getEdgeByIndex(index) {
+    console.log('[->] FlatSurfaceShape: getEdgeByIndex()')
     const edges = this.getBoundaryEdges();
     return edges.find(e => e.index === index) || null;
   }
 
   // Получение ребра в мировых координатах (с учетом позиции и поворота фигуры)
   getWorldEdge(index, mesh) {
+    console.log('[->] FlatSurfaceShape: getWorldEdge()')
     const edge = this.getEdgeByIndex(index);
     if (!edge || !mesh) return null;
 

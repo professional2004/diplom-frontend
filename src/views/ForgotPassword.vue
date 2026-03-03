@@ -7,6 +7,7 @@ const email = ref('');
 const notify = useNotificationStore();
 
 async function submit() {
+  console.log('[vue] ForgotPassword: submit()')
   await api.post('/api/auth/forgot-password', { email: email.value })
   notify.show({
     type: 'info',

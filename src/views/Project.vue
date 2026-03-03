@@ -15,6 +15,7 @@ const isSaving = ref(false)
 const projectName = ref('')
 
 const loadProject = async (projectId) => {
+  console.log('[vue] Project: loadProject()')
   if (!projectId) {
     router.push({ name: 'app' })
     return
@@ -68,6 +69,7 @@ watch(() => route.params.projectId, async (newProjectId, oldProjectId) => {
 })
 
 const handleSaveProject = async () => {
+  console.log('[vue] Project: handleSaveProject()')
   if (isSaving.value) return
 
   isSaving.value = true
@@ -88,6 +90,7 @@ const handleSaveProject = async () => {
 }
 
 const handleBackToProjects = async () => {
+  console.log('[vue] Project: handleBackToProjects()')
   if (isSaving.value) return
   
   const save = confirm('Сохранить изменения перед выходом?')
