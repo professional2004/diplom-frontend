@@ -50,6 +50,11 @@ export class RenderSystem2D {
   dispose() {
     console.log('[->] RenderSystem2D: dispose()')
     this.resizeObserver.disconnect()
+    // remove canvas from DOM to avoid detached elements
+    try {
+      const canvas = this.renderer.domElement
+      if (canvas && canvas.parentNode) canvas.parentNode.removeChild(canvas)
+    } catch (e) { console.warn('[RenderSystem2D] remove canvas failed', e) }
     this.renderer.dispose()
   }
 }

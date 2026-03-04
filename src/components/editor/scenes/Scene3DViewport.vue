@@ -1,13 +1,13 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useEditorStore } from '@/stores/editorStore'
-import EngineRegistry from '@/editor_core/general/engine/EngineRegistry'
 
 const canvasRef = ref(null)
 const store = useEditorStore()
 
 onMounted(() => {
   if (canvasRef.value) {
+    store.initEngineRegistry()
     store.init3D(canvasRef.value)
     // // after engine initialized, register renderer canvas for preview
     // try {
@@ -19,10 +19,14 @@ onMounted(() => {
   }
 })
 
-// onUnmounted(() => {
-//   // clear current canvas when viewport is destroyed
-//   try { store.setCurrentCanvas(null) } catch (e) {}
-// })
+onUnmounted(() => {
+  // Detach canvas when component is removed so it doesn't stay in stale DOM
+  try {
+    const ER = store.engineRegistry
+    const canvas = ER?.engine3D?.renderSystem3D?.domElement
+    if (canvas && canvas.parentNode) canvas.parentNode.removeChild(canvas)
+  } catch (e) { /* ignore */ }
+})
 </script>
 
 <template>

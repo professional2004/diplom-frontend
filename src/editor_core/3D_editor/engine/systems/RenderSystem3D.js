@@ -77,6 +77,11 @@ export class RenderSystem3D {
 
   dispose() {
     console.log('[->] RenderSystem3D: dispose()')
+    // detach canvas from DOM
+    try {
+      const canvas = this.renderer.domElement
+      if (canvas && canvas.parentNode) canvas.parentNode.removeChild(canvas)
+    } catch (e) { console.warn('[RenderSystem3D] remove canvas failed', e) }
     try {
       this.renderer.dispose()
       const gl = this.renderer.getContext && this.renderer.getContext()

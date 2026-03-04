@@ -1,5 +1,5 @@
 import { ShapeRegistry } from '@/editor_core/3D_editor/entities/ShapeRegistry'
-import EngineRegistry from '@/editor_core/general/engine/EngineRegistry'
+import { getGlobalEngineRegistry } from '@/editor_core/general/engine/EngineRegistry'
 
 export class AddShapeCommand {
   constructor(sceneSystem, shapeType, params = {}) {
@@ -23,7 +23,8 @@ export class AddShapeCommand {
       this.mesh.position.z = (Math.random() - 0.5) * 5
 
       // после создания зарегистрируемся в ShapeSystem
-      EngineRegistry.shapeSystem.register(this.mesh)
+      const ER = getGlobalEngineRegistry()
+      ER?.shapeSystem?.register(this.mesh)
     }
     this.sceneSystem.add(this.mesh)
   }
@@ -32,7 +33,8 @@ export class AddShapeCommand {
     console.log('[->] AddShapeCommand: undo()')
     if (this.mesh) {
       this.sceneSystem.remove(this.mesh)
-      EngineRegistry.shapeSystem.unregister(this.mesh)
+      const ER2 = getGlobalEngineRegistry()
+      ER2?.shapeSystem?.unregister(this.mesh)
     }
   }
 }

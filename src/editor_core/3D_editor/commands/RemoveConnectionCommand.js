@@ -1,4 +1,4 @@
-import EngineRegistry from '@/editor_core/general/engine/EngineRegistry'
+import { getGlobalEngineRegistry } from '@/editor_core/general/engine/EngineRegistry'
 
 export class RemoveConnectionCommand {
   constructor(connectionId) {
@@ -12,22 +12,23 @@ export class RemoveConnectionCommand {
 
   execute() {
     console.log('[->] RemoveConnectionCommand: execute()')
-    if (EngineRegistry.connectionSystem) {
+    const ER = getGlobalEngineRegistry()
+    if (ER?.connectionSystem) {
       // Ищем связь перед удалением, чтобы сохранить её для отмены
-      const connections = EngineRegistry.connectionSystem.connections
+      const connections = ER.connectionSystem.connections
       this.savedConnection = connections.find(c => c.id === this.connectionId)
       
       if (this.savedConnection) {
-        EngineRegistry.connectionSystem.removeConnection(this.connectionId)
+        ER.connectionSystem.removeConnection(this.connectionId)
       }
     }
   }
 
   undo() {
     console.log('[->] RemoveConnectionCommand: undo()')
-    if (EngineRegistry.connectionSystem && this.savedConnection) {
-      // Восстанавливаем сохраненную связь
-      EngineRegistry.connectionSystem.addConnection(this.savedConnection)
+    const ER2 = getGlobalEngineRegistry()
+    if (ER2?.connectionSystem && this.savedConnection) {
+      ER2.connectionSystem.addConnection(this.savedConnection)
     }
   }
 }

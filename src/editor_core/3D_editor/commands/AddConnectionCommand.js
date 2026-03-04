@@ -1,4 +1,4 @@
-import EngineRegistry from '@/editor_core/general/engine/EngineRegistry'
+import { getGlobalEngineRegistry } from '@/editor_core/general/engine/EngineRegistry'
 
 export class AddConnectionCommand {
   constructor(connection) {
@@ -12,20 +12,17 @@ export class AddConnectionCommand {
 
   execute() {
     console.log('[->] AddConnectionCommand: execute()')
-    if (EngineRegistry.connectionSystem) {
-      // Добавляем связь. Внутри addConnection автоматически вызовется updateDependencies,
-      // и фигура-потомок сразу же "примагнитится" к родителю.
-      EngineRegistry.connectionSystem.addConnection(this.connection)
+    const ER = getGlobalEngineRegistry()
+    if (ER?.connectionSystem) {
+      ER.connectionSystem.addConnection(this.connection)
     }
   }
 
   undo() {
     console.log('[->] AddConnectionCommand: undo()')
-    if (EngineRegistry.connectionSystem) {
-      // При отмене просто удаляем связь.
-      // Важно: фигура-потомок останется на том месте, куда примагнитилась (так работает большинство САПР).
-      // Если нужно возвращать её на старое место, нам придется сохранять её старые координаты в этой команде.
-      EngineRegistry.connectionSystem.removeConnection(this.connection.id)
+    const ER2 = getGlobalEngineRegistry()
+    if (ER2?.connectionSystem) {
+      ER2.connectionSystem.removeConnection(this.connection.id)
     }
   }
 }

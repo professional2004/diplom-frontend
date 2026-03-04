@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import EngineRegistry from '@/editor_core/general/engine/EngineRegistry'
+import { getGlobalEngineRegistry } from '@/editor_core/general/engine/EngineRegistry'
 import { ShapeRegistry } from '@/editor_core/3D_editor/entities/ShapeRegistry'
 import { UnfoldDetail } from '@/editor_core/2D_editor/entities/UnfoldDetail'
 
@@ -35,8 +35,9 @@ export class SyncSystem {
 
       // используем ShapeSystem, если он доступен; это быстрее и точнее
       let meshes = []
-      if (EngineRegistry && EngineRegistry.shapeSystem) {
-        meshes = Array.from(EngineRegistry.shapeSystem.entities.values())
+      const ER = getGlobalEngineRegistry()
+      if (ER && ER.shapeSystem) {
+        meshes = Array.from(ER.shapeSystem.entities.values())
           .map(ent => ent.mesh)
           .filter(m => m && m.userData?.selectable && m.userData?.shapeType)
       } else {
@@ -78,7 +79,8 @@ export class SyncSystem {
         
         // Удаляем из UnfoldSystem
         if (m.userData?.unfoldId) {
-          EngineRegistry.unfoldSystem?.remove(m.userData.unfoldId)
+          const ER2 = getGlobalEngineRegistry()
+          ER2?.unfoldSystem?.remove(m.userData.unfoldId)
         }
       }
       // Кэшируем параметры по UUID фигуры
@@ -142,7 +144,8 @@ export class SyncSystem {
         }
         
         // Регистрируем в UnfoldSystem
-        EngineRegistry.unfoldSystem.add(unfoldDetail)
+        const ER3 = getGlobalEngineRegistry()
+        ER3?.unfoldSystem?.add(unfoldDetail)
 
         unfoldMeshes.push(unfoldDetail.mesh)
       })

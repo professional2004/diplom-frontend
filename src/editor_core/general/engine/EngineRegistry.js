@@ -32,7 +32,17 @@ class SimpleEmitter {
   }
 }
 
-class EngineRegistry {
+let _globalRegistry = null
+
+export function setGlobalEngineRegistry(registry) {
+  _globalRegistry = registry
+}
+
+export function getGlobalEngineRegistry() {
+  return _globalRegistry
+}
+
+export default class EngineRegistry {
   constructor() {
     console.log('[->] EngineRegistry: constructor')
     this.engine2D = null
@@ -51,17 +61,56 @@ class EngineRegistry {
   // Создание 3D движка (вызывается из Viewport)
   initEngine3D(container) {
     console.log('[->] EngineRegistry: initEngine3D()')
-    if (this.engine3D) return
-    this.engine3D = new Engine3D(container, this)
-    this._checkEnginesReady()
+    if (!container) return
+    if (!this.engine3D) {
+      this.engine3D = new Engine3D(container, this)
+      this._checkEnginesReady()
+    } else if (this.engine3D.container !== container) {
+      // if the viewport component was remounted with a new element,
+      // move the existing canvas into the new container
+      console.log('[->] EngineRegistry: reattaching 3D canvas to new container')
+      this.engine3D.container = container
+      try {
+        container.appendChild(this.engine3D.renderSystem3D.domElement)
+        // update resize observer to watch new container
+        if (this.engine3D.renderSystem3D.resizeObserver) {
+          try {
+            this.engine3D.renderSystem3D.resizeObserver.disconnect()
+            this.engine3D.renderSystem3D.resizeObserver.observe(container)
+          } catch (err) {
+            console.warn('[EngineRegistry] unable to re-observe container', err)
+          }
+        }
+      } catch (e) {
+        console.warn('[EngineRegistry] failed to reattach 3D canvas', e)
+      }
+    }
   }
 
   // Создание 2D движка (вызывается из Viewport)
   initEngine2D(container) {
     console.log('[->] EngineRegistry: initEngine2D()')
-    if (this.engine2D) return
-    this.engine2D = new Engine2D(container, this)
-    this._checkEnginesReady()
+    if (!container) return
+    if (!this.engine2D) {
+      this.engine2D = new Engine2D(container, this)
+      this._checkEnginesReady()
+    } else if (this.engine2D.container !== container) {
+      console.log('[->] EngineRegistry: reattaching 2D canvas to new container')
+      this.engine2D.container = container
+      try {
+        container.appendChild(this.engine2D.renderSystem2D.renderer.domElement)
+        if (this.engine2D.renderSystem2D.resizeObserver) {
+          try {
+            this.engine2D.renderSystem2D.resizeObserver.disconnect()
+            this.engine2D.renderSystem2D.resizeObserver.observe(container)
+          } catch (err) {
+            console.warn('[EngineRegistry] unable to re-observe 2D container', err)
+          }
+        }
+      } catch (e) {
+        console.warn('[EngineRegistry] failed to reattach 2D canvas', e)
+      }
+    }
   }
 
 
@@ -110,5 +159,5 @@ class EngineRegistry {
   }
 }
 
-const registry = new EngineRegistry()
-export default registry
+// const registry = new EngineRegistry()
+// export default registry

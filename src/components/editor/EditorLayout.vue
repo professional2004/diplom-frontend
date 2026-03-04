@@ -1,4 +1,5 @@
 <script setup>
+import { onMounted } from 'vue'
 import Scene3DViewport from './scenes/Scene3DViewport.vue'
 import Scene2DViewport from './scenes/Scene2DViewport.vue'
 import ViewCubeGizmo from './utils/ViewCubeGizmo.vue'

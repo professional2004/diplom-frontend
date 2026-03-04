@@ -1,4 +1,4 @@
-import EngineRegistry from '@/editor_core/general/engine/EngineRegistry'
+import { getGlobalEngineRegistry } from '@/editor_core/general/engine/EngineRegistry'
 
 export class DeleteShapeCommand {
   constructor(sceneSystem, selectionSystem, meshOrEntity) {
@@ -23,14 +23,16 @@ export class DeleteShapeCommand {
   execute() {
     console.log('[->] DeleteShapeCommand: execute()')
     // Сохраняем и удаляем связи перед удалением фигуры
-    if (EngineRegistry.connectionSystem) {
-      const connections = EngineRegistry.connectionSystem.connections
+    const ER = getGlobalEngineRegistry()
+    if (ER?.connectionSystem) {
+      const connections = ER.connectionSystem.connections
       this.deletedConnections = connections.filter(c => c.parentId === this.mesh.uuid || c.childId === this.mesh.uuid)
-      EngineRegistry.connectionSystem.removeConnectionsForShape(this.mesh.uuid)
+      ER.connectionSystem.removeConnectionsForShape(this.mesh.uuid)
     }
 
     // перед удалением удаляем из реестра
-    EngineRegistry.shapeSystem.unregister(this.mesh)
+    const ER2 = getGlobalEngineRegistry()
+    ER2?.shapeSystem?.unregister(this.mesh)
 
     // Удаляем фигуру со сцены
     this.sceneSystem.remove(this.mesh)
@@ -47,8 +49,9 @@ export class DeleteShapeCommand {
     this.sceneSystem.add(this.mesh)
 
     // при возвращении необходимо снова зарегистрировать объект
-    if (EngineRegistry && EngineRegistry.shapeSystem) {
-      EngineRegistry.shapeSystem.register(this.mesh)
+    const ER3 = getGlobalEngineRegistry()
+    if (ER3 && ER3.shapeSystem) {
+      ER3.shapeSystem.register(this.mesh)
     }
     
     // Восстанавливаем трансформацию
@@ -57,9 +60,10 @@ export class DeleteShapeCommand {
     this.mesh.scale.copy(this.scale)
 
     // Восстанавливаем связи при отмене удаления
-    if (EngineRegistry.connectionSystem && this.deletedConnections.length > 0) {
+    const ER4 = getGlobalEngineRegistry()
+    if (ER4?.connectionSystem && this.deletedConnections.length > 0) {
       this.deletedConnections.forEach(conn => {
-        EngineRegistry.connectionSystem.addConnection(conn)
+        ER4.connectionSystem.addConnection(conn)
       })
       this.deletedConnections = []
     }

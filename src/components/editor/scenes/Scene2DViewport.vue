@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useEditorStore } from '@/stores/editorStore'
 
 const containerRef = ref(null)
@@ -7,7 +7,17 @@ const store = useEditorStore()
 
 onMounted(() => {
   if (!containerRef.value) return
+  store.initEngineRegistry()
   store.init2D(containerRef.value)
+})
+
+onUnmounted(() => {
+  // detach 2D canvas to prevent orphaned element
+  try {
+    const ER = store.engineRegistry
+    const canvas = ER?.engine2D?.renderSystem2D?.renderer?.domElement
+    if (canvas && canvas.parentNode) canvas.parentNode.removeChild(canvas)
+  } catch (e) { /* ignore */ }
 })
 </script>
 

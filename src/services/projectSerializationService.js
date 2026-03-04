@@ -1,5 +1,5 @@
-import EngineRegistry from '@/editor_core/general/engine/EngineRegistry'
 import { ShapeRegistry } from '@/editor_core/3D_editor/entities/ShapeRegistry'
+import { getGlobalEngineRegistry } from '@/editor_core/general/engine/EngineRegistry'
 
 /**
  * Serialization service for saving and loading project state
@@ -18,39 +18,46 @@ export const projectSerializationService = {
     }
 
     // Serialize 3D shapes
-    for (const [shapeId, entity] of EngineRegistry.shapeSystem.entities.entries()) {
-      if (entity && entity.mesh && entity.owner) {
-        data.shapes.push({
-          id: shapeId,
-          type: entity.mesh.userData.shapeType || 'unknown',
-          params: { ...entity.mesh.userData.params }
-        })
+    const ERs = getGlobalEngineRegistry() || store.engineRegistry
+    if (ERs?.shapeSystem) {
+      for (const [shapeId, entity] of ERs.shapeSystem.entities.entries()) {
+        if (entity && entity.mesh && entity.owner) {
+          data.shapes.push({
+            id: shapeId,
+            type: entity.mesh.userData.shapeType || 'unknown',
+            params: { ...entity.mesh.userData.params }
+          })
+        }
       }
     }
 
     // Serialize 2D unfoldings
-    const unfoldings = EngineRegistry.unfoldSystem.getAll()
-    unfoldings.forEach(unfold => {
-      if (unfold && unfold.mesh && unfold.mesh.userData.unfoldId) {
-        data.unfoldings.push({
-          id: unfold.mesh.userData.unfoldId,
-          parentShapeId: unfold.mesh.userData.parentShapeId,
-          unfoldParams: { ...unfold.mesh.userData.unfoldParams }
-        })
-      }
-    })
+    if (ERs?.unfoldSystem) {
+      const unfoldings = ERs.unfoldSystem.getAll()
+      unfoldings.forEach(unfold => {
+        if (unfold && unfold.mesh && unfold.mesh.userData.unfoldId) {
+          data.unfoldings.push({
+            id: unfold.mesh.userData.unfoldId,
+            parentShapeId: unfold.mesh.userData.parentShapeId,
+            unfoldParams: { ...unfold.mesh.userData.unfoldParams }
+          })
+        }
+      })
+    }
 
     // Serialize connections
-    EngineRegistry.connectionSystem.connections.forEach(conn => {
-      data.connections.push({
-        id: conn.id,
-        type: conn.type,
-        parentId: conn.parentId,
-        parentEdgeIndex: conn.parentEdgeIndex,
-        childId: conn.childId,
-        childEdgeIndex: conn.childEdgeIndex
+    if (ERs?.connectionSystem) {
+      ERs.connectionSystem.connections.forEach(conn => {
+        data.connections.push({
+          id: conn.id,
+          type: conn.type,
+          parentId: conn.parentId,
+          parentEdgeIndex: conn.parentEdgeIndex,
+          childId: conn.childId,
+          childEdgeIndex: conn.childEdgeIndex
+        })
       })
-    })
+    }
 
     return JSON.stringify(data)
   },
@@ -64,10 +71,11 @@ export const projectSerializationService = {
       // Handle empty project
       if (!jsonString || jsonString === '{}' || jsonString.trim() === '') {
         // Return empty project structure
-        EngineRegistry.historySystem.clear()
-        EngineRegistry.shapeSystem.entities.clear()
-        EngineRegistry.unfoldSystem.clear()
-        EngineRegistry.connectionSystem.connections = []
+        const ER_empty = getGlobalEngineRegistry() || store.engineRegistry
+        ER_empty?.historySystem?.clear()
+        ER_empty?.shapeSystem?.entities?.clear()
+        ER_empty?.unfoldSystem?.clear()
+        if (ER_empty?.connectionSystem) ER_empty.connectionSystem.connections = []
         return {
           version: '1.0',
           shapes: [],
@@ -84,10 +92,11 @@ export const projectSerializationService = {
       }
       
       // Clear current state (reset engines) safely
-      if (EngineRegistry.historySystem) EngineRegistry.historySystem.clear()
-      if (EngineRegistry.shapeSystem) EngineRegistry.shapeSystem.entities.clear()
-      if (EngineRegistry.unfoldSystem) EngineRegistry.unfoldSystem.clear()
-      if (EngineRegistry.connectionSystem) EngineRegistry.connectionSystem.connections = []
+      const ER = getGlobalEngineRegistry() || store.engineRegistry
+      ER?.historySystem?.clear()
+      ER?.shapeSystem?.entities?.clear()
+      ER?.unfoldSystem?.clear()
+      if (ER?.connectionSystem) ER.connectionSystem.connections = []
 
       // Restore shapes
       if (data.shapes && Array.isArray(data.shapes)) {
@@ -102,14 +111,19 @@ export const projectSerializationService = {
 
       // Restore connections (after all shapes are created)
       if (data.connections && Array.isArray(data.connections)) {
+        const ER2 = getGlobalEngineRegistry() || store.engineRegistry
         for (const connData of data.connections) {
           try {
-            EngineRegistry.connectionSystem.connections.push(connData)
+            if (ER2?.connectionSystem?.addConnection) {
+              ER2.connectionSystem.addConnection(connData)
+            } else if (ER2?.connectionSystem) {
+              ER2.connectionSystem.connections.push(connData)
+            }
           } catch (error) {
             console.error('Error creating connection:', error, connData)
           }
         }
-        EngineRegistry.emitter.emit('connections:changed', EngineRegistry.connectionSystem.connections)
+        ER2?.emitter?.emit('connections:changed', ER2?.connectionSystem?.connections || [])
       }
 
       // Restore unfoldings (after all shapes and connections)
@@ -122,6 +136,10 @@ export const projectSerializationService = {
           }
         }
       }
+
+      // Trigger a rebuild/sync if engines are available
+      const ER3 = getGlobalEngineRegistry() || store.engineRegistry
+      try { ER3?.syncSystem?.rebuildAllFrom3D() } catch (e) { /* ignore */ }
 
       return data
     } catch (error) {
@@ -141,21 +159,26 @@ export const projectSerializationService = {
     // Create mesh
     const mesh = shape.createMesh()
     
-    // Add to engine
-    if (EngineRegistry.engine3D && EngineRegistry.engine3D.sceneSystem3D) {
-      EngineRegistry.engine3D.sceneSystem3D.add(mesh)
+    // Add to engine scene if available (engine may not be initialized yet)
+    const ER = getGlobalEngineRegistry() || store.engineRegistry
+    if (ER?.engine3D && ER.engine3D.sceneSystem3D) {
+      ER.engine3D.sceneSystem3D.add(mesh)
     }
 
-    // Register in shape system with specific ID
-    const entity = {
-      id: shapeData.id,
-      mesh: mesh,
-      owner: shape
-    }
-    
-    // Override the UUID to match saved ID
+    // Override the UUID to match saved ID BEFORE registering
     mesh.uuid = shapeData.id
-    EngineRegistry.shapeSystem.entities.set(shapeData.id, entity)
+
+    // Ensure owner reference exists
+    mesh.userData.owner = mesh.userData.owner || shape
+
+    // Register in shape system with specific ID (use system helper)
+    if (ER?.shapeSystem?.register) {
+      ER.shapeSystem.register(mesh)
+    } else if (ER?.shapeSystem) {
+      ER.shapeSystem.entities.set(shapeData.id, { id: shapeData.id, mesh, owner: shape })
+    }
+
+    const entity = ER?.shapeSystem?.getById ? ER.shapeSystem.getById(shapeData.id) : { id: shapeData.id, mesh, owner: shape }
 
     return entity
   },
@@ -165,7 +188,8 @@ export const projectSerializationService = {
    */
   _applyUnfoldParameters(unfoldData) {
     console.log('[->] projectSerializationService: _applyUnfoldParameters()')
-    const unfold = EngineRegistry.unfoldSystem.getById(unfoldData.id)
+    const ER = getGlobalEngineRegistry() || store.engineRegistry
+    const unfold = ER?.unfoldSystem?.getById ? ER.unfoldSystem.getById(unfoldData.id) : null
     
     if (unfold) {
       // Update stored parameters
