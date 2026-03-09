@@ -64,14 +64,15 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  // Очистить проект при уходе
-  EngineRegistry.clearProject();
+  // Полностью очистить движки при уходе со страницы проекта
+  EngineRegistry.dispose();
 });
 
 const saveProject = async () => {
   try {
     const projectData = EngineRegistry.serializeProject();
-    await projectStore.updateProject(projectId, { ...project.value, projectData });
+    const preview = null;
+    await projectStore.saveProject(projectId, projectData, preview);
     alert('Проект сохранен!');
   } catch (error) {
     alert('Ошибка сохранения: ' + error.message);

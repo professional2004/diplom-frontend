@@ -15,7 +15,7 @@ export class RenderSystem2D {
     
     container.appendChild(canvas)
 
-    // ИСПРАВЛЕНИЕ: Защита от нулевых размеров при инициализации
+    // Защита от нулевых размеров при инициализации
     const w = container.clientWidth || 1
     const h = container.clientHeight || 1
     
@@ -47,5 +47,10 @@ export class RenderSystem2D {
   dispose() {
     this.resizeObserver.disconnect()
     this.renderer.dispose()
+    // Удаляем canvas из DOM, если он там есть
+    const canvas = this.renderer.domElement
+    if (canvas.parentNode) {
+      canvas.parentNode.removeChild(canvas)
+    }
   }
 }

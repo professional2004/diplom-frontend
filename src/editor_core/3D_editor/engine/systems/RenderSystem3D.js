@@ -78,6 +78,10 @@ export class RenderSystem3D {
         const ext = gl.getExtension && gl.getExtension('WEBGL_lose_context')
         if (ext) ext.loseContext()
       }
+      // Удаляем canvas из DOM
+      if (this.container && this.renderer.domElement && this.container.contains(this.renderer.domElement)) {
+        this.container.removeChild(this.renderer.domElement)
+      }
     } catch (e) {}
     this.resizeObserver.disconnect()
   }

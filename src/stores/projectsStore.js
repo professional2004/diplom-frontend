@@ -68,8 +68,7 @@ export const useProjectsStore = defineStore('projects', {
       }
     },
 
-    async saveProject(id, projectData, preview = null) {
-      // legacy with preview support
+    async saveProject(id, projectData, preview) {
       this.isSaving = true
       const notify = useNotificationStore()
       try {
