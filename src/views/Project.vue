@@ -4,31 +4,62 @@ import { useProjectsStore } from '@/stores/projectsStore';
 import { useEditorStore } from '@/stores/editorStore';
 import EditorLayout from '@/components/editor/EditorLayout.vue';
 import EngineRegistry from '@/editor_core/general/engine/EngineRegistry';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, nextTick } from 'vue';
 
 const route = useRoute();
 const router = useRouter();
-const projects = useProjectsStore();
-const editor = useEditorStore();
+const projectStore = useProjectsStore();
+const editorStore = useEditorStore();
 
 const projectId = route.params.id;
 const isLoading = ref(true);
 const project = ref(null);
+const projectData = ref(null);
+
+function applyProjectData(data) {
+  if (data && data.shapes) {
+    if (EngineRegistry.engine3D && EngineRegistry.engine2D) {
+      EngineRegistry.deserializeProject(data);
+    } else {
+      // дождёмся готовности движков
+      EngineRegistry.emitter.on('engines:ready', () => EngineRegistry.deserializeProject(data));
+    }
+  } else {
+    // пустой проект
+    if (EngineRegistry.engine3D || EngineRegistry.engine2D) {
+      EngineRegistry.clearProject();
+    } else {
+      EngineRegistry.emitter.on('engines:ready', () => EngineRegistry.clearProject());
+    }
+  }
+}
 
 onMounted(async () => {
   try {
-    project.value = await projects.fetchProject(projectId);
+    project.value = await projectStore.fetchProject(projectId);
 
-    // Десериализовать проект
-    if (project.projectData) {
-      const projectData = JSON.parse(project.projectData);
-      EngineRegistry.deserializeProject(projectData);
+    // Подготовить данные для десериализации (без выполнения)
+    let raw = project.value.projectData;
+    if (raw) {
+      if (typeof raw === 'string') {
+        try {
+          projectData.value = JSON.parse(raw);
+        } catch (e) {
+          console.warn('Project.vue: не удалось распарсить projectData, используем пустой проект', e);
+          projectData.value = null;
+        }
+      } else if (typeof raw === 'object') {
+        projectData.value = raw;
+      }
     }
   } catch (error) {
+    // ошибка только при запросе проекта
     alert('Ошибка загрузки проекта: ' + error.message);
     router.push('/app');
   } finally {
     isLoading.value = false;
+    // после того как интерфейс отрендерился (EditorLayout может появиться)
+    nextTick(() => applyProjectData(projectData.value));
   }
 });
 
@@ -40,10 +71,7 @@ onUnmounted(() => {
 const saveProject = async () => {
   try {
     const projectData = EngineRegistry.serializeProject();
-    await projects.updateProject(projectId, {
-      ...project.value,
-      projectData: JSON.stringify(projectData)
-    });
+    await projectStore.updateProject(projectId, { ...project.value, projectData });
     alert('Проект сохранен!');
   } catch (error) {
     alert('Ошибка сохранения: ' + error.message);

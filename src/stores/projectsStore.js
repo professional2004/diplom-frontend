@@ -1,12 +1,14 @@
 import { defineStore } from 'pinia'
 import { projectsApi } from '@/services/api'
+import { useNotificationStore } from '@/stores/notificationsStore'
 
 export const useProjectsStore = defineStore('projects', {
   state: () => ({
     projects: [],
     categories: [],
     currentProject: null,
-    isLoading: false
+    isLoading: false,
+    isSaving: false
   }),
 
   actions: {
@@ -29,6 +31,7 @@ export const useProjectsStore = defineStore('projects', {
       try {
         const project = await projectsApi.getProject(id)
         this.currentProject = project
+        console.log(project)
         return project
       } catch (error) {
         console.error('Failed to fetch project:', error)
@@ -50,16 +53,46 @@ export const useProjectsStore = defineStore('projects', {
     },
 
     async updateProject(id, projectData) {
+      // generic update endpoint without preview
       try {
-        const updatedProject = await projectsApi.updateProject(id, projectData)
+        const updated = await projectsApi.updateProject(id, projectData)
+        // update local cache
         const index = this.projects.findIndex(p => p.id === id)
         if (index !== -1) {
-          this.projects[index] = updatedProject
+          this.projects[index] = { ...this.projects[index], ...updated }
         }
-        return updatedProject
+        return updated
       } catch (error) {
         console.error('Failed to update project:', error)
         throw error
+      }
+    },
+
+    async saveProject(id, projectData, preview = null) {
+      // legacy with preview support
+      this.isSaving = true
+      const notify = useNotificationStore()
+      try {
+        const { data } = await projectsApi.saveProject(id, projectData, preview)
+        this.currentProject = data
+        
+        const index = this.projects.findIndex(p => p.id === id)
+        if (index !== -1) {
+          this.projects[index] = {
+            ...this.projects[index],
+            updatedAt: data.updatedAt,
+            preview: data.preview
+          }
+        }
+        console.log(data)
+        
+        notify.show({type: 'success', message: 'Проект сохранён успешно'})
+        return data
+      } catch (error) {
+        notify.show({type: 'error',message: 'Ошибка при сохранении проекта'})
+        throw error
+      } finally {
+        this.isSaving = false
       }
     },
 

@@ -25,10 +25,20 @@ export const projectsApi = {
     return response.data
   },
 
-  // Обновить проект
+  // Обновить/сохранить проект (общий endpoint)
   async updateProject(id, projectData) {
     const response = await api.put(`/api/projects/${id}`, projectData)
     return response.data
+  },
+
+  // альтернативный вариант (с поддержкой preview)
+  saveProject(id, projectData, preview) {
+    return api.put(`/api/projects/${id}/save`, {
+      projectData: String(projectData || '{}'),
+      preview: preview || null
+    }, {
+      headers: {'Content-Type': 'application/json'}
+    })
   },
 
   // Удалить проект
