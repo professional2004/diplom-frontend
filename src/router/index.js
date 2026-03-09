@@ -4,6 +4,7 @@ import Login from '@/views/Login.vue'
 import Signup from '@/views/Signup.vue'
 import Main from '@/views/Main.vue'
 import Home from '@/views/Home.vue'
+import Project from '@/views/Project.vue'
 import Error from '@/views/Error.vue'
 import ForgotPassword from '@/views/ForgotPassword.vue'
 import ResetPassword from '@/views/ResetPassword.vue'
@@ -15,6 +16,7 @@ const routes = [
   { path: '/forgot-password', name: 'forgot-password', component: ForgotPassword },
   { path: '/reset-password', name: 'reset-password', component: ResetPassword },
   { path: '/app', name: 'app', component: Home, meta: { requiresAuth: true } },
+  { path: '/project/:id', name: 'project', component: Project, meta: { requiresAuth: true } },
   { path: '/:pathMatch(.*)*', name: 'error', component: Error }
 ]
 

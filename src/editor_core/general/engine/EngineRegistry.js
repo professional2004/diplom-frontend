@@ -4,6 +4,7 @@ import { ShapeSystem } from './systems/ShapeSystem'
 import { UnfoldSystem } from './systems/UnfoldSystem'
 import { Engine3D } from '@/editor_core/3D_editor/engine/Engine3D'
 import { Engine2D } from '@/editor_core/2D_editor/engine/Engine2D'
+import { ShapeRegistry } from '@/editor_core/3D_editor/entities/ShapeRegistry'
 
 class SimpleEmitter {
   constructor() { this._map = new Map() }
@@ -83,6 +84,79 @@ class EngineRegistry {
         this.syncSystem.rebuildAllFrom3D()
       }
     }
+  }
+
+
+  // Сериализация проекта в JSON
+  serializeProject() {
+    const data = {
+      shapes: [],
+      unfoldings: []
+    }
+
+    for (const [shapeId, entity] of this.shapeSystem.entities) {
+      if (entity && entity.mesh) {
+        data.shapes.push({
+          id: shapeId,
+          type: entity.mesh.userData.shapeType || 'unknown',
+          params: { ...entity.mesh.userData.params }
+        })
+      }
+    }
+
+    for (const [unfoldId, entity] of this.unfoldSystem.entities) {
+      if (entity && entity.mesh) {
+        data.unfoldings.push({
+          id: unfoldId,
+          parentShapeId: entity.mesh.userData.parentShapeId,
+          unfoldParams: { ...entity.mesh.userData.unfoldParams }
+        })
+      }
+    }
+
+    return JSON.stringify(data)
+  }
+
+  // Десериализация проекта из JSON
+  deserializeProject(data) {
+
+    this.clearProject()
+
+    // распаковка shapes
+    if (data.shapes && Array.isArray(data.shapes)) {
+      for (const shapeData of data.shapes) {
+        const shape = ShapeRegistry.create(shapeData.type, shapeData.params)
+        const mesh = shape.createMesh()
+        this.engine3D.sceneSystem3D.add(mesh)
+        mesh.uuid = shapeData.id
+        this.shapeSystem.register(mesh)
+      }
+    }
+
+    // распаковка unfoldings
+    if (data.unfoldings && Array.isArray(data.unfoldings)) {
+      for (const unfoldData of data.unfoldings) {
+        const unfold = this.unfoldSystem.getById(unfoldData.id)
+        if (unfold) {
+          unfold.mesh.userData.unfoldParams = {
+            ...unfold.mesh.userData.unfoldParams,
+            ...unfoldData.unfoldParams
+          }
+          unfold.applyStoredTransform()
+        }
+      }
+    }
+
+    this.syncSystem.rebuildAllFrom3D()
+    return data
+  }
+
+
+  // Очистить проект
+  clearProject() {
+    this.historySystem.clear()
+    this.shapeSystem.entities.clear()
+    this.unfoldSystem.clear()
   }
 
 

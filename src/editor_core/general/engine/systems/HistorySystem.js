@@ -57,4 +57,9 @@ export class HistorySystem {
       }
     }
   }
+
+  clear() {
+    this.history = []
+    this.index = -1
+  }
 }
