@@ -67,6 +67,11 @@ export class SyncSystem {
           this.engine2D.selectionSystem2D.clear()
         }
         
+        // также убираем связанную «плоскость» (она не хранится в unfoldMeshes)
+        if (m.userData?.selectionPlane) {
+          try { this.engine2D.sceneSystem2D.remove(m.userData.selectionPlane) } catch (e) {}
+        }
+
         // Сохраняем параметры в кэш
         if (m.userData?.unfoldParams) {
           paramsArray.push({ ...m.userData.unfoldParams })
@@ -82,6 +87,18 @@ export class SyncSystem {
         this.unfoldParamsCache.set(uuid, paramsArray)
       }
     }
+
+    // Дополнительная страховка: удалим все оставшиеся плоскости на сцене
+    try {
+      this.engine2D.sceneSystem2D.unfoldObjects.traverse(obj => {
+        if (obj.userData?.isSelectionPlane) {
+          try { this.engine2D.sceneSystem2D.remove(obj) } catch (e) {}
+        }
+      })
+    } catch (e) {
+      // ignore
+    }
+
     this.trackedShapes.clear()
   }
 
@@ -133,6 +150,8 @@ export class SyncSystem {
         // Создаем и добавляем невидимую плоскость для лучшего выделения
         const selectionPlane = unfoldDetail.createInvisibleSelectionPlane()
         if (selectionPlane) {
+          // сохраняем ссылку рядом с мешем для дальнейшей очистки
+          unfoldDetail.mesh.userData.selectionPlane = selectionPlane
           this.engine2D.sceneSystem2D.add(selectionPlane)
         }
         

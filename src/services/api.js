@@ -29,7 +29,6 @@ export const projectsApi = {
         'Content-Type': 'application/json'
       }
     })
-    // backend returns the created project in response.data
     return response.data
   },
 

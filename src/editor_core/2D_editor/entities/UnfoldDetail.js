@@ -80,6 +80,10 @@ export class UnfoldDetail {
 
     // Сохраняем ссылку на плоскость
     this.selectionPlane = plane
+    // записываем также на сам меш для удобства удаления
+    if (this.mesh) {
+      this.mesh.userData.selectionPlane = plane
+    }
     return plane
   }
 }

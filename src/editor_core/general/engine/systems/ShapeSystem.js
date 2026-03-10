@@ -10,6 +10,14 @@ export class ShapeSystem {
 
   register(mesh) {
     if (!mesh || !mesh.uuid) return null
+    // если тот же экземпляр уже присутствует под другим ключом,
+    // удаляем старую запись (например после изменения mesh.uuid)
+    for (const [key, ent] of this.entities.entries()) {
+      if (ent.mesh === mesh && key !== mesh.uuid) {
+        this.entities.delete(key)
+        break
+      }
+    }
     const owner = mesh.userData.owner || null
     const ent = { id: mesh.uuid, mesh, owner }
     this.entities.set(mesh.uuid, ent)

@@ -127,8 +127,12 @@ class EngineRegistry {
       for (const shapeData of data.shapes) {
         const shape = ShapeRegistry.create(shapeData.type, shapeData.params)
         const mesh = shape.createMesh()
-        this.engine3D.sceneSystem3D.add(mesh)
+        // обязательно назначаем uuid перед добавлением в сцену,
+        // иначе SceneSystem3D.add зарегистрирует старый автосгенерированный id
         mesh.uuid = shapeData.id
+        this.engine3D.sceneSystem3D.add(mesh)
+        // явная регистрация остаётся допустимой, но
+        // ShapeSystem теперь удаляет возможный «старый» ключ
         this.shapeSystem.register(mesh)
       }
     }
@@ -163,8 +167,18 @@ class EngineRegistry {
       }
     }
 
-    // удалить все 2D-развёртки
+    // удалить все 2D-развёртки и связанные с ними «плоскости»
     if (this.engine2D && this.engine2D.sceneSystem2D) {
+      // сначала уберём управляющие плоскости, которые не хранятся в unfoldSystem
+      try {
+        this.engine2D.sceneSystem2D.unfoldObjects.traverse(obj => {
+          if (obj.userData?.isSelectionPlane) {
+            try { this.engine2D.sceneSystem2D.remove(obj) } catch (e) {}
+          }
+        })
+      } catch (e) {
+        // ничего
+      }
       for (const unfold of this.unfoldSystem.entities.values()) {
         if (unfold && unfold.mesh) {
           try { this.engine2D.sceneSystem2D.remove(unfold.mesh) } catch (e) {}
