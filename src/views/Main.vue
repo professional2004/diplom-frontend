@@ -6,17 +6,8 @@ import EditorLayout from '@/components/editor/EditorLayout.vue';
 <template>
   <h1>Главная страница</h1>
 
-  <p>3D-редактор</p>
-  <div class="editor-wrapper">
-    <EditorLayout/>      
-  </div>
-
 </template>
 
 
 <style scoped>
-.editor-wrapper {
-  width: 100%;
-  height: 80vh;
-}
 </style>

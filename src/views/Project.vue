@@ -91,13 +91,22 @@ const goBack = () => {
     </div>
 
     <div v-else>
-      <div style="position: absolute; top: 10px; left: 10px; z-index: 100;">
+      <div>
         <button @click="goBack">Назад к проектам</button>
         <button @click="saveProject">Сохранить проект</button>
         <h2>{{ project.name }}</h2>
       </div>
 
-      <EditorLayout />
+      <div class="editor-wrapper">
+        <EditorLayout/>      
+      </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.editor-wrapper {
+  width: 100%;
+  height: 80vh;
+}
+</style>
