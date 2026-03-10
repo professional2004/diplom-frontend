@@ -41,6 +41,7 @@ const deleteProject = async (project) => {
   if (!confirm(`Удалить проект "${project.name}"?`)) return;
   try {
     await projects.deleteProject(project.id);
+    await projects.fetchProjectsAndCategories();
     alert('Проект удалён');
   } catch (error) {
     alert('Ошибка удаления проекта: ' + error.message);
@@ -52,6 +53,7 @@ const renameProject = async (project) => {
   if (!newName || newName === project.name) return;
   try {
     await projects.renameProject(project.id, newName);
+    await projects.fetchProjectsAndCategories();
   } catch (error) {
     alert('Ошибка переименования: ' + error.message);
   }
@@ -68,6 +70,7 @@ const changeProjectCategory = async (project) => {
   if (!category || category.id === project.categoryId) return;
   try {
     await projects.changeProjectCategory(project.id, category.id);
+    await projects.fetchProjectsAndCategories();
   } catch (error) {
     alert('Ошибка изменения категории: ' + error.message);
   }
@@ -112,7 +115,12 @@ const createNewProject = async () => {
       categoryId: category.id,
       projectData: JSON.stringify({ shapes: [] }) // Пустой проект
     });
-    router.push(`/project/${newProject.id}`);
+    await projects.fetchProjectsAndCategories();
+    if (newProject && newProject.id) {
+      router.push(`/project/${newProject.id}`);
+    } else {
+      alert('Ошибка: не удалось получить ID нового проекта');
+    }
   } catch (error) {
     alert('Ошибка создания проекта: ' + error.message);
   }
