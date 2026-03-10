@@ -53,9 +53,13 @@ const renameProject = async (project) => {
   if (!newName || newName === project.name) return;
   try {
     await projects.renameProject(project.id, newName);
+  } catch (error) {
+    console.log('Ошибка переименования: ' + error.message);
+  }
+  try {
     await projects.fetchProjectsAndCategories();
   } catch (error) {
-    alert('Ошибка переименования: ' + error.message);
+    console.log('Ошибка перезагрузки проектов: ' + error.message);
   }
 };
 
@@ -94,35 +98,26 @@ const createNewProject = async () => {
   if (!name) return;
 
   const description = prompt('Введите описание проекта:');
-
-  // Выбрать категорию
-  if (projects.categories.length === 0) {
-    alert('Нет доступных категорий');
-    return;
-  }
-  const categoryOptions = projects.categories.map(c => c.name).join('\n');
-  const categoryName = prompt(`Выберите категорию:\n${categoryOptions}`);
-  const category = projects.categories.find(c => c.name === categoryName);
-  if (!category) {
-    alert('Категория не найдена');
-    return;
-  }
+  let project = null
 
   try {
     const newProject = await projects.createProject({
-      name,
-      description,
-      categoryId: category.id,
-      projectData: JSON.stringify({ shapes: [] }) // Пустой проект
+      name: name,
+      description: description
     });
-    await projects.fetchProjectsAndCategories();
-    if (newProject && newProject.id) {
-      router.push(`/project/${newProject.id}`);
-    } else {
-      alert('Ошибка: не удалось получить ID нового проекта');
-    }
+    project = newProject
   } catch (error) {
     alert('Ошибка создания проекта: ' + error.message);
+  }
+  try {
+    await projects.fetchProjectsAndCategories();
+  } catch (error) {
+    alert('Ошибка загрузки проектов: ' + error.message);
+  }
+  if (project && project.id) {
+    router.push(`/project/${project.id}`);
+  } else {
+    alert('Ошибка: не удалось получить ID нового проекта');
   }
 };
 </script>

@@ -20,8 +20,8 @@ export const projectsApi = {
   },
 
   // Создать новый проект
-  createProject(name, description) {
-    return api.post('/api/projects', {
+  async createProject(name, description) {
+    const response = await api.post('/api/projects', {
       name: String(name || ''),
       description: String(description || '')
     }, {
@@ -29,57 +29,63 @@ export const projectsApi = {
         'Content-Type': 'application/json'
       }
     })
+    return response
   },
 
   
-  saveProject(id, projectData, preview) {
-    return api.put(`/api/projects/${id}/save`, {
+  async saveProject(id, projectData, preview) {
+    const response = await api.put(`/api/projects/${id}/save`, {
       projectData: String(projectData || '{}'),
       preview: preview || null
     }, {
       headers: {'Content-Type': 'application/json'}
     })
+    return response
   },
 
   
-  renameProject(projectId, name) {
-    return api.put(`/api/projects/${projectId}/rename`, {
+  async renameProject(projectId, name) {
+    const response = await api.put(`/api/projects/${projectId}/rename`, {
       name: String(name || '')
     }, {
       headers: {
         'Content-Type': 'application/json'
       }
     })
+    return response.data
   },
 
   
-  changeProjectCategory(projectId, categoryId) {
-    return api.put(`/api/projects/${projectId}/category`, {
+  async changeProjectCategory(projectId, categoryId) {
+    const response = await api.put(`/api/projects/${projectId}/category`, {
       categoryId: Number(categoryId)
     }, {
       headers: {
         'Content-Type': 'application/json'
       }
     })
+    return response.data
   },
 
   
-  duplicateProject(projectId) {
-    return api.post(`/api/projects/${projectId}/duplicate`, {}, {
+  async duplicateProject(projectId) {
+    const response = await api.post(`/api/projects/${projectId}/duplicate`, {}, {
       headers: {
         'Content-Type': 'application/json'
       }
     })
+    return response.data
   },
 
 
-  deleteProject(projectId) {
-    return api.delete(`/api/projects/${projectId}`)
+  async deleteProject(projectId) {
+    const response = await api.delete(`/api/projects/${projectId}`)
+    return response.data
   },
 
   
-  createCategory(name, description) {
-    return api.post('/api/categories', {
+  async createCategory(name, description) {
+    const response = await api.post('/api/categories', {
       name: String(name || ''),
       description: String(description || '')
     }, {
@@ -87,6 +93,7 @@ export const projectsApi = {
         'Content-Type': 'application/json'
       }
     })
+    return response.data
   }
 }
 

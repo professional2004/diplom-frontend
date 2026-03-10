@@ -18,6 +18,8 @@ export const useProjectsStore = defineStore('projects', {
         const data = await projectsApi.getProjectsAndCategories()
         this.projects = data.projects || []
         this.categories = data.categories || []
+        console.log('this projects:', this.projects)
+        console.log('this categories:', this.categories)
       } catch (error) {
         console.error('Failed to fetch projects:', error)
         throw error
@@ -41,7 +43,7 @@ export const useProjectsStore = defineStore('projects', {
       }
     },
 
-    async createProject(name, description) {
+    async createProject(name, description = '') {
       try {
         const newProject = await projectsApi.createProject(name, description)
         this.projects.push(newProject)
@@ -79,17 +81,17 @@ export const useProjectsStore = defineStore('projects', {
       }
     },
 
-      async renameProject(projectId, name) {
+    async renameProject(projectId, name) {
       const notify = useNotificationStore()
       try {
         const { data } = await projectsApi.renameProject(projectId, name)
-        const index = this.projects.findIndex(p => p.id === projectId)
-        if (index !== -1) {
-          this.projects[index].name = data.name
-        }
-        if (this.currentProject && this.currentProject.id === projectId) {
-          this.currentProject.name = data.name
-        }
+        // const index = this.projects.findIndex(p => p.id === projectId)
+        // if (index !== -1) {
+        //   this.projects[index].name = data.name
+        // }
+        // if (this.currentProject && this.currentProject.id === projectId) {
+        //   this.currentProject.name = data.name
+        // }
         notify.show({type: 'success', message: 'Проект переименован'})
         return data
       } catch (error) {
