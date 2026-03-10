@@ -97,23 +97,22 @@ const createNewProject = async () => {
   const name = prompt('Введите название проекта:');
   if (!name) return;
 
-  const description = prompt('Введите описание проекта:');
-  let project = null
+  // prompt returns null if cancelled
+  const description = prompt('Введите описание проекта:') || '';
+  let project = null;
 
   try {
-    const newProject = await projects.createProject({
-      name: name,
-      description: description
-    });
-    project = newProject
+    project = await projects.createProject(name, description);
   } catch (error) {
     alert('Ошибка создания проекта: ' + error.message);
   }
+
   try {
     await projects.fetchProjectsAndCategories();
   } catch (error) {
     alert('Ошибка загрузки проектов: ' + error.message);
   }
+
   if (project && project.id) {
     router.push(`/project/${project.id}`);
   } else {
