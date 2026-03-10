@@ -112,11 +112,7 @@ const createNewProject = async () => {
       categoryId: category.id,
       projectData: JSON.stringify({ shapes: [] }) // Пустой проект
     });
-    if (newProject && newProject.id) {
-      router.push(`/project/${newProject.id}`);
-    } else {
-      alert('Ошибка создания проекта: ID не получен');
-    }
+    router.push(`/project/${newProject.id}`);
   } catch (error) {
     alert('Ошибка создания проекта: ' + error.message);
   }
@@ -156,3 +152,8 @@ const createNewProject = async () => {
   </div>
 </template>
 
+<style scoped>
+.project-card {
+  border: 1px solid #222222;
+}
+</style>
