@@ -1,7 +1,6 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router';
 import { useProjectsStore } from '@/stores/projectsStore';
-import { useEditorStore } from '@/stores/editorStore';
 import EditorLayout from '@/components/editor/EditorLayout.vue';
 import EngineRegistry from '@/editor_core/general/engine/EngineRegistry';
 import { onMounted, onUnmounted, ref, nextTick } from 'vue';
@@ -9,7 +8,6 @@ import { onMounted, onUnmounted, ref, nextTick } from 'vue';
 const route = useRoute();
 const router = useRouter();
 const projectStore = useProjectsStore();
-const editorStore = useEditorStore();
 
 const projectId = route.params.id;
 const isLoading = ref(true);

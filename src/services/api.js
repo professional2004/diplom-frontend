@@ -20,18 +20,18 @@ export const projectsApi = {
   },
 
   // Создать новый проект
-  async createProject(projectData) {
-    const response = await api.post('/api/projects', projectData)
-    return response.data
+  createProject(name, description) {
+    return api.post('/api/projects', {
+      name: String(name || ''),
+      description: String(description || '')
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
   },
 
-  // Обновить/сохранить проект (общий endpoint)
-  async updateProject(id, projectData) {
-    const response = await api.put(`/api/projects/${id}`, projectData)
-    return response.data
-  },
-
-  // альтернативный вариант (с поддержкой preview)
+  
   saveProject(id, projectData, preview) {
     return api.put(`/api/projects/${id}/save`, {
       projectData: String(projectData || '{}'),
@@ -41,10 +41,52 @@ export const projectsApi = {
     })
   },
 
-  // Удалить проект
-  async deleteProject(id) {
-    const response = await api.delete(`/api/projects/${id}`)
-    return response.data
+  
+  renameProject(projectId, name) {
+    return api.put(`/api/projects/${projectId}/rename`, {
+      name: String(name || '')
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+  },
+
+  
+  changeProjectCategory(projectId, categoryId) {
+    return api.put(`/api/projects/${projectId}/category`, {
+      categoryId: Number(categoryId)
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+  },
+
+  
+  duplicateProject(projectId) {
+    return api.post(`/api/projects/${projectId}/duplicate`, {}, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+  },
+
+
+  deleteProject(projectId) {
+    return api.delete(`/api/projects/${projectId}`)
+  },
+
+  
+  createCategory(name, description) {
+    return api.post('/api/categories', {
+      name: String(name || ''),
+      description: String(description || '')
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
   }
 }
 
