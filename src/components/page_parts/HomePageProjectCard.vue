@@ -1,34 +1,52 @@
 <script setup>
 import { ref, watch, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router';
+import { useProjectsStore } from '@/stores/projectsStore'
+import { useNotificationStore } from '@/stores/notificationsStore'
 
-// Определяем props
 const props = defineProps({
-  visible: {
-    type: Boolean,
-    default: false
-  },
-  project: {
-    type: Object,
-    default: null
-  }
+  visible: { type: Boolean, default: false },
+  project: { type: Object, default: null }
 })
 
-// Определяем emits
 const emit = defineEmits(['update:visible', 'close'])
 
-// Локальное состояние для анимации
+const router = useRouter();
+const projectsStore = useProjectsStore()
+const notificationStore = useNotificationStore()
+
+// Локальное состояние для анимации и видимости
 const show = ref(props.visible)
 
-// Следим за изменением props.visible и синхронизируем с show
+// Локальные копии данных проекта для редактирования
+const editedName = ref('')
+const editedDescription = ref('')
+const selectedCategoryId = ref(null)
+
+// Следим за изменением props.visible и синхронизируем show
 watch(() => props.visible, (val) => {
   show.value = val
   if (val) {
-    // При открытии добавляем обработчик клавиши Escape
     document.addEventListener('keydown', handleEscape)
+    // При открытии инициализируем поля данными из проекта
+    if (props.project) {
+      editedName.value = props.project.name || ''
+      editedDescription.value = props.project.description || ''
+      selectedCategoryId.value = props.project.categoryId || null
+    }
   } else {
     document.removeEventListener('keydown', handleEscape)
   }
 })
+
+// Следим за изменением проекта, когда модалка уже открыта
+watch(() => props.project, (newProject) => {
+  if (newProject) {
+    editedName.value = newProject.name || ''
+    editedDescription.value = newProject.description || ''
+    selectedCategoryId.value = newProject.categoryId || null
+  }
+}, { deep: true })
 
 // Закрытие модалки
 const close = () => {
@@ -41,18 +59,137 @@ const handleEscape = (e) => {
   if (e.key === 'Escape') close()
 }
 
-// Очищаем обработчик при размонтировании
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleEscape)
-})
-
-
+// Блокировка прокрутки body
 watch(show, (val) => {
   if (val) {
     document.body.classList.add('modal-open')
   } else {
     document.body.classList.remove('modal-open')
   }
+})
+
+const openProject = () => {
+  if (!props.project) return
+  router.push(`/project/${props.project.id}`);
+};
+
+
+const deleteProject = async () => {
+  if (!props.project) return
+  try {
+    await projectsStore.deleteProject(props.project.id);
+    notificationStore.show({type: 'success', message: 'Проект удален'})
+  } catch (error) {
+    notificationStore.show({type: 'error', message: 'Ошибка удаления проекта'})
+    console.log('Ошибка удаления проекта: ' + error.message);
+  }
+  try {
+    await projectsStore.fetchProjectsAndCategories();
+  } catch (error) {
+    console.log('Ошибка перезагрузки проектов: ' + error.message);
+  }
+  close()
+};
+
+
+const renameProject = async (project, newName) => {
+  if (!newName || newName === project.name) return;
+  try {
+    await projectsStore.renameProject(project.id, newName);
+    notificationStore.show({type: 'success', message: 'Проект переименован'})
+  } catch (error) {
+    notificationStore.show({type: 'error', message: 'Ошибка переименования проекта'})
+    console.log('Ошибка переименования: ' + error.message);
+  }
+  try {
+    await projectsStore.fetchProjectsAndCategories();
+  } catch (error) {
+    console.log('Ошибка перезагрузки проектов: ' + error.message);
+  }
+};
+
+
+const changeProjectCategory = async (project, categoryName) => {
+  const category = projectsStore.categories.find(c => c.name === categoryName);
+  if (!category || category.id === project.categoryId) return;
+  try {
+    await projectsStore.changeProjectCategory(project.id, category.id);
+    notificationStore.show({type: 'success', message: 'Категория проекта изменена'})
+  } catch (error) {
+    notificationStore.show({type: 'error', message: 'Ошибка изменения категории проекта'})
+    console.log('Ошибка изменения категории: ' + error.message);
+  }
+  try {
+    await projectsStore.fetchProjectsAndCategories();
+  } catch (error) {
+    console.log('Ошибка перезагрузки проектов: ' + error.message);
+  }
+};
+
+
+const changeProjectDescription = async (project, description) => {
+  try {
+    await projectsStore.changeProjectDescription(project.id, description);
+    notificationStore.show({type: 'success', message: 'Описание проекта изменено'})
+  } catch (error) {
+    notificationStore.show({type: 'error', message: 'Ошибка изменения описания проекта'})
+    console.log('Ошибка изменения описания проекта: ' + error.message);
+  }
+  try {
+    await projectsStore.fetchProjectsAndCategories();
+  } catch (error) {
+    console.log('Ошибка перезагрузки проектов: ' + error.message);
+  }
+};
+
+
+
+const duplicateProject = async () => {
+  if (!props.project) return
+  try {
+    await projectsStore.duplicateProject(props.project.id);
+    notificationStore.show({type: 'success', message: 'Проект дублирован'})
+  } catch (error) {
+    notificationStore.show({type: 'error', message: 'Ошибка дублирования проекта'})
+    console.log('Ошибка переименования: ' + error.message);
+  }
+  try {
+    await projectsStore.fetchProjectsAndCategories();
+  } catch (error) {
+    console.log('Ошибка перезагрузки проектов: ' + error.message);
+  }
+  close()
+};
+
+
+
+
+const saveChanges = async () => {
+  if (!props.project) return
+  try {
+    // Переименование, если изменилось название
+    if (editedName.value !== props.project.name) {
+      await renameProject(props.project, editedName.value)
+    }
+    // Метод обновления описания 
+    if (editedDescription.value !== props.project.decsription) {
+      await changeProjectDescription(props.project, editedDescription.value)
+    }
+    // Если изменилась категория
+    if (selectedCategoryId.value !== props.project.categoryId) {
+      await changeProjectCategory(props.project, selectedCategoryId.value)
+    }
+    notificationStore.show({type: 'success', message: 'Проект сохранен'})
+  } catch (error) {
+    notificationStore.show({type: 'error', message: 'Ошибка сохранения проекта'})
+    console.log('Ошибка: ' + error.message)
+  }
+  close()
+}
+
+// Очищаем обработчик при размонтировании
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleEscape)
 })
 </script>
 
@@ -64,22 +201,44 @@ watch(show, (val) => {
         <div class="modal-container">
           <header class="modal-header">
             <slot name="header">
-              <h3>{{ project?.name || 'Просмотр проекта' }}</h3>
+              <h3>Редактирование проекта</h3>
             </slot>
             <button class="close-btn" @click="close">&times;</button>
           </header>
           <main class="modal-content">
-            <div v-if="project">
-              <p><strong>Описание:</strong> {{ project.description }}</p>
-              <p><strong>Создан:</strong> {{ new Date(project.createdAt).toLocaleDateString() }}</p>
-              <!-- Добавьте другие поля, если нужно -->
+            <div v-if="project" class="edit-form">
+              <div class="form-group">
+                <label>Название</label>
+                <input v-model="editedName" type="text" />
+              </div>
+              <div class="form-group">
+                <label>Описание</label>
+                <textarea v-model="editedDescription" rows="3"></textarea>
+              </div>
+              <div class="form-group">
+                <label>Категория</label>
+                <select v-model="selectedCategoryId">
+                  <option :value="null">Без категории</option>
+                  <option 
+                    v-for="cat in projectsStore.categories" 
+                    :key="cat.id" 
+                    :value="cat.id"
+                  >
+                    {{ cat.name }}
+                  </option>
+                </select>
+              </div>
             </div>
             <div v-else>
               <p>Проект не выбран</p>
             </div>
           </main>
-          <footer v-if="$slots.footer" class="modal-footer">
-            <slot name="footer" />
+          <footer class="modal-footer">
+            <button class="btn-delete" @click="deleteProject">Удалить</button>
+            <button class="btn-save" @click="duplicateProject">Дублировать</button>
+            <button class="btn-save" @click="openProject">Открыть</button>
+            <button class="btn-save" @click="saveChanges">Сохранить</button>
+            <button  @click="close">Закрыть</button>
           </footer>
         </div>
       </div>
@@ -157,5 +316,58 @@ watch(show, (val) => {
 .modal-enter-from .modal-container,
 .modal-leave-to .modal-container {
   transform: scale(0.9);
+}
+
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.form-group label {
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: inherit;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.btn-delete {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-save {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
 }
 </style>

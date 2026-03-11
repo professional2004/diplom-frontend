@@ -68,6 +68,18 @@ export const projectsApi = {
   },
 
   
+  async changeProjectDescription(projectId, description) {
+    const response = await api.put(`/api/projects/${projectId}/description`, {
+      description: String(description || '')
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    return response.data
+  },
+
+  
   async duplicateProject(projectId) {
     const response = await api.post(`/api/projects/${projectId}/duplicate`, {}, {
       headers: {
@@ -84,10 +96,9 @@ export const projectsApi = {
   },
 
   
-  async createCategory(name, description) {
+  async createCategory(name) {
     const response = await api.post('/api/categories', {
-      name: String(name || ''),
-      description: String(description || '')
+      name: String(name || '')
     }, {
       headers: {
         'Content-Type': 'application/json'
