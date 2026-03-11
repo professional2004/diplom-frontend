@@ -1,9 +1,10 @@
 <script setup>
-import { onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useProjectsStore } from '@/stores/projectsStore';
 import PageHeader from '@/components/page_parts/PageHeader.vue';
+import HomePageProjectCard from '@/components/page_parts/HomePageProjectCard.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -120,6 +121,23 @@ const createNewProject = async () => {
     alert('Ошибка: не удалось получить ID нового проекта');
   }
 };
+
+
+
+// Модалка
+
+const selectedProject = ref(null);
+const showModal = ref(false)
+
+const openProjectModal = (project) => {
+  selectedProject.value = project;
+  showModal.value = true;
+};
+
+const onModalClose = () => {
+  selectedProject.value = null;
+  console.log('Модальное окно закрыто');
+};
 </script>
 
 
@@ -137,13 +155,13 @@ const createNewProject = async () => {
 
     <div v-if="projectsStore.isLoading">Загрузка проектов...</div>
 
-    <div v-else-if="projectsStore.projects.length === 0">
+    <div class="projects" v-else-if="projectsStore.projects.length === 0">
       <p>У вас нет проектов. Создайте новый!</p>
     </div>
 
-    <div v-else>
-      <div v-for="project in projectsStore.projects" :key="project.id" class="project-card">
-        <div @click="openProject(project)" style="cursor: pointer;">
+    <div class="projects" v-else>
+      <div v-for="project in projectsStore.projects" :key="project.id" class="project-card" @click="openProjectModal(project)">
+        <div>
           <h3>{{ project.name }}</h3>
           <p>{{ project.description }}</p>
           <small>Создан: {{ new Date(project.createdAt).toLocaleDateString() }}</small>
@@ -152,16 +170,31 @@ const createNewProject = async () => {
           <button @click="renameProject(project)">Переименовать</button>
           <button @click="changeProjectCategory(project)">Изменить категорию</button>
           <button @click="deleteProject(project)">Удалить</button>
+          <button @click="openProject(project)">Открыть</button>
         </div>
       </div>
     </div>
+
+    <HomePageProjectCard v-model:visible="showModal" :project="selectedProject" @close="onModalClose">
+      <template #footer>
+        <button @click="showModal = false">Закрыть</button>
+      </template>
+    </HomePageProjectCard>
   </div>
 </template>
 
 <style scoped>
 @import '@/styles/main.css'; 
 
+.projects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
 .project-card {
   border: 1px solid #222222;
+  border-radius: 10px;
+  cursor: pointer;
 }
 </style>

@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/authStore';
 const router = useRouter();
 const authStore = useAuthStore();
 
+
 const toPageMain = () => {
   router.push(`/`);
 }
@@ -28,11 +29,11 @@ const register = () => {
 const toHomePage = () => {
   router.push(`/app`);
 }
+
 </script>
 
 <template>
   <div> 
-
     <div class="header -user" v-if ="authStore.user">
       <div class="wrapper">
         <img class="image -logo" src="../../materials/images/logo.svg" @click="toPageMain"></img>

@@ -7,6 +7,7 @@ import EngineRegistry from '@/editor_core/general/engine/EngineRegistry';
 import Scene3DViewport from '@/components/editor/3D_scene/Scene3DViewport.vue'
 import Scene2DViewport from '@/components/editor/2D_scene/Scene2DViewport.vue'
 import ShapeChangeBoard from '@/components/editor/3D_toolbar/3DToolbarBoard.vue'
+import PageHeader from '@/components/page_parts/PageHeader.vue';
 
 const route = useRoute();
 const router = useRouter();
