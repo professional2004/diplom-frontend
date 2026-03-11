@@ -6,7 +6,7 @@ import { useProjectsStore } from '@/stores/projectsStore';
 import EngineRegistry from '@/editor_core/general/engine/EngineRegistry';
 import Scene3DViewport from '@/components/editor/3D_scene/Scene3DViewport.vue'
 import Scene2DViewport from '@/components/editor/2D_scene/Scene2DViewport.vue'
-import ShapeChangeBoard from '@/components/editor/toolbar_board/ShapeChangeBoard.vue'
+import ShapeChangeBoard from '@/components/editor/3D_toolbar/3DToolbarBoard.vue'
 
 const route = useRoute();
 const router = useRouter();
@@ -17,6 +17,7 @@ const projectId = route.params.id;
 const isLoading = ref(true);
 const project = ref(null);
 const projectData = ref(null);
+const openedEditorSection = ref('project');
 
 function applyProjectData(data) {
   if (data && data.shapes) {
@@ -46,6 +47,7 @@ onMounted(async () => {
       if (typeof raw === 'string') {
         try {
           projectData.value = JSON.parse(raw);
+          editorStore.editorSettings.openSection = 'project'
         } catch (e) {
           console.warn('Project.vue: не удалось распарсить projectData, используем пустой проект', e);
           projectData.value = null;
@@ -110,41 +112,49 @@ const hasSelection = computed(() => {
       </div>
 
       <div class="project-menu">
-        <input type="radio" id="radio-project-menu-project" name="radio-project-menu" checked>
-        <label for="radio-project-menu-project" class="button">Проект</label>
-
-        <input type="radio" id="radio-project-menu-unfoldings" name="radio-project-menu">
-        <label for="radio-project-menu-unfoldings" class="button">Развертка</label>
-
-        <input type="radio" id="radio-project-menu-about" name="radio-project-menu">
-        <label for="radio-project-menu-about" class="button">О проекте</label>
-
-        <input type="radio" id="radio-project-menu-help" name="radio-project-menu">
-        <label for="radio-project-menu-help" class="button">Помощь</label>
+        <label><input type="radio" value="project" name="radio-project-menu" v-model="openedEditorSection" checked/> Проект</label>
+        <label><input type="radio" value="unfoldings" name="radio-project-menu" v-model="openedEditorSection"/> Развертка</label>
+        <label><input type="radio" value="about" name="radio-project-menu" v-model="openedEditorSection"/> О проекте</label>
+        <label><input type="radio" value="help" name="radio-project-menu" v-model="openedEditorSection"/> Помощь</label>
       </div>
 
-      <div class="editor-menu">
-        <button :disabled="!hasSelection" @click="editorStore.deleteShape" title="Delete (Del)">Delete</button>
-        <button :disabled="!editorStore.canUndo" @click="editorStore.undo" title="Undo (Ctrl+Z)">Undo</button>
-        <button :disabled="!editorStore.canRedo" @click="editorStore.redo" title="Redo (Ctrl+Shift+Z)">Redo</button>
-        <button @click="editorStore.addShape('conical')">Add Conical Surface</button>
-        <button @click="editorStore.addShape('cylindrical')">Add Cylindrical Surface</button>
-        <button @click="editorStore.addShape('flat')">Add Flat Surface</button>
-      </div>
 
-      <div class="editor">
-        <div class="wrapper">
-          <Scene3DViewport class="scene-layer" />
+
+      <div class="section -project" v-show="openedEditorSection === 'project'">
+        <div class="editor-menu">
+          <button :disabled="!hasSelection" @click="editorStore.deleteShape" title="Delete (Del)">Delete</button>
+          <button :disabled="!editorStore.canUndo" @click="editorStore.undo" title="Undo (Ctrl+Z)">Undo</button>
+          <button :disabled="!editorStore.canRedo" @click="editorStore.redo" title="Redo (Ctrl+Shift+Z)">Redo</button>
+          <button @click="editorStore.addShape('conical')">Add Conical Surface</button>
+          <button @click="editorStore.addShape('cylindrical')">Add Cylindrical Surface</button>
+          <button @click="editorStore.addShape('flat')">Add Flat Surface</button>
         </div>
-        <div class="wrapper">
-          <Scene2DViewport class="scene-layer" />
-        </div>
-        <div class="wrapper scrolled">
-          <div class="ui-layer" v-if="editorStore.selectedShape">
-            <ShapeChangeBoard />
+        <div class="wrapper -horizontal-layout">
+          <div class="wrapper">
+            <Scene3DViewport class="scene-layer"/>
           </div>
-        </div>   
+          <div class="wrapper -scrollable">
+            <div v-if="editorStore.selectedShape">
+              <ShapeChangeBoard />
+            </div>
+          </div>            
+        </div>
       </div>
+
+      <div class="section -unfoldings" v-show="openedEditorSection === 'unfoldings'">
+        <div class="wrapper">
+          <Scene2DViewport class="scene-layer"/>
+        </div>
+      </div>
+
+      <div class="section -about" v-show="openedEditorSection === 'about'">
+          о проекте
+      </div>
+
+      <div class="section -help" v-show="openedEditorSection === 'help'">
+          помощь
+      </div>
+
     </div>
   </div>
 </template>
@@ -181,29 +191,39 @@ const hasSelection = computed(() => {
   height: 80px;
 }
 
-/* editor-menu */
-.editor-menu {
-  height: 80px;
-}
+/* sections */
 
-.editor {
+.section {
   position: relative;
   width: 100%;
-  height: calc(100vh - 60px - 80px - 80px);
+  height: calc(100vh - 60px - 80px);
   display: flex;
+  flex-direction: column;
 }
 
-.editor .wrapper {
+.section .wrapper {
   position: relative;
   width: 100%;
   height: 100%;
   overflow: hidden;
   min-width: 0;
   min-height: 0;
-  border: 1px solid #222222;
 }
 
-.editor canvas {
+.section .wrapper.-horizontal-layout {
+  display: flex;
+}
+
+.section .wrapper.-scrollable {
+  overflow-y: auto;
+}
+
+
+.section.-project .editor-menu {
+  height: 80px;
+}
+
+.section canvas {
   display: block;
   width: 100% !important;
   height: 100% !important;

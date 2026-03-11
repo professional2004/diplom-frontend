@@ -6,6 +6,7 @@ import { UpdateShapeCommand } from '@/editor_core/3D_editor/commands/UpdateShape
 
 export const useEditorStore = defineStore('editor', {
   state: () => ({
+    editorSettings: {},
     canUndo: false,
     canRedo: false,
     // храним только uuid выбранной фигуры; сам объект хранится в ShapeSystem

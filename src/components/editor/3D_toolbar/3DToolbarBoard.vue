@@ -133,7 +133,7 @@ const applyChanges = () => {
 
         <template v-else-if="paramDef.type === 'object'">
           <div v-if="paramKey === 'apex'" class="vector-inputs">
-             <div v-for="n in 3" :key="n" class="vec-coord">
+            <div v-for="n in 3" :key="n" class="vec-coord">
                 <span>{{ ['X','Y','Z'][n-1] }}:</span>
                 <input 
                   type="number" 
@@ -141,7 +141,7 @@ const applyChanges = () => {
                   step="0.1" 
                   @input="markAsChanged"
                 />
-             </div>
+            </div>
           </div>
           
           <Polyline2DEditor 
@@ -186,13 +186,14 @@ const applyChanges = () => {
     <div v-else class="no-selection">
       Выберите фигуру на сцене
     </div>
-  </div>
+  </div>  
+
 </template>
 
 
 
 <style scoped>
-.shape-board { padding: 15px; background: #fff; height: 100%; display: flex; flex-direction: column; overflow-y: auto; }
+.shape-board { min-height: 100%; height: fit-content; display: flex; flex-direction: column; }
 .board-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .apply-btn { 
   padding: 8px 12px; background: #eee; border: 1px solid #ccc; cursor: pointer; border-radius: 4px; 
