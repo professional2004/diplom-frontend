@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useEditorStore } from '@/stores/editorStore'
+import ToolbarPanel2D from '@/components/editor/panels/ToolbarPanel2D.vue'
 
 const containerRef = ref(null)
 const store = useEditorStore()
@@ -12,28 +13,19 @@ onMounted(() => {
 </script>
 
 <template>
-  <div ref="containerRef" class="unfold-viewport"></div>
+  <div class="scene2d-viewport">
+    <div ref="containerRef" class="viewport"></div>
+    <div class="ui-layer">
+      <ToolbarPanel2D />
+    </div>
+  </div>
 </template>
 
 <style scoped>
-.unfold-viewport { 
+.viewport { 
   width: 100%;
   height: 100%; 
-  background: #f0f0f0; 
-  border-left: 2px solid #ddd;
-  position: relative;
   overflow: hidden;
-  cursor: default;
-}
-.overlay-info {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 11px;
-  color: #666;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  pointer-events: none;
 }
 
 </style>

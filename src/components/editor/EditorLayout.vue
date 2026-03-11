@@ -45,7 +45,7 @@ const store = useEditorStore()
 
 
 <style scoped>
-/* @import './all.css'; */
+@import '@/styles/main.css'; 
 
 
 .vertical-layout {

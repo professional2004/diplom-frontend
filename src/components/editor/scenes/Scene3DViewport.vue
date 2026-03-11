@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useEditorStore } from '@/stores/editorStore'
+import ViewCubeGizmo from '@/components/editor/utils/ViewCubeGizmo.vue'
+import ToolbarPanel3D from '@/components/editor/panels/ToolbarPanel3D.vue'
 
 const canvasRef = ref(null)
 const store = useEditorStore()
@@ -13,7 +15,15 @@ onMounted(() => {
 </script>
 
 <template>
-  <div ref="canvasRef" class="viewport"></div>
+  <div class="scene3d-viewport">
+    <div ref="canvasRef" class="viewport"></div>
+    <div class="cube-wrapper ui-layer">
+      <ViewCubeGizmo />
+    </div>
+    <div class="ui-layer">
+      <ToolbarPanel3D />
+    </div>
+  </div>
 </template>
 
 <style scoped>
