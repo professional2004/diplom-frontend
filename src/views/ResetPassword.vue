@@ -1,9 +1,10 @@
 <script setup>
 import { ref } from 'vue'
 import { useRoute } from 'vue-router'
-import api from '@/services/api'
 import router from '@/router'
+import api from '@/services/api'
 import { useNotificationStore } from '@/stores/notificationsStore'
+import PageHeader from '@/components/page_parts/PageHeader.vue';
 
 const password = ref('')
 const route = useRoute()
@@ -36,6 +37,7 @@ async function handleResetPassword() {
 
 
 <template>
+  <PageHeader/>
   <h1>Новый пароль</h1>
 
   <label for="input-password">Введите новый пароль пароль</label>

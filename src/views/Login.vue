@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
+import PageHeader from '@/components/page_parts/PageHeader.vue';
 
 const email = ref('');
 const password = ref('');
@@ -25,6 +26,7 @@ const handleLogin = async () => {
 
 <template>
   <div>
+    <PageHeader/>
     <h1>Авторизация</h1>
     <label for="input-email">Введите email</label>
     <input v-model="email" id="input-email" type="email">
