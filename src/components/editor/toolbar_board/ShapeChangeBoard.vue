@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useEditorStore } from '@/stores/editorStore'
-import Polyline2DEditor from '../utils/Polyline2DEditor.vue'
+import Polyline2DEditor from './Polyline2DEditor.vue'
 
 const editorStore = useEditorStore()
 const hasUnsavedChanges = ref(false)

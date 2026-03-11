@@ -1,13 +1,12 @@
 <script setup>
-import { onMounted, onUnmounted, ref, nextTick } from 'vue';
+import { onMounted, onUnmounted, ref, nextTick, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useEditorStore } from '@/stores/editorStore'
 import { useProjectsStore } from '@/stores/projectsStore';
 import EngineRegistry from '@/editor_core/general/engine/EngineRegistry';
-import Scene3DViewport from '@/components/editor/scenes/Scene3DViewport.vue'
-import Scene2DViewport from '@/components/editor/scenes/Scene2DViewport.vue'
-import ShapeChangeBoard from '@/components/editor/boards/ShapeChangeBoard.vue' 
-import ToolbarBoard from '@/components/editor/boards/ToolbarBoard.vue'
+import Scene3DViewport from '@/components/editor/3D_scene/Scene3DViewport.vue'
+import Scene2DViewport from '@/components/editor/2D_scene/Scene2DViewport.vue'
+import ShapeChangeBoard from '@/components/editor/toolbar_board/ShapeChangeBoard.vue'
 
 const route = useRoute();
 const router = useRouter();
@@ -85,6 +84,11 @@ const saveProject = async () => {
 const goBack = () => {
   router.push('/app');
 };
+
+// Вычисляемое свойство для проверки наличия выбранной фигуры
+const hasSelection = computed(() => {
+  return editorStore.selectedShape !== null
+})
 </script>
 
 <template>
@@ -120,7 +124,12 @@ const goBack = () => {
       </div>
 
       <div class="editor-menu">
-        <ToolbarBoard class="ui-layer" />
+        <button :disabled="!hasSelection" @click="editorStore.deleteShape" title="Delete (Del)">Delete</button>
+        <button :disabled="!editorStore.canUndo" @click="editorStore.undo" title="Undo (Ctrl+Z)">Undo</button>
+        <button :disabled="!editorStore.canRedo" @click="editorStore.redo" title="Redo (Ctrl+Shift+Z)">Redo</button>
+        <button @click="editorStore.addShape('conical')">Add Conical Surface</button>
+        <button @click="editorStore.addShape('cylindrical')">Add Cylindrical Surface</button>
+        <button @click="editorStore.addShape('flat')">Add Flat Surface</button>
       </div>
 
       <div class="editor">

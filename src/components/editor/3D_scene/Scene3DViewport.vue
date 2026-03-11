@@ -1,8 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useEditorStore } from '@/stores/editorStore'
-import ViewCubeGizmo from '@/components/editor/utils/ViewCubeGizmo.vue'
-import ToolbarPanel3D from '@/components/editor/panels/ToolbarPanel3D.vue'
+import ViewCubeGizmo from '@/components/editor/3D_scene/ViewCubeGizmo.vue'
+import ToolbarPanel3D from '@/components/editor/3D_scene/ToolbarPanel3D.vue'
 
 const canvasRef = ref(null)
 const store = useEditorStore()

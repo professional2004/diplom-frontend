@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useEditorStore } from '@/stores/editorStore'
-import ToolbarPanel2D from '@/components/editor/panels/ToolbarPanel2D.vue'
+import ToolbarPanel2D from '@/components/editor/2D_scene/ToolbarPanel2D.vue'
 
 const containerRef = ref(null)
 const store = useEditorStore()
