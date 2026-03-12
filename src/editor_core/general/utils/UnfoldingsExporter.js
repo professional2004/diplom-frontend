@@ -98,20 +98,30 @@ export class UnfoldingsExporter {
     });
 
     layout.parts.forEach(part => {
-      // Рисуем контур
+      // Рисуем контур как последовательность линий
       doc.setDrawColor(0);
       doc.setLineWidth(0.5);
-      const poly = part.polygon.map(p => [p.x - layout.offsetX, layout.height - (p.y - layout.offsetY)]);
-      doc.polygon(poly, 'S');
+      const pts = part.polygon.map(p => ({
+        x: p.x - layout.offsetX,
+        y: layout.height - (p.y - layout.offsetY)
+      }));
+      if (pts.length > 1) {
+        for (let i = 0; i < pts.length; i++) {
+          const a = pts[i];
+          const b = pts[(i + 1) % pts.length];
+          doc.line(a.x, a.y, b.x, b.y);
+        }
+      }
 
       // Рисуем линии сгиба
       doc.setDrawColor(100, 100, 255);
       doc.setLineWidth(0.2);
       part.foldLines.forEach(l => {
-        doc.line(
-          l.start.x - layout.offsetX, layout.height - (l.start.y - layout.offsetY),
-          l.end.x - layout.offsetX, layout.height - (l.end.y - layout.offsetY)
-        );
+        const x1 = l.start.x - layout.offsetX;
+        const y1 = layout.height - (l.start.y - layout.offsetY);
+        const x2 = l.end.x - layout.offsetX;
+        const y2 = layout.height - (l.end.y - layout.offsetY);
+        doc.line(x1, y1, x2, y2);
       });
     });
 
