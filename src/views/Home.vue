@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useProjectsStore } from '@/stores/projectsStore';
@@ -74,6 +74,16 @@ const createNewProject = async () => {
 };
 
 
+// для отображения категорий проектов
+
+const categoryNames = computed(() => {
+  const map = {};
+  projectsStore.categories.forEach(category => {
+    map[category.id] = category.name;
+  });
+  return map;
+})
+
 
 // Модалка
 
@@ -138,6 +148,7 @@ const onModalClose = () => {
           <div>
             <h3>{{ project.name }}</h3>
             <p>{{ project.description }}</p>
+            <p>Категория: {{ categoryNames[project.categoryId] || '(нет категории)' }}</p>
             <small>Создан: {{ new Date(project.createdAt).toLocaleDateString() }}</small><br>
             <small>Изменен: {{ new Date(project.updatedAt).toLocaleDateString() }}</small>
           </div>

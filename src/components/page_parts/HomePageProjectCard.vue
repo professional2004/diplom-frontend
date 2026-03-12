@@ -109,9 +109,12 @@ const renameProject = async (project, newName) => {
 };
 
 
-const changeProjectCategory = async (project, categoryName) => {
-  const category = projectsStore.categories.find(c => c.name === categoryName);
-  if (!category || category.id === project.categoryId) return;
+const changeProjectCategory = async (project, categoryId) => {
+  const category = projectsStore.categories.find(c => c.id === categoryId);
+  if (!category) {
+    notificationStore.show({type: 'error', message: 'Нет категории с таким ID!'})
+    return;
+  }
   try {
     await projectsStore.changeProjectCategory(project.id, category.id);
     notificationStore.show({type: 'success', message: 'Категория проекта изменена'})
@@ -218,7 +221,6 @@ onUnmounted(() => {
               <div class="form-group">
                 <label>Категория</label>
                 <select v-model="selectedCategoryId">
-                  <option :value="null">Без категории</option>
                   <option 
                     v-for="cat in projectsStore.categories" 
                     :key="cat.id" 
