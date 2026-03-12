@@ -8,6 +8,7 @@ import EngineRegistry from '@/editor_core/general/engine/EngineRegistry';
 import Scene3DViewport from '@/components/editor/3D_scene/Scene3DViewport.vue'
 import Scene2DViewport from '@/components/editor/2D_scene/Scene2DViewport.vue'
 import ShapeChangeBoard from '@/components/editor/3D_toolbar/3DToolbarBoard.vue'
+import { PreviewGenerator } from '@/editor_core/general/utils/PreviewGenerator'
 
 const route = useRoute();
 const router = useRouter();
@@ -78,7 +79,10 @@ onUnmounted(() => {
 const saveProject = async () => {
   try {
     const projectData = EngineRegistry.serializeProject();
-    const preview = null;
+    // генерация превью
+    const sceneSystem = EngineRegistry.engine3D?.sceneSystem3D;
+    const preview = sceneSystem ? PreviewGenerator.generate(sceneSystem) : null;
+    // сохранение на бэкенде
     await projectStore.saveProject(projectId, projectData, preview);
     notificationStore.show({type: 'success', message: 'Проект сохранен'})
   } catch (error) {

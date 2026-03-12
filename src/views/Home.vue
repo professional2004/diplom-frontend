@@ -123,8 +123,18 @@ const onModalClose = () => {
       <div class="projects" v-if="projectsStore.projects.length === 0">
         <p>У вас нет проектов. Создайте новый!</p>
       </div>
+
       <div class="projects" v-else>
         <div v-for="project in projectsStore.projects" :key="project.id" class="project-card" @click="openProjectModal(project)">
+          <div class="project-preview">
+            <img 
+              v-if="project.preview" 
+              :src="'data:image/png;base64,' + project.preview" 
+              alt="Превью сцены" 
+              class="preview-img"
+            />
+            <div v-else class="no-preview">Нет превью</div>
+          </div> 
           <div>
             <h3>{{ project.name }}</h3>
             <p>{{ project.description }}</p>
@@ -159,5 +169,22 @@ const onModalClose = () => {
   border: 1px solid #222222;
   border-radius: 10px;
   cursor: pointer;
+}
+
+.preview-img {
+  width: 100%;
+  height: 150px;
+  object-fit: contain; /* или cover, в зависимости от желаемого дизайна */
+  background-color: #f8f9fa; /* светлый фон, так как PNG прозрачный */
+  border-radius: 4px;
+}
+.no-preview {
+  width: 100%;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e9ecef;
+  color: #6c757d;
 }
 </style>
