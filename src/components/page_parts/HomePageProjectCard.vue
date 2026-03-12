@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router';
+import { useEditorStore } from '@/stores/editorStore'
 import { useProjectsStore } from '@/stores/projectsStore'
 import { useNotificationStore } from '@/stores/notificationsStore'
 
@@ -12,6 +13,7 @@ const props = defineProps({
 const emit = defineEmits(['update:visible', 'close'])
 
 const router = useRouter();
+const editorStore = useEditorStore()
 const projectsStore = useProjectsStore()
 const notificationStore = useNotificationStore()
 
@@ -190,6 +192,16 @@ const saveChanges = async () => {
   close()
 }
 
+// экспорт лекал
+
+const exportSVG = () => {
+  editorStore.exportSVG()
+};
+
+const exportPDF = () => {
+  editorStore.exportPDF()
+};
+
 // Очищаем обработчик при размонтировании
 onUnmounted(() => {
   document.removeEventListener('keydown', handleEscape)
@@ -240,6 +252,8 @@ onUnmounted(() => {
             <button class="btn-save" @click="duplicateProject">Дублировать</button>
             <button class="btn-save" @click="openProject">Открыть</button>
             <button class="btn-save" @click="saveChanges">Сохранить</button>
+            <button class="btn-save" @click="exportSVG">Экспортировать SVG</button>
+            <button class="btn-save" @click="exportPDF">Экспортировать PDF</button>
             <button  @click="close">Закрыть</button>
           </footer>
         </div>
@@ -265,7 +279,7 @@ onUnmounted(() => {
 .modal-container {
   background: white;
   border-radius: 8px;
-  max-width: 500px;
+  max-width: 800px;
   width: 90%;
   max-height: 80vh;
   overflow-y: auto;

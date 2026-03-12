@@ -3,6 +3,7 @@ import EngineRegistry from '@/editor_core/general/engine/EngineRegistry'
 import { AddShapeCommand } from '@/editor_core/3D_editor/commands/AddShapeCommand'
 import { DeleteShapeCommand } from '@/editor_core/3D_editor/commands/DeleteShapeCommand'
 import { UpdateShapeCommand } from '@/editor_core/3D_editor/commands/UpdateShapeCommand'
+import { UnfoldingsExporter } from '@/editor_core/general/utils/UnfoldingsExporter'
 
 export const useEditorStore = defineStore('editor', {
   state: () => ({
@@ -117,6 +118,22 @@ export const useEditorStore = defineStore('editor', {
       EngineRegistry.executeCommand(cmd)
       // selectedShapeParams обновится при событии params:changed
     },
+
+
+    // экспорт лекал
+
+    exportSVG() {
+      const engine2D = EngineRegistry.engine2D;
+      const unfoldingsExporter = new UnfoldingsExporter(engine2D.sceneSystem2D)
+      unfoldingsExporter.exportToSVG();
+    },
+
+    exportPDF() {
+      const engine2D = EngineRegistry.engine2D;
+      const unfoldingsExporter = new UnfoldingsExporter(engine2D.sceneSystem2D)
+      unfoldingsExporter.exportToPDF();
+    },
+
 
     undo() {
       EngineRegistry.historySystem.undo()

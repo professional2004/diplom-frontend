@@ -100,6 +100,23 @@ export class UnfoldTextureGenerator {
       side: THREE.DoubleSide
     })
 
-    return new THREE.Mesh(geometry, material)
+    // Сначала создаем объект меша в переменную
+    const mesh = new THREE.Mesh(geometry, material)
+
+    // --- ДОБАВЛЯЕМ ДАННЫЕ ДЛЯ ЭКСПОРТЕРА ---
+    // Устанавливаем флаг, по которому UnfoldingsExporter найдет этот меш
+    mesh.userData.isUnfoldPart = true 
+    
+    // Сохраняем чистые векторные данные (координаты точек), 
+    // чтобы PDF и SVG были точными, а не просто картинкой
+    mesh.userData.exportData = {
+      polygon: polygon.map(p => ({ x: p.x, y: p.y })),
+      foldLines: foldLines.map(line => ({
+        start: { x: line.start.x, y: line.start.y },
+        end: { x: line.end.x, y: line.end.y }
+      }))
+    }
+
+    return mesh
   }
 }
