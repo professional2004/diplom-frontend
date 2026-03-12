@@ -1,4 +1,6 @@
+import { UnfoldTextureGenerator } from '@/editor_core/2D_editor/utils/UnfoldTextureGenerator'
 import * as THREE from 'three'
+
 
 export class ConicalSurfaceShape {
   constructor(params = {}) {
@@ -207,19 +209,27 @@ export class ConicalSurfaceShape {
   }
 
   createUnfold2D() {
-    const group = new THREE.Group()
-    const { P2D } = this._computeUnroll()
-    const mat = this.getLineMaterial()
-
     const polygonRaw = this.params.polygon || this.defaultParams.polygon
-    if (polygonRaw.length >= 3) {
-      const points = polygonRaw.map(p => new THREE.Vector3(p[0], p[1], 0))
-      points.push(points[0].clone())
-      const geo = new THREE.BufferGeometry().setFromPoints(points)
-      group.add(new THREE.Line(geo, mat))
+    if (!polygonRaw || polygonRaw.length < 3) return new THREE.Mesh()
+
+    const polygon = polygonRaw.map(p => new THREE.Vector2(p[0], p[1]))
+    const { P2D } = this._computeUnroll()
+
+    const foldLines = []
+    
+    // Определяем максимальный радиус для отрисовки лучей сгиба
+    let maxDist = 0
+    polygon.forEach(p => { maxDist = Math.max(maxDist, p.length()) })
+
+    for (let j = 1; j < P2D.length - 1; j++) {
+      const rayDir = P2D[j].clone().normalize()
+      foldLines.push({
+        start: new THREE.Vector2(0, 0),
+        end: rayDir.multiplyScalar(maxDist * 1.5) // Задаем длину с запасом, ShapeGeometry сама обрежет лишнее
+      })
     }
 
-    return group
+    return UnfoldTextureGenerator.createMeshWithTexture(polygon, foldLines)
   }
 
 

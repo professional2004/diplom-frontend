@@ -133,6 +133,9 @@ const hasSelection = computed(() => {
           <div class="wrapper">
             <Scene3DViewport class="scene-layer"/>
           </div>
+          <div class="wrapper">
+            <Scene2DViewport class="scene-layer"/>
+          </div>
           <div class="wrapper -scrollable">
             <div v-if="editorStore.selectedShape">
               <ShapeChangeBoard />
@@ -143,9 +146,9 @@ const hasSelection = computed(() => {
 
       <div class="section -unfoldings" v-show="openedEditorSection === 'unfoldings'">
         <div class="wrapper -horizontal-layout">
-          <div class="wrapper">
+          <!-- <div class="wrapper">
             <Scene2DViewport class="scene-layer"/>
-          </div>
+          </div> -->
           <div class="wrapper"></div>          
         </div>
       </div>

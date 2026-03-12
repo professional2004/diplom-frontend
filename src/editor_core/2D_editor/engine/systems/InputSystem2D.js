@@ -6,8 +6,6 @@ export class InputSystem2D {
   constructor(container) {
     this.container = container
     this.raycaster = new THREE.Raycaster()
-    // Уменьшиваем толщину выделения для Line объектов
-    this.raycaster.params.Line.threshold = 0.01
     
     this.mouse = new THREE.Vector2()
     this.prevMouse = new THREE.Vector2()
@@ -45,21 +43,12 @@ export class InputSystem2D {
   getIntersectedObject() {
     this.raycaster.setFromCamera(this.mouse, this.engine2D.cameraSystem2D.camera)
     const objects = this.engine2D.sceneSystem2D.unfoldObjects.children
-    // Включаем рекурсивный поиск по дереву — нужно для корректной работы
-    // с вложенными объектами (линии, группы, невидимые плоскости)
     const intersects = this.raycaster.intersectObjects(objects, true)
 
-    // Ищем родительскую UnfoldDetail, помеченную как selectable
-    // Если пересекаем невидимую плоскость, используем linkedMesh
     for (let hit of intersects) {
       let obj = hit.object
       
-      // Если это невидимая плоскость, используем связанный mesh
-      if (obj.userData.isSelectionPlane && obj.userData.linkedMesh) {
-        obj = obj.userData.linkedMesh
-      }
-      
-      // Проверяем, есть ли объект с флагом selectable
+      // Ищем ближайшего родителя с флагом selectable
       while (obj && !obj.userData?.selectable) {
         obj = obj.parent
       }

@@ -44,10 +44,7 @@ router.beforeEach(async (to) => {
   // Защищённые маршруты
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
     return { name: 'main' }
-  }
-
-  // Если пользователь уже залогинен
-  if ((to.name === 'login' || to.name === 'register') && auth.isAuthenticated) {
+  } else if ((to.name === 'login' || to.name === 'register') && auth.isAuthenticated) {
     return { name: 'app' }
   }
 })

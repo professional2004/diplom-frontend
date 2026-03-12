@@ -1,3 +1,4 @@
+import { UnfoldTextureGenerator } from '@/editor_core/2D_editor/utils/UnfoldTextureGenerator'
 import * as THREE from 'three'
 
 export class FlatSurfaceShape {
@@ -105,20 +106,14 @@ export class FlatSurfaceShape {
 
   createUnfold2D() {
     const { width, height } = this.params
-    const polygon = this._normalizePolygon(this.params.polygon || this.defaultParams.polygon, width, height)
+    const polygonArray = this._normalizePolygon(this.params.polygon || this.defaultParams.polygon, width, height)
+    
+    if (!polygonArray || polygonArray.length < 3) return new THREE.Mesh()
+    
+    const polygon = polygonArray.map(p => new THREE.Vector2(p[0], p[1]))
 
-    const group = new THREE.Group()
-    const mat = this.getLineMaterial()
-
-    if (polygon.length > 0) {
-      const points = polygon.map(p => new THREE.Vector3(p[0], p[1], 0))
-      points.push(points[0].clone()) // замыкание
-      const geom = new THREE.BufferGeometry().setFromPoints(points)
-      const line = new THREE.Line(geom, mat)
-      group.add(line)
-    }
-
-    return group
+    // Плоская деталь не имеет линий сгиба
+    return UnfoldTextureGenerator.createMeshWithTexture(polygon, []) 
   }
 
   getBoundaryEdges() {

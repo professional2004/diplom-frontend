@@ -1,3 +1,4 @@
+import { UnfoldTextureGenerator } from '@/editor_core/2D_editor/utils/UnfoldTextureGenerator'
 import * as THREE from 'three'
 
 export class CylindricalSurfaceShape {
@@ -212,18 +213,28 @@ export class CylindricalSurfaceShape {
   }
 
   createUnfold2D() {
-    const group = new THREE.Group()
-    const mat = this.getLineMaterial()
-
     const polygonRaw = this.params.polygon || this.defaultParams.polygon
-    if (polygonRaw.length >= 3) {
-      const points = polygonRaw.map(p => new THREE.Vector3(p[0], p[1], 0))
-      points.push(points[0].clone())
-      const geo = new THREE.BufferGeometry().setFromPoints(points)
-      group.add(new THREE.Line(geo, mat))
+    if (!polygonRaw || polygonRaw.length < 3) return new THREE.Mesh()
+
+    const polygon = polygonRaw.map(p => new THREE.Vector2(p[0], p[1]))
+
+    // Вычисляем линии сгиба (вертикальные сегменты)
+    const polyline2D = this.params.polyline?.length >= 2 ? this.params.polyline : this.defaultParams.polyline
+    const polyline = this._toVec3Array(polyline2D)
+    const { lens } = this._computeArcLengths(polyline)
+    
+    const foldLines = []
+    let minY = Math.min(...polygon.map(p => p.y))
+    let maxY = Math.max(...polygon.map(p => p.y))
+
+    for (let j = 1; j < lens.length - 1; j++) {
+      foldLines.push({
+        start: new THREE.Vector2(lens[j], minY),
+        end: new THREE.Vector2(lens[j], maxY)
+      })
     }
 
-    return group
+    return UnfoldTextureGenerator.createMeshWithTexture(polygon, foldLines)
   }
 
 

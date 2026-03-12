@@ -162,26 +162,16 @@ class EngineRegistry {
     if (this.engine3D && this.engine3D.sceneSystem3D) {
       for (const ent of this.shapeSystem.entities.values()) {
         if (ent && ent.mesh) {
-          try { this.engine3D.sceneSystem3D.remove(ent.mesh) } catch (e) {}
+          try { this.engine3D.sceneSystem3D.remove(ent.mesh) } catch (e) { console.log(e) }
         }
       }
     }
 
-    // удалить все 2D-развёртки и связанные с ними «плоскости»
+    // удалить все 2D-развёртки
     if (this.engine2D && this.engine2D.sceneSystem2D) {
-      // сначала уберём управляющие плоскости, которые не хранятся в unfoldSystem
-      try {
-        this.engine2D.sceneSystem2D.unfoldObjects.traverse(obj => {
-          if (obj.userData?.isSelectionPlane) {
-            try { this.engine2D.sceneSystem2D.remove(obj) } catch (e) {}
-          }
-        })
-      } catch (e) {
-        // ничего
-      }
       for (const unfold of this.unfoldSystem.entities.values()) {
         if (unfold && unfold.mesh) {
-          try { this.engine2D.sceneSystem2D.remove(unfold.mesh) } catch (e) {}
+          try { this.engine2D.sceneSystem2D.remove(unfold.mesh) } catch (e) { console.log(e) }
         }
       }
     }
