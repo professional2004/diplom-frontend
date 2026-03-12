@@ -138,13 +138,13 @@ const onModalClose = () => {
         <div v-for="project in projectsStore.projects" :key="project.id" class="project-card" @click="openProjectModal(project)">
           <div class="project-preview">
             <img 
-              v-if="project.preview" 
-              :src="'data:image/png;base64,' + project.preview" 
+              v-if="project.previewUrl"
+              :src="project.previewUrl" 
               alt="Превью сцены" 
               class="preview-img"
             />
-            <div v-else class="no-preview">Нет превью</div>
-          </div> 
+            <div v-else class="no-preview">Загрузка... или нет превью</div>
+          </div>
           <div>
             <h3>{{ project.name }}</h3>
             <p>{{ project.description }}</p>

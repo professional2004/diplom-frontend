@@ -17,6 +17,9 @@ export const useProjectsStore = defineStore('projects', {
         const data = await projectsApi.getProjectsAndCategories()
         this.projects = data.projects || []
         this.categories = data.categories || []
+        for (let project of this.projects) {
+          project.previewUrl = await projectsApi.loadProjectPreview(project.id);
+        }
         console.log('this projects:', this.projects)
         console.log('this categories:', this.categories)
       } catch (error) {
@@ -39,6 +42,16 @@ export const useProjectsStore = defineStore('projects', {
         throw error
       } finally {
         this.isLoading = false
+      }
+    },
+
+    async loadProjectPreview(id) {
+      try {
+        const preview = await projectsApi.loadProjectPreview(id)
+        return preview
+      } catch (error) {
+        console.error('Failed to load project preview:', error)
+        throw error
       }
     },
 

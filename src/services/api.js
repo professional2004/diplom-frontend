@@ -19,6 +19,16 @@ export const projectsApi = {
     return response.data
   },
 
+
+  // Загрузка превью проекта
+  async loadProjectPreview(id) {
+    const response = await api.get(`/api/projects/${id}/preview`, {
+      responseType: 'blob'
+    })
+    return URL.createObjectURL(response.data);
+  },
+
+
   // Создать новый проект
   async createProject(name, description) {
     const response = await api.post('/api/projects', {
