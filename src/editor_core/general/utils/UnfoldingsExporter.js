@@ -6,7 +6,8 @@ export class UnfoldingsExporter {
   }
 
   // Сбор данных со всех разверток на 2D сцене
-  static _collectLayout(scene2D) {
+  _collectLayout() {
+    const scene2D = this.sceneSystem2D.scene;
     const parts = [];
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
@@ -60,9 +61,9 @@ export class UnfoldingsExporter {
   }
 
   // Экспорт в SVG
-  static exportToSVG() {
-    const layout = this._collectLayout(this.sceneSystem2D.scene);
-    if (!layout) return;
+  exportToSVG() {
+    const layout = this._collectLayout();
+    if (!layout) return false;
 
     let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${layout.width}mm" height="${layout.height}mm" viewBox="0 0 ${layout.width} ${layout.height}">\n`;
     
@@ -82,12 +83,13 @@ export class UnfoldingsExporter {
 
     svg += `  </g>\n</svg>`;
     this._downloadFile(svg, 'pattern.svg', 'image/svg+xml');
+    return true;
   }
 
   // Экспорт в PDF
-  static exportToPDF() {
-    const layout = this._collectLayout(this.sceneSystem2D.scene);
-    if (!layout) return;
+  exportToPDF() {
+    const layout = this._collectLayout();
+    if (!layout) return false;
 
     const doc = new jsPDF({
       orientation: layout.width > layout.height ? 'l' : 'p',
@@ -114,9 +116,10 @@ export class UnfoldingsExporter {
     });
 
     doc.save('pattern.pdf');
+    return true;
   }
 
-  static _downloadFile(content, fileName, contentType) {
+  _downloadFile(content, fileName, contentType) {
     const a = document.createElement("a");
     const file = new Blob([content], { type: contentType });
     a.href = URL.createObjectURL(file);

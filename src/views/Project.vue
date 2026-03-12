@@ -99,6 +99,36 @@ const goBack = () => {
 const hasSelection = computed(() => {
   return editorStore.selectedShape !== null
 })
+
+// экспорт лекал
+
+const exportSVG = async () => {
+  try {
+    const ok = await editorStore.exportSVG()
+    if (ok) {
+      notificationStore.show({type: 'success', message: 'SVG файл экспортирован'})
+    } else {
+      notificationStore.show({type: 'error', message: 'Нет разверток для экспорта'})
+    }
+  } catch (error) {
+    notificationStore.show({type: 'error', message: 'Ошибка экспорта SVG'})
+    console.error('Ошибка экспорта SVG:', error)
+  }
+};
+
+const exportPDF = async () => {
+  try {
+    const ok = await editorStore.exportPDF()
+    if (ok) {
+      notificationStore.show({type: 'success', message: 'PDF файл экспортирован'})
+    } else {
+      notificationStore.show({type: 'error', message: 'Нет разверток для экспорта'})
+    }
+  } catch (error) {
+    notificationStore.show({type: 'error', message: 'Ошибка экспорта PDF'})
+    console.error('Ошибка экспорта PDF:', error)
+  }
+};
 </script>
 
 <template>
@@ -114,6 +144,8 @@ const hasSelection = computed(() => {
           <div class="text -project-name">Проект: {{ project.name }}</div>
         </div>
         <div class="wrapper">
+          <button class="button -save" @click="exportSVG">Экспорт SVG</button>
+          <button class="button -save" @click="exportPDF">Экспорт PDF</button>
           <button class="button -save" @click="saveProject">Сохранить изменения</button>
           <button class="button -back" @click="goBack">Назад</button>
         </div>

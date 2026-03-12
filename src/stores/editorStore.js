@@ -122,16 +122,22 @@ export const useEditorStore = defineStore('editor', {
 
     // экспорт лекал
 
-    exportSVG() {
+    async exportSVG() { 
       const engine2D = EngineRegistry.engine2D;
-      const unfoldingsExporter = new UnfoldingsExporter(engine2D.sceneSystem2D)
-      unfoldingsExporter.exportToSVG();
+      if (!engine2D || !engine2D.sceneSystem2D) {
+        console.log('проблема с engine2D или engine2D.sceneSystem2D')
+        return null
+      }
+      return new UnfoldingsExporter(engine2D.sceneSystem2D).exportToSVG();
     },
 
-    exportPDF() {
+    async exportPDF() {
       const engine2D = EngineRegistry.engine2D;
-      const unfoldingsExporter = new UnfoldingsExporter(engine2D.sceneSystem2D)
-      unfoldingsExporter.exportToPDF();
+      if (!engine2D || !engine2D.sceneSystem2D) {
+        console.log('проблема с engine2D или engine2D.sceneSystem2D')
+        return null
+      }
+      return new UnfoldingsExporter(engine2D.sceneSystem2D).exportToPDF();
     },
 
 

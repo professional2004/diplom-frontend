@@ -192,16 +192,6 @@ const saveChanges = async () => {
   close()
 }
 
-// экспорт лекал
-
-const exportSVG = () => {
-  editorStore.exportSVG()
-};
-
-const exportPDF = () => {
-  editorStore.exportPDF()
-};
-
 // Очищаем обработчик при размонтировании
 onUnmounted(() => {
   document.removeEventListener('keydown', handleEscape)
@@ -252,8 +242,6 @@ onUnmounted(() => {
             <button class="btn-save" @click="duplicateProject">Дублировать</button>
             <button class="btn-save" @click="openProject">Открыть</button>
             <button class="btn-save" @click="saveChanges">Сохранить</button>
-            <button class="btn-save" @click="exportSVG">Экспортировать SVG</button>
-            <button class="btn-save" @click="exportPDF">Экспортировать PDF</button>
             <button  @click="close">Закрыть</button>
           </footer>
         </div>
