@@ -3,6 +3,7 @@ import { onMounted, onUnmounted, ref, nextTick, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useEditorStore } from '@/stores/editorStore'
 import { useProjectsStore } from '@/stores/projectsStore';
+import { useNotificationStore } from '@/stores/notificationsStore'
 import EngineRegistry from '@/editor_core/general/engine/EngineRegistry';
 import Scene3DViewport from '@/components/editor/3D_scene/Scene3DViewport.vue'
 import Scene2DViewport from '@/components/editor/2D_scene/Scene2DViewport.vue'
@@ -12,6 +13,7 @@ const route = useRoute();
 const router = useRouter();
 const editorStore = useEditorStore()
 const projectStore = useProjectsStore();
+const notificationStore = useNotificationStore()
 
 const projectId = route.params.id;
 const isLoading = ref(true);
@@ -58,7 +60,8 @@ onMounted(async () => {
     }
   } catch (error) {
     // ошибка только при запросе проекта
-    alert('Ошибка загрузки проекта: ' + error.message);
+    notificationStore.show({type: 'error', message: 'Ошибка загрузки проекта'})
+    console.log('Ошибка загрузки проекта: ' + error.message);
     router.push('/app');
   } finally {
     isLoading.value = false;
@@ -77,9 +80,10 @@ const saveProject = async () => {
     const projectData = EngineRegistry.serializeProject();
     const preview = null;
     await projectStore.saveProject(projectId, projectData, preview);
-    alert('Проект сохранен!');
+    notificationStore.show({type: 'success', message: 'Проект сохранен'})
   } catch (error) {
-    alert('Ошибка сохранения: ' + error.message);
+    notificationStore.show({type: 'error', message: 'Ошибка сохранения проекта'})
+    console.log('Ошибка сохранения проекта: ' + error.message);
   }
 };
 
