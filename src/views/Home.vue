@@ -103,23 +103,38 @@ const onModalClose = () => {
     <button @click="addCategory">Добавить категорию проектов</button>
     <button @click="deleteAccount">Удалить аккаунт</button>
 
-    <div v-if="projectsStore.isLoading">Загрузка проектов...</div>
-
-    <div class="projects" v-else-if="projectsStore.projects.length === 0">
-      <p>У вас нет проектов. Создайте новый!</p>
+    <div class="content" v-if="projectsStore.isLoading">
+      <div class="categories">Загрузка категорий...</div>
+      <div class="projects">Загрузка проектов...</div>
     </div>
 
-    <div class="projects" v-else>
-      <div v-for="project in projectsStore.projects" :key="project.id" class="project-card" @click="openProjectModal(project)">
-        <div>
-          <h3>{{ project.name }}</h3>
-          <p>{{ project.description }}</p>
-          <small>Создан: {{ new Date(project.createdAt).toLocaleDateString() }}</small><br>
-          <small>Изменен: {{ new Date(project.updatedAt).toLocaleDateString() }}</small>
-        </div>
-        <div>
-          <button @click="openProject(project)">Открыть</button>
-        </div>
+    <div class="content" v-else>
+      <div class="categories" v-if="projectsStore.categories.length === 0">
+        У вас нет категорий
+      </div>
+      <div class="categories" v-else>
+        <div v-for="category in projectsStore.categories" :key="category.id" class="category-card">
+          <div>
+            <h3>{{ category.name }}</h3>
+          </div>
+        </div>   
+      </div>
+
+      <div class="projects" v-if="projectsStore.projects.length === 0">
+        <p>У вас нет проектов. Создайте новый!</p>
+      </div>
+      <div class="projects" v-else>
+        <div v-for="project in projectsStore.projects" :key="project.id" class="project-card" @click="openProjectModal(project)">
+          <div>
+            <h3>{{ project.name }}</h3>
+            <p>{{ project.description }}</p>
+            <small>Создан: {{ new Date(project.createdAt).toLocaleDateString() }}</small><br>
+            <small>Изменен: {{ new Date(project.updatedAt).toLocaleDateString() }}</small>
+          </div>
+          <div>
+            <button @click="openProject(project)">Открыть</button>
+          </div>
+        </div>        
       </div>
     </div>
 
@@ -129,6 +144,10 @@ const onModalClose = () => {
 
 <style scoped>
 @import '@/styles/main.css'; 
+
+.content {
+  display: flex;
+}
 
 .projects {
   display: flex;
