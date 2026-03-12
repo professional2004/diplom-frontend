@@ -129,6 +129,7 @@ const hasSelection = computed(() => {
           <button :disabled="!hasSelection" @click="editorStore.deleteShape" title="Delete (Del)">Delete</button>
           <button :disabled="!editorStore.canUndo" @click="editorStore.undo" title="Undo (Ctrl+Z)">Undo</button>
           <button :disabled="!editorStore.canRedo" @click="editorStore.redo" title="Redo (Ctrl+Shift+Z)">Redo</button>
+          <button @click="editorStore.toggleConnectMode" :class="{ 'active-mode': editorStore.isConnectingMode }"title="Связать края фигур">{{ editorStore.isConnectingMode ? 'Cancel Connection' : 'Connect Edges' }}</button>
           <button @click="editorStore.addShape('conical')">Add Conical Surface</button>
           <button @click="editorStore.addShape('cylindrical')">Add Cylindrical Surface</button>
           <button @click="editorStore.addShape('flat')">Add Flat Surface</button>

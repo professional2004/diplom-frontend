@@ -11,13 +11,21 @@ export const useEditorStore = defineStore('editor', {
     canRedo: false,
     // храним только uuid выбранной фигуры; сам объект хранится в ShapeSystem
     selectedShapeId: null,
-    selectedShapeParams: null
+    selectedShapeParams: null,
+    // Состояния для системы связей
+    isConnectingMode: false,
+    connections: [] 
   }),
   getters: {
     selectedShape(state) {
       if (!state.selectedShapeId) return null
       return EngineRegistry.shapeSystem.getById(state.selectedShapeId)
-    }
+    },
+    // Проверка, является ли выбранная фигура потомком в связи
+    isShapeChild(state) {
+      if (!state.selectedShapeId) return false
+      return state.connections.some(c => c.childId === state.selectedShapeId)
+     }
   },
 
   actions: {
@@ -74,6 +82,18 @@ export const useEditorStore = defineStore('editor', {
       EngineRegistry.emitter.on('ui:deleteSelected', () => {
         this.deleteShape()
       })
+
+      // Слушаем изменения связей из ядра
+      EngineRegistry.emitter.on('connections:changed', (connections) => {
+        this.connections = connections || []
+      })
+    },
+
+    // Метод переключения режима связывания
+    toggleConnectMode() {
+      this.isConnectingMode = !this.isConnectingMode
+      // Оповещаем InputSystem3D, что мы перешли в режим выбора ребер
+      EngineRegistry.emitter.emit('mode:connecting', this.isConnectingMode)
     },
 
     init3D(container) {

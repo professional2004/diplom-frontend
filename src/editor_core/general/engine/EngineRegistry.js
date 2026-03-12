@@ -2,6 +2,7 @@ import { HistorySystem } from './systems/HistorySystem'
 import { SyncSystem } from './systems/SyncSystem'
 import { ShapeSystem } from './systems/ShapeSystem'
 import { UnfoldSystem } from './systems/UnfoldSystem'
+import { ConnectionSystem } from './systems/ConnectionSystem'
 import { Engine3D } from '@/editor_core/3D_editor/engine/Engine3D'
 import { Engine2D } from '@/editor_core/2D_editor/engine/Engine2D'
 import { ShapeRegistry } from '@/editor_core/3D_editor/entities/ShapeRegistry'
@@ -36,6 +37,7 @@ class EngineRegistry {
     this.syncSystem = new SyncSystem()
     this.shapeSystem = new ShapeSystem(this)
     this.unfoldSystem = new UnfoldSystem()
+    this.connectionSystem = new ConnectionSystem(this)
     
     this.emitter = new SimpleEmitter()
   }
