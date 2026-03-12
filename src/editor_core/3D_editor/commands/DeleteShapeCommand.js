@@ -16,6 +16,7 @@ export class DeleteShapeCommand {
     this.materialColor = this.mesh.material?.color?.getHex?.() || 0xffffff
   }
 
+  
   execute() {
     // перед удалением удаляем из реестра
     EngineRegistry.shapeSystem.unregister(this.mesh)
