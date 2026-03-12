@@ -59,6 +59,17 @@ export class SceneSystem3D {
   remove(obj) { this.scene.remove(obj) }
   traverse(cb) { this.scene.traverse(cb) }
 
+  // Получение меша по ID (uuid)
+  getMeshById(id) {
+    let result = null
+    this.scene.traverse((obj) => {
+      if (obj.uuid === id && obj.isMesh) {
+        result = obj
+      }
+    })
+    return result
+  }
+
   dispose() {
     this.scene.traverse((obj) => {
       if (obj.geometry) obj.geometry.dispose()

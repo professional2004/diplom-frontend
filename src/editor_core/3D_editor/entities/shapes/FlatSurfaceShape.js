@@ -202,4 +202,26 @@ export class FlatSurfaceShape {
       points3D: worldPoints
     };
   }
+
+  // Получение нормали поверхности в мировых координатах
+  getSurfaceNormal(planeIndex = 0, mesh) {
+    // Для плоской поверхности нормаль всегда (0, 0, 1) в локальных координатах
+    const normalLocal = new THREE.Vector3(0, 0, 1);
+    
+    if (!mesh) return normalLocal;
+
+    // Преобразуем нормаль в мировые координаты
+    mesh.updateMatrixWorld(true);
+    const normalWorld = normalLocal.clone().applyMatrix4(mesh.matrixWorld);
+    // Вычитаем позицию меша чтобы получить направление (не позицию)
+    normalWorld.sub(mesh.position).normalize();
+    
+    return normalWorld;
+  }
+
+  // Получение точки на поверхности для EDGE_TO_PLANE и PLANE_TO_PLANE
+  getSurfacePoint(planeIndex = 0, mesh) {
+    if (!mesh) return new THREE.Vector3();
+    return new THREE.Vector3().copy(mesh.position);
+  }
 }

@@ -377,4 +377,24 @@ export class CylindricalSurfaceShape {
       points3D: worldPoints
     };
   }
+
+  // Получение нормали поверхности цилиндра в мировых координатах
+  getSurfaceNormal(planeIndex = 0, mesh) {
+    // Для цилиндрической поверхности нормаль также используется как Z-ось
+    const normalLocal = new THREE.Vector3(0, 0, 1);
+    
+    if (!mesh) return normalLocal;
+
+    mesh.updateMatrixWorld(true);
+    const normalWorld = normalLocal.clone().applyMatrix4(mesh.matrixWorld);
+    normalWorld.sub(mesh.position).normalize();
+    
+    return normalWorld;
+  }
+
+  // Получение точки на поверхности цилиндра
+  getSurfacePoint(planeIndex = 0, mesh) {
+    if (!mesh) return new THREE.Vector3();
+    return new THREE.Vector3().copy(mesh.position);
+  }
 }
