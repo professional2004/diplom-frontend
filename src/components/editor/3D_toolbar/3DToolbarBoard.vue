@@ -149,6 +149,8 @@ const applyChanges = () => {
             v-model="editParams[paramKey]"
             :label="paramDef.label"
             :is-polygon="paramKey.toLowerCase().includes('polygon')"
+            :shape-instance="shapeInstance"
+            :param-key="paramKey"
             @change="markAsChanged"
           />
         </template>

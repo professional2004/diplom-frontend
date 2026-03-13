@@ -11,6 +11,10 @@ export default class Polyline2DEditor {
     this.onChange = options.onChange || (() => {})
     this.points = Array.isArray(options.points) ? options.points.slice() : []
 
+    this.shapeInstance = options.shapeInstance || null
+    this.paramKey = options.paramKey || ''
+    this._bounds = null // Хранит математические ограничения для текущей развертки
+
     this._dragIndex = null
     this._isDragging = false
     this._isPanning = false
@@ -20,10 +24,19 @@ export default class Polyline2DEditor {
     this._initScene()
     this._bindEvents()
     this.updateGeometry()
+    this.updateShapeContext(this.shapeInstance, this.paramKey) // Инициализируем развертку
     this._render()
   }
 
   // public API
+
+  // Обновление контекста (вызывается из Vue watch)
+  updateShapeContext(shapeInstance, paramKey) {
+    this.shapeInstance = shapeInstance
+    this.paramKey = paramKey
+    this._updateReferenceGeometry()
+    this._enforceConstraints()
+  }
 
   setPoints(points) {
     // update from outside without firing change event
@@ -104,6 +117,12 @@ export default class Polyline2DEditor {
     grid.rotation.x = -Math.PI / 2
     this.scene.add(grid)
 
+    // НОВАЯ ГРУППА ДЛЯ ОТОБРАЖЕНИЯ РАЗВЕРТКИ
+    this._referenceGroup = new THREE.Group()
+    this.scene.add(this._referenceGroup)
+
+    this._pointGeom = new THREE.CircleGeometry(0.2, 16)
+
     // shared geometry / materials for points and line
     this._pointGeom = new THREE.CircleGeometry(0.2, 16)
     // <-- changed base point color на голубой
@@ -137,6 +156,134 @@ export default class Polyline2DEditor {
     })
     this.resizeObserver.observe(this.container)
   }
+
+
+  // Отрисовка развертки пунктирными линиями
+  _updateReferenceGeometry() {
+    this._referenceGroup.clear()
+    this._bounds = null
+
+    // Отрисовываем развертку только если редактируем ограничивающий многоугольник
+    if (!this.shapeInstance || this.paramKey !== 'polygon') {
+      this._render()
+      return
+    }
+
+    const mat = new THREE.LineDashedMaterial({
+      color: 0x999999,
+      dashSize: 0.2,
+      gapSize: 0.2,
+      transparent: true,
+      opacity: 0.6
+    })
+
+    const shapeType = this.shapeInstance.constructor.name
+
+    if (shapeType === 'CylindricalSurfaceShape') {
+      // Цилиндр: получаем длины развернутых отрезков
+      const polyline2D = this.shapeInstance.params.polyline || this.shapeInstance.defaultParams.polyline
+      const polyline = this.shapeInstance._toVec3Array(polyline2D)
+      const { lens } = this.shapeInstance._computeArcLengths(polyline)
+      const maxL = lens[lens.length - 1]
+
+      const pts = []
+      // Рисуем вертикальные линии сгиба для наглядности
+      for (let i = 0; i < lens.length; i++) {
+        pts.push(new THREE.Vector3(lens[i], -100, -0.02), new THREE.Vector3(lens[i], 100, -0.02))
+      }
+      
+      const geom = new THREE.BufferGeometry().setFromPoints(pts)
+      const line = new THREE.LineSegments(geom, mat)
+      line.computeLineDistances() // Обязательно для LineDashedMaterial
+      this._referenceGroup.add(line)
+
+      // Сохраняем границы: X от 0 до maxL
+      this._bounds = { type: 'cylinder', maxL }
+
+    } else if (shapeType === 'ConicalSurfaceShape') {
+      // Конус: получаем лучи
+      const { P2D, thetas } = this.shapeInstance._computeUnroll()
+      const pts = []
+      
+      // Рисуем лучи от вершины до края основания
+      for (let i = 0; i < P2D.length; i++) {
+        pts.push(new THREE.Vector3(0, 0, -0.02), new THREE.Vector3(P2D[i].x, P2D[i].y, -0.02))
+      }
+      // Рисуем саму кривую основания
+      for (let i = 0; i < P2D.length - 1; i++) {
+        pts.push(new THREE.Vector3(P2D[i].x, P2D[i].y, -0.02), new THREE.Vector3(P2D[i+1].x, P2D[i+1].y, -0.02))
+      }
+
+      const geom = new THREE.BufferGeometry().setFromPoints(pts)
+      const line = new THREE.LineSegments(geom, mat)
+      line.computeLineDistances()
+      this._referenceGroup.add(line)
+
+      // Сохраняем границы: Угол от 0 до maxTheta
+      this._bounds = { type: 'cone', maxTheta: thetas[thetas.length - 1] }
+    }
+    
+    this._render()
+  }
+
+
+  // Математическое ограничение точки в пределах развертки
+  _constrainPoint(pt) {
+    if (!this._bounds || this.paramKey !== 'polygon') return pt
+
+    if (this._bounds.type === 'cylinder') {
+      // Для цилиндра ограничиваем по оси X (не выходит за длину основания)
+      const x = Math.max(0, Math.min(this._bounds.maxL, pt[0]))
+      return [x, pt[1]]
+      
+    } else if (this._bounds.type === 'cone') {
+      const x = pt[0], y = pt[1]
+      const r = Math.sqrt(x * x + y * y)
+      
+      if (r < 1e-5) return [0, 0] // Точка лежит строго на вершине
+
+      let a = Math.atan2(y, x)
+      
+      // Нормализуем угол к диапазону вокруг [0, maxTheta]
+      while (a < -Math.PI) a += 2 * Math.PI
+      while (a > Math.PI) a -= 2 * Math.PI
+
+      const maxTheta = this._bounds.maxTheta
+
+      // Если угол выходит за пределы сектора развертки, "примагничиваем" его к ближайшему краю
+      if (a < 0) {
+        a = (Math.abs(a) > Math.abs(a + 2 * Math.PI - maxTheta)) ? maxTheta : 0
+      } else if (a > maxTheta) {
+        a = (Math.abs(a - maxTheta) < Math.abs(a - 2 * Math.PI)) ? maxTheta : 0
+      }
+
+      // Возвращаем точку на том же радиусе, но с валидным углом (ограничение "не заходить за вершину" выполняется автоматически, т.к. радиус всегда положительный)
+      return [r * Math.cos(a), r * Math.sin(a)]
+    }
+
+    return pt
+  }
+
+
+  // Принудительное применение ограничений ко всем текущим точкам
+  _enforceConstraints() {
+    let changed = false
+    for (let i = 0; i < this.points.length; i++) {
+      const original = this.points[i]
+      const constrained = this._constrainPoint(original)
+      if (Math.abs(original[0] - constrained[0]) > 1e-5 || Math.abs(original[1] - constrained[1]) > 1e-5) {
+        this.points[i] = constrained
+        changed = true
+      }
+    }
+    if (changed) {
+      this.updateGeometry()
+      this._render()
+      this._emitChange()
+    }
+  }
+
+
 
   _bindEvents() {
     const canvas = this.renderer.domElement
@@ -185,7 +332,8 @@ export default class Polyline2DEditor {
   _onPointerMove(e) {
     if (this._isDragging && this._dragIndex !== null) {
       const pos = this._getWorldCoords(e)
-      this.points[this._dragIndex] = [pos.x, pos.y]
+      const constrainedPos = this._constrainPoint([pos.x, pos.y])
+      this.points[this._dragIndex] = constrainedPos
       this.updateGeometry()
       this._render()
     } else if (this._isPanning) {
@@ -289,7 +437,8 @@ export default class Polyline2DEditor {
   }
 
   addPoint(pt) {
-    const newPt = [Math.round(pt[0] * 10) / 10, Math.round(pt[1] * 10) / 10]
+    const cPt = this._constrainPoint(pt)
+    const newPt = [Math.round(cPt[0] * 10) / 10, Math.round(cPt[1] * 10) / 10]
 
     // If there are fewer than 2 points, just append
     if (this.points.length < 2) {

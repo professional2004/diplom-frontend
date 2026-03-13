@@ -5,7 +5,9 @@ import Polyline2DEditorClass from '@/editor_core/general/utils/Polyline2DEditor.
 const props = defineProps({
   modelValue: { type: Array, default: () => [] },
   label: String,
-  isPolygon: Boolean
+  isPolygon: Boolean,
+  shapeInstance: { type: Object, default: null },
+  paramKey: { type: String, default: '' }
 })
 
 const emit = defineEmits(['update:modelValue', 'change'])
@@ -19,8 +21,9 @@ const createEditor = () => {
   editorInstance = new Polyline2DEditorClass(canvasContainer.value, {
     points: props.modelValue,
     isPolygon: props.isPolygon,
+    shapeInstance: props.shapeInstance,
+    paramKey: props.paramKey,
     onChange: (pts) => {
-      // copy the array so Vue can react
       emit('update:modelValue', pts.map(p => [p[0], p[1]]))
       emit('change')
     }
@@ -43,6 +46,16 @@ watch(
   (v) => {
     if (editorInstance) editorInstance.setPolygon(v)
   }
+)
+
+watch(
+  () => props.shapeInstance?.params,
+  () => {
+    if (editorInstance) {
+      editorInstance.updateShapeContext(props.shapeInstance, props.paramKey)
+    }
+  },
+  { deep: true }
 )
 
 onMounted(() => {
