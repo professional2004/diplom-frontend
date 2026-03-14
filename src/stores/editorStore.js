@@ -24,13 +24,13 @@ export const useEditorStore = defineStore('editor', {
   actions: {
 
     // --- Методы управления 3D камерой ---
-    zoomIn() {
+    zoomIn3D() {
       EngineRegistry.engine3D.cameraSystem3D.zoom(0.9)
     },
-    zoomOut() {
+    zoomOut3D() {
       EngineRegistry.engine3D.cameraSystem3D.zoom(1.1)
     },
-    resetView() {
+    resetView3D() {
       EngineRegistry.engine3D.cameraSystem3D.reset()
     },
 
@@ -41,7 +41,7 @@ export const useEditorStore = defineStore('editor', {
     zoomOut2D() {
       EngineRegistry.engine2D.cameraSystem2D.zoom(0.9)
     },
-    reset2D() {
+    resetView2D() {
       EngineRegistry.engine2D.cameraSystem2D.reset()
     },
 

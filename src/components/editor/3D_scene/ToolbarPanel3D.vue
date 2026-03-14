@@ -8,9 +8,9 @@ const editorStore = useEditorStore()
 <template>
   <div class="toolbar">
     <div class="group">
-      <button @click="editorStore.zoomIn">Zoom +</button>
-      <button @click="editorStore.zoomOut">Zoom -</button>
-      <button @click="editorStore.resetView">Reset</button>
+      <button @click="editorStore.zoomIn3D()">Zoom +</button>
+      <button @click="editorStore.zoomOut3D()">Zoom -</button>
+      <button @click="editorStore.resetView3D()">Reset</button>
     </div>
   </div>
 </template>

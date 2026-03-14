@@ -7,7 +7,7 @@ const editorStore = useEditorStore()
   <div class="toolbar-2d" aria-hidden="false">
     <button @click="editorStore.zoomIn2D()">Zoom +</button>
     <button @click="editorStore.zoomOut2D()">Zoom -</button>
-    <button @click="editorStore.reset2D()">Reset</button>
+    <button @click="editorStore.resetView2D()">Reset</button>
   </div>
 </template>
 
