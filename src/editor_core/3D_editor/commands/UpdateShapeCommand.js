@@ -1,10 +1,10 @@
 import { ShapeRegistry } from '@/editor_core/3D_editor/entities/ShapeRegistry'
 
 export class UpdateShapeCommand {
-  constructor(engine, meshOrEntity, newParams) {
+  constructor(engine, entity, newParams) {
     this.engine = engine
     // payload может быть либо THREE.Mesh либо shape-entity {id, mesh, owner}
-    this.mesh = meshOrEntity && meshOrEntity.mesh ? meshOrEntity.mesh : meshOrEntity
+    this.mesh = entity.mesh
 
     // Сохраняем старые параметры до того, как UI начнёт их мутировать.
     // В идеале объекты параметров не должны меняться напрямую, но мы
