@@ -6,6 +6,48 @@ import Polyline2DEditor from './Polyline2DEditor.vue'
 const editorStore = useEditorStore()
 const hasUnsavedChanges = ref(false)
 
+// Значения ползунков (всегда возвращаются к 0 после применения)
+const sliderValues = ref({
+  posX: 0, posY: 0, posZ: 0,
+  rotationX: 0, rotationY: 0, rotationZ: 0
+})
+
+// Базовый шаг для ползунков
+const baseStep = 0.1
+
+// Функция для вычисления дельты на основе положения ползунка (относительная шкала)
+const calculateDelta = (sliderValue) => {
+  const absValue = Math.abs(sliderValue)
+  // Множитель от 1 (в центре) до 10 (на краях)
+  const multiplier = 1 + (absValue / 100) * 9
+  return sliderValue * baseStep * multiplier
+}
+
+// Простая функция debounce
+const debounce = (func, delay) => {
+  let timeoutId
+  return (...args) => {
+    clearTimeout(timeoutId)
+    timeoutId = setTimeout(() => func.apply(null, args), delay)
+  }
+}
+
+// Обработчик изменения ползунка с debounce
+const debouncedApplyChanges = debounce(() => {
+  applyChanges()
+}, 100)
+
+// Обработчик изменения ползунка
+const onSliderChange = (paramKey, sliderValue) => {
+  const delta = calculateDelta(sliderValue)
+  editParams.value[paramKey] += delta
+  // Сбрасываем ползунок к центру
+  sliderValues.value[paramKey] = 0
+  // Применяем изменения с debounce
+  debouncedApplyChanges()
+  markAsChanged()
+}
+
 // активная фигура (логический объект) – используется для определения
 // описания параметров и названия. Не содержит сами значения.
 const shapeInstance = computed(() => {
@@ -161,12 +203,24 @@ const applyChanges = () => {
         <div class="group-title">🎯 Позиция</div>
         <div v-for="(paramDef, paramKey) in positionParams" :key="paramKey" class="param-row">
           <label class="param-label">{{ paramDef.label }}</label>
-          <input 
-            type="number" 
-            v-model.number="editParams[paramKey]" 
-            :step="paramDef.step"
-            @input="markAsChanged" 
-          />
+          <div class="input-with-slider">
+            <input 
+              type="number" 
+              v-model.number="editParams[paramKey]" 
+              :step="paramDef.step"
+              @input="markAsChanged" 
+              class="number-input"
+            />
+            <input 
+              type="range" 
+              min="-10" 
+              max="10" 
+              step="0.01" 
+              v-model.number="sliderValues[paramKey]" 
+              @input="onSliderChange(paramKey, parseInt($event.target.value))"
+              class="slider-input"
+            />
+          </div>
         </div>
       </div>
 
@@ -175,12 +229,24 @@ const applyChanges = () => {
         <div class="group-title">🔄 Поворот (рад)</div>
         <div v-for="(paramDef, paramKey) in rotationParams" :key="paramKey" class="param-row">
           <label class="param-label">{{ paramDef.label }}</label>
-          <input 
-            type="number" 
-            v-model.number="editParams[paramKey]" 
-            :step="paramDef.step"
-            @input="markAsChanged" 
-          />
+          <div class="input-with-slider">
+            <input 
+              type="number" 
+              v-model.number="editParams[paramKey]" 
+              :step="paramDef.step"
+              @input="markAsChanged" 
+              class="number-input"
+            />
+            <input 
+              type="range" 
+              min="-5" 
+              max="5" 
+              step="0.002" 
+              v-model.number="sliderValues[paramKey]" 
+              @input="onSliderChange(paramKey, parseInt($event.target.value))"
+              class="slider-input"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -221,5 +287,50 @@ const applyChanges = () => {
   margin-bottom: 12px; 
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+/* Стили для инпутов с ползунками */
+.input-with-slider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.number-input {
+  flex: 1;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+.slider-input {
+  width: 120px;
+  height: 6px;
+  border-radius: 3px;
+  background: #ddd;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4caf50;
+  cursor: pointer;
+  box-shadow: 0 0 2px rgba(0,0,0,0.3);
+}
+.slider-input::-webkit-slider-thumb:hover {
+  background: #45a049;
+}
+.slider-input::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4caf50;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 2px rgba(0,0,0,0.3);
 }
 </style>
