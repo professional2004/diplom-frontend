@@ -13,12 +13,12 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'change'])
 
 // container for WebGL canvas
-const canvasContainer = ref(null)
+const canvasRef = ref(null)
 let editorInstance = null
 
 const createEditor = () => {
-  if (!canvasContainer.value) return
-  editorInstance = new Polyline2DEditorClass(canvasContainer.value, {
+  if (!canvasRef.value) return
+  editorInstance = new Polyline2DEditorClass(canvasRef.value, {
     points: props.modelValue,
     isPolygon: props.isPolygon,
     shapeInstance: props.shapeInstance,
@@ -92,7 +92,7 @@ const resetPoints = () => {
     </div>
 
     <!-- three.js will insert a canvas into this div -->
-    <div ref="canvasContainer" class="editor-canvas"></div>
+    <div ref="canvasRef" class="editor-canvas"></div>
 
     <div class="hint">Double-click по полю: +точка | Drag: двигать | Double-click по точке: -точка | колесо: масштаб | перетаскивание: панорама</div>
   </div>
