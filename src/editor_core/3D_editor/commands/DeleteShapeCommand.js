@@ -1,10 +1,10 @@
 import EngineRegistry from '@/editor_core/general/engine/EngineRegistry'
 
 export class DeleteShapeCommand {
-  constructor(sceneSystem, selectionSystem, meshOrEntity) {
+  constructor(sceneSystem, selectionSystem, entity) {
     this.sceneSystem = sceneSystem
     this.selectionSystem = selectionSystem
-    this.mesh = meshOrEntity && meshOrEntity.mesh ? meshOrEntity.mesh : meshOrEntity
+    this.mesh = entity.mesh
     this.is3DCommand = true 
     
     // Сохраняем данные фигуры для восстановления
