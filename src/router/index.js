@@ -29,11 +29,11 @@ const router = createRouter({
 let initialAuthCheckDone = false
 
 router.beforeEach(async (to) => {
-  const auth = useAuthStore()
+  const authStore = useAuthStore()
   
   if (!initialAuthCheckDone) {
     try {
-      await auth.fetchUser()
+      await authStore.fetchUser()
     } catch (e) {
 
     } finally {
@@ -42,9 +42,9 @@ router.beforeEach(async (to) => {
   }
 
   // Защищённые маршруты
-  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return { name: 'main' }
-  } else if ((to.name === 'login' || to.name === 'register') && auth.isAuthenticated) {
+  } else if ((to.name === 'login' || to.name === 'register') && authStore.isAuthenticated) {
     return { name: 'app' }
   }
 })

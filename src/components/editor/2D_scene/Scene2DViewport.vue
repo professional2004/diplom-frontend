@@ -4,11 +4,11 @@ import { useEditorStore } from '@/stores/editorStore'
 import ToolbarPanel2D from '@/components/editor/2D_scene/ToolbarPanel2D.vue'
 
 const containerRef = ref(null)
-const store = useEditorStore()
+const editorStore = useEditorStore()
 
 onMounted(() => {
   if (!containerRef.value) return
-  store.init2D(containerRef.value)
+  editorStore.init2D(containerRef.value)
 })
 </script>
 

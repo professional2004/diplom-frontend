@@ -5,11 +5,11 @@ import ViewCubeGizmo from '@/components/editor/3D_scene/ViewCubeGizmo.vue'
 import ToolbarPanel3D from '@/components/editor/3D_scene/ToolbarPanel3D.vue'
 
 const canvasRef = ref(null)
-const store = useEditorStore()
+const editorStore = useEditorStore()
 
 onMounted(() => {
   if (canvasRef.value) {
-    store.init3D(canvasRef.value)
+    editorStore.init3D(canvasRef.value)
   }
 })
 </script>

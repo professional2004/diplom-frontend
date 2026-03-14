@@ -5,14 +5,11 @@ import { useNotificationStore } from '@/stores/notificationsStore';
 import PageHeader from '@/components/page_parts/PageHeader.vue';
 
 const email = ref('');
-const notify = useNotificationStore();
+const notificationStore = useNotificationStore();
 
 async function submit() {
   await api.post('/api/auth/forgot-password', { email: email.value })
-  notify.show({
-    type: 'info',
-    message: 'Если email существует, ссылка отправлена'
-  })
+  notificationStore.show({type: 'info', message: 'Если email существует, ссылка отправлена'})
 };
 </script>
 

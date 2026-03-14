@@ -5,7 +5,6 @@ export class InputSystem3D {
   constructor(container) {
     this.container = container
     this.engine3D = null // Ссылка на движок будет установлена позже
-    this.store = null  // Ссылка на Pinia store для обновления UI
 
     // Основные инструменты
     this.raycaster = new THREE.Raycaster()
@@ -37,11 +36,6 @@ export class InputSystem3D {
   // Метод для инъекции зависимости (вызывается из Engine)
   setEngine(engine3D) {
     this.engine3D = engine3D
-  }
-
-  // Метод для инъекции Store зависимости (вызывается из editorStore)
-  setStore(store) {
-    this.store = store
   }
 
   // Вспомогательный метод обновления координат мыши

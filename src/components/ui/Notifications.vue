@@ -1,14 +1,14 @@
 <script setup>
 import { useNotificationStore } from '@/stores/notificationsStore'
-const store = useNotificationStore()
+const notificationStore = useNotificationStore()
 </script>
 
 
 <template>
   <div class="notifications">
-    <div v-for="n in store.notifications" :key="n.id" class="notification" :class="n.type">
+    <div v-for="n in notificationStore.notifications" :key="n.id" class="notification" :class="n.type">
       <span>{{ n.message }}</span>
-      <button @click="store.remove(n.id)">✕</button>
+      <button @click="notificationStore.remove(n.id)">✕</button>
     </div>
   </div>
 </template>

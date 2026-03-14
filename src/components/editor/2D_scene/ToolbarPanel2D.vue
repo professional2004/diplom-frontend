@@ -1,13 +1,13 @@
 <script setup>
 import { useEditorStore } from '@/stores/editorStore'
-const store = useEditorStore()
+const editorStore = useEditorStore()
 </script>
 
 <template>
   <div class="toolbar-2d" aria-hidden="false">
-    <button @click="store.zoomIn2D()">Zoom +</button>
-    <button @click="store.zoomOut2D()">Zoom -</button>
-    <button @click="store.reset2D()">Reset</button>
+    <button @click="editorStore.zoomIn2D()">Zoom +</button>
+    <button @click="editorStore.zoomOut2D()">Zoom -</button>
+    <button @click="editorStore.reset2D()">Reset</button>
   </div>
 </template>
 

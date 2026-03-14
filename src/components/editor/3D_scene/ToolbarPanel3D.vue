@@ -1,16 +1,16 @@
 <script setup>
 import { useEditorStore } from '@/stores/editorStore'
 
-const store = useEditorStore()
+const editorStore = useEditorStore()
 
 </script>
 
 <template>
   <div class="toolbar">
     <div class="group">
-      <button @click="store.zoomIn">Zoom +</button>
-      <button @click="store.zoomOut">Zoom -</button>
-      <button @click="store.resetView">Reset</button>
+      <button @click="editorStore.zoomIn">Zoom +</button>
+      <button @click="editorStore.zoomOut">Zoom -</button>
+      <button @click="editorStore.resetView">Reset</button>
     </div>
   </div>
 </template>

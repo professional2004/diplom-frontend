@@ -4,15 +4,15 @@ import { useEditorStore } from '@/stores/editorStore'
 import { ViewCubeGizmo } from '@/editor_core/3D_editor/utils/ViewCubeGizmo'
 
 const containerRef = ref(null)
-const store = useEditorStore()
+const editorStore = useEditorStore()
 let gizmo = null
 let raf = null
 
 onMounted(() => {
   const init = () => {
-    if (store.engine3D && containerRef.value) {
-      const mainCamera = store.engine3D.cameraSystem3D.camera
-      const mainControls = store.engine3D.cameraSystem3D.controls
+    if (editorStore.engine3D && containerRef.value) {
+      const mainCamera = editorStore.engine3D.cameraSystem3D.camera
+      const mainControls = editorStore.engine3D.cameraSystem3D.controls
 
       gizmo = new ViewCubeGizmo(
         containerRef.value,
@@ -20,7 +20,7 @@ onMounted(() => {
         mainControls,
         (direction) => {
           // flyTo через cameraSystem
-          store.engine3D.cameraSystem3D.flyTo(direction)
+          editorStore.engine3D.cameraSystem3D.flyTo(direction)
         }
       )
 

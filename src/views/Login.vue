@@ -7,11 +7,11 @@ import PageHeader from '@/components/page_parts/PageHeader.vue';
 const email = ref('');
 const password = ref('');
 const router = useRouter();
-const auth = useAuthStore();
+const authStore = useAuthStore();
 
 const handleLogin = async () => {
   try {
-    await auth.login({
+    await authStore.login({
       email: email.value,
       password: password.value
     })
