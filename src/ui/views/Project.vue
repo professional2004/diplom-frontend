@@ -1,14 +1,9 @@
 <script setup>
-import { onMounted, onUnmounted, ref, nextTick, computed } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useEditorStore } from '@/stores/editorStore'
 import { useProjectsStore } from '@/stores/projectsStore';
 import { useNotificationStore } from '@/stores/notificationsStore'
-import EngineRegistry from '@/editor_core/general/engine/EngineRegistry';
-import Scene3DViewport from '@/ui/components/editor/3D_scene/Scene3DViewport.vue'
-import Scene2DViewport from '@/ui/components/editor/2D_scene/Scene2DViewport.vue'
-import ShapeChangeBoard from '@/ui/components/editor/3D_toolbar/3DToolbarBoard.vue'
-import { PreviewGenerator } from '@/editor_core/general/utils/PreviewGenerator'
 
 const route = useRoute();
 const router = useRouter();
@@ -17,30 +12,22 @@ const projectStore = useProjectsStore();
 const notificationStore = useNotificationStore()
 
 const projectId = route.params.id;
-const isLoading = ref(true);
+const container2D = ref(null)
+const container3D = ref(null)
+
 const project = ref(null);
 const projectData = ref(null);
+
+const isLoading = ref(true);
+
 const openedEditorSection = ref('project');
 
 function applyProjectData(data) {
-  if (data && data.shapes) {
-    if (EngineRegistry.engine3D && EngineRegistry.engine2D) {
-      EngineRegistry.deserializeProject(data);
-    } else {
-      // дождёмся готовности движков
-      EngineRegistry.emitter.on('engines:ready', () => EngineRegistry.deserializeProject(data));
-    }
-  } else {
-    // пустой проект
-    if (EngineRegistry.engine3D || EngineRegistry.engine2D) {
-      EngineRegistry.clearProject();
-    } else {
-      EngineRegistry.emitter.on('engines:ready', () => EngineRegistry.clearProject());
-    }
-  }
+  editorStore.deserializeProject(data);
 }
 
 onMounted(async () => {
+  editorStore.createEngine(container2D.value, container3D.value)
   try {
     project.value = await projectStore.fetchProject(projectId);
 
@@ -52,7 +39,7 @@ onMounted(async () => {
           projectData.value = JSON.parse(raw);
           editorStore.editorSettings.openSection = 'project'
         } catch (e) {
-          console.warn('Project.vue: не удалось распарсить projectData, используем пустой проект', e);
+          notificationStore.show({type: 'error', message: 'Не удалось распарсить projectData: ' + error})
           projectData.value = null;
         }
       } else if (typeof raw === 'object') {
@@ -60,34 +47,26 @@ onMounted(async () => {
       }
     }
   } catch (error) {
-    // ошибка только при запросе проекта
-    notificationStore.show({type: 'error', message: 'Ошибка загрузки проекта'})
-    console.log('Ошибка загрузки проекта: ' + error.message);
+    notificationStore.show({type: 'error', message: 'Ошибка загрузки проекта: ' + error})
     router.push('/app');
   } finally {
     isLoading.value = false;
-    // после того как интерфейс отрендерился (EditorLayout может появиться)
-    nextTick(() => applyProjectData(projectData.value));
+    applyProjectData(projectData.value)
   }
 });
 
 onUnmounted(() => {
-  // Полностью очистить движки при уходе со страницы проекта
-  EngineRegistry.dispose();
+  editorStore.disposeEngine()
 });
 
 const saveProject = async () => {
   try {
-    const projectData = EngineRegistry.serializeProject();
-    // генерация превью
-    const sceneSystem = EngineRegistry.engine3D?.sceneSystem3D;
-    const preview = sceneSystem ? PreviewGenerator.generate(sceneSystem) : null;
-    // сохранение на бэкенде
+    const projectData = editorStore.serializeProject();
+    const preview = editorStore.generateProjectPreview();
     await projectStore.saveProject(projectId, projectData, preview);
     notificationStore.show({type: 'success', message: 'Проект сохранен'})
   } catch (error) {
-    notificationStore.show({type: 'error', message: 'Ошибка сохранения проекта'})
-    console.log('Ошибка сохранения проекта: ' + error.message);
+    notificationStore.show({type: 'error', message: 'Ошибка сохранения проекта: ' + error})
   }
 };
 
@@ -95,40 +74,6 @@ const goBack = () => {
   router.push('/app');
 };
 
-// Вычисляемое свойство для проверки наличия выбранной фигуры
-const hasSelection = computed(() => {
-  return editorStore.selectedShape !== null
-})
-
-// экспорт лекал
-
-const exportSVG = async () => {
-  try {
-    const ok = await editorStore.exportSVG()
-    if (ok) {
-      notificationStore.show({type: 'success', message: 'SVG файл экспортирован'})
-    } else {
-      notificationStore.show({type: 'error', message: 'Нет разверток для экспорта'})
-    }
-  } catch (error) {
-    notificationStore.show({type: 'error', message: 'Ошибка экспорта SVG'})
-    console.error('Ошибка экспорта SVG:', error)
-  }
-};
-
-const exportPDF = async () => {
-  try {
-    const ok = await editorStore.exportPDF()
-    if (ok) {
-      notificationStore.show({type: 'success', message: 'PDF файл экспортирован'})
-    } else {
-      notificationStore.show({type: 'error', message: 'Нет разверток для экспорта'})
-    }
-  } catch (error) {
-    notificationStore.show({type: 'error', message: 'Ошибка экспорта PDF'})
-    console.error('Ошибка экспорта PDF:', error)
-  }
-};
 </script>
 
 <template>
@@ -144,8 +89,6 @@ const exportPDF = async () => {
           <div class="text -project-name">Проект: {{ project.name }}</div>
         </div>
         <div class="wrapper">
-          <button class="button -save" @click="exportSVG">Экспорт SVG</button>
-          <button class="button -save" @click="exportPDF">Экспорт PDF</button>
           <button class="button -save" @click="saveProject">Сохранить изменения</button>
           <button class="button -back" @click="goBack">Назад</button>
         </div>
@@ -162,35 +105,26 @@ const exportPDF = async () => {
 
       <div class="section -project" v-show="openedEditorSection === 'project'">
         <div class="editor-menu">
-          <button :disabled="!hasSelection" @click="editorStore.deleteShape" title="Delete (Del)">Delete</button>
-          <button :disabled="!editorStore.canUndo" @click="editorStore.undo" title="Undo (Ctrl+Z)">Undo</button>
-          <button :disabled="!editorStore.canRedo" @click="editorStore.redo" title="Redo (Ctrl+Shift+Z)">Redo</button>
-          <button @click="editorStore.addShape('conical')">Add Conical Surface</button>
-          <button @click="editorStore.addShape('cylindrical')">Add Cylindrical Surface</button>
-          <button @click="editorStore.addShape('flat')">Add Flat Surface</button>
+
         </div>
         <div class="wrapper -horizontal-layout">
           <div class="wrapper">
-            <Scene3DViewport class="scene-layer"/>
-          </div>
-          <div class="wrapper">
-            <Scene2DViewport class="scene-layer"/>
-          </div>
-          <div class="wrapper -scrollable">
-            <div v-if="editorStore.selectedShape">
-              <ShapeChangeBoard />
+            <!-- 3D-сцена -->
+            <div class="scene-layer">
+              <div ref="container3D" class="viewport"></div>
             </div>
-          </div>            
+          </div>
+          <!-- 2D-сцена -->
+          <div class="wrapper">
+            <div class="scene-layer">
+              <div ref="container2D" class="viewport"></div>
+            </div>
+          </div>         
         </div>
       </div>
 
       <div class="section -unfoldings" v-show="openedEditorSection === 'unfoldings'">
-        <div class="wrapper -horizontal-layout">
-          <!-- <div class="wrapper">
-            <Scene2DViewport class="scene-layer"/>
-          </div> -->
-          <div class="wrapper"></div>          
-        </div>
+        
       </div>
 
       <div class="section -about" v-show="openedEditorSection === 'about'">
@@ -206,7 +140,7 @@ const exportPDF = async () => {
 </template>
 
 <style scoped>
-@import '@/styles/main.css'; 
+@import '@/ui/styles/main.css'; 
 
 /* header */
 .header {
@@ -238,6 +172,11 @@ const exportPDF = async () => {
 }
 
 /* sections */
+.viewport { 
+  width: 100%; 
+  height: 100%; 
+  overflow: hidden; 
+}
 
 .section {
   position: relative;

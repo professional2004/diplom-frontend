@@ -164,7 +164,7 @@ const onModalClose = () => {
 </template>
 
 <style scoped>
-@import '@/styles/main.css'; 
+@import '@/ui/styles/main.css'; 
 
 .content {
   display: flex;
@@ -185,8 +185,8 @@ const onModalClose = () => {
 .preview-img {
   width: 100%;
   height: 150px;
-  object-fit: contain; /* или cover, в зависимости от желаемого дизайна */
-  background-color: #f8f9fa; /* светлый фон, так как PNG прозрачный */
+  object-fit: contain;
+  background-color: #f8f9fa;
   border-radius: 4px;
 }
 .no-preview {

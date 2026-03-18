@@ -12,6 +12,7 @@ export const useNotificationStore = defineStore('notifications', {
       const id = nextId++
 
       this.notifications.push({ id, type, message })
+      console.log(`[message-${type}] ${message}`)
 
       if (timeout > 0) {
         setTimeout(() => {

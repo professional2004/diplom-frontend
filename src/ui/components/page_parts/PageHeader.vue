@@ -59,7 +59,7 @@ const toHomePage = () => {
 </template>
 
 <style scoped>
-@import '@/styles/main.css'; 
+@import '@/ui/styles/main.css'; 
 
 /* header */
 .header {

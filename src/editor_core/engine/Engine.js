@@ -15,9 +15,9 @@ export class Engine {
     this.container3D = container3D
 
     // Инициализация систем 2D
-    this.cameraSystem2D = new CameraSystem2D(container2D)
-    this.interactionSystem2D = new InteractionSystem2D(this, container2D)
-    this.renderSystem2D = new RenderSystem2D(this, container2D)
+    this.cameraSystem2D = new CameraSystem2D(this.container2D)
+    this.interactionSystem2D = new InteractionSystem2D(this, this.container2D)
+    this.renderSystem2D = new RenderSystem2D(this, this.container2D)
     this.sceneSystem2D = new SceneSystem2D()
 
     this.renderSystem2D.onResize = (w, h) => {
@@ -33,9 +33,9 @@ export class Engine {
     ]
 
     // Инициализация систем 3D
-    this.cameraSystem3D = new CameraSystem3D(container3D)
-    this.interactionSystem3D = new InteractionSystem3D(this, container3D)
-    this.renderSystem3D = new RenderSystem3D(this, container3D)
+    this.cameraSystem3D = new CameraSystem3D(this.container3D)
+    this.interactionSystem3D = new InteractionSystem3D(this, this.container3D)
+    this.renderSystem3D = new RenderSystem3D(this, this.container3D)
     this.sceneSystem3D = new SceneSystem3D()
 
     this.renderSystem3D.onResize = (w, h) => {

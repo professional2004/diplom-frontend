@@ -3,7 +3,9 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
 export class CameraSystem3D {
   constructor(container) {
-    this.camera = new THREE.PerspectiveCamera(fov, container.clientWidth / container.clientHeight, near, far)
+    console.log(container)
+    const aspect = container.innerWidth / container.innerHeight
+    this.camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 1000)
     this.camera.position.set(0, 10, 20)
 
     // Сохраняем начальное состояние для reset

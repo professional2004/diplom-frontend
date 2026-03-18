@@ -29,11 +29,11 @@ const router = createRouter({
 let initialAuthCheckDone = false
 
 router.beforeEach(async (to) => {
-  const auth = useAuthStore()
+  const authStore = useAuthStore()
   
   if (!initialAuthCheckDone) {
     try {
-      await auth.fetchUser()
+      await authStore.fetchUser()
     } catch (e) {
 
     } finally {
