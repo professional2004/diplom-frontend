@@ -3,7 +3,9 @@ import { MapControls } from 'three/examples/jsm/controls/MapControls'
 
 export class CameraSystem2D {
   constructor(container) {
-    const aspect = container.clientWidth / container.clientHeight
+    const width = container.clientWidth || 1
+    const height = container.clientHeight || 1
+    const aspect = width / height
     const viewHeight = 40
     const viewWidth = viewHeight * aspect
     this.camera = new THREE.OrthographicCamera(-viewWidth / 2, viewWidth / 2, viewHeight / 2, -viewHeight / 2, 0.1, 1000)
@@ -33,7 +35,9 @@ export class CameraSystem2D {
   }
 
   setAspect(width, height) {
-    const aspect = width / height
+    const widthSafe = width || 1
+    const heightSafe = height || 1
+    const aspect = widthSafe / heightSafe
     const viewHeight = 40
     const viewWidth = viewHeight * aspect
     this.camera.left = -viewWidth / 2

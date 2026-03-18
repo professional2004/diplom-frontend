@@ -164,7 +164,7 @@ const onModalClose = () => {
 </template>
 
 <style scoped>
-@import '@/ui/styles/main.css'; 
+@import '../styles/main.css'; 
 
 .content {
   display: flex;

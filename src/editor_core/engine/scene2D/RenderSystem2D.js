@@ -13,9 +13,10 @@ export class RenderSystem2D {
     container.appendChild(canvas)
     
     // Обновление размеров рендерера (с уведомлением других слушателей с помощью onResize)
-    this.resizeObserver = new ResizeObserver((container) => {
-      const w = container.clientWidth
-      const h = container.clientHeight
+    this.resizeObserver = new ResizeObserver((entries) => {
+      const entry = entries[0]
+      const w = entry.contentRect.width
+      const h = entry.contentRect.height
       if (typeof this.onResize === 'function') {
         this.onResize(w, h)
       }

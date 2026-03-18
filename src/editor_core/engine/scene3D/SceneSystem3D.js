@@ -13,7 +13,6 @@ export class SceneSystem3D {
 
     // сетка
     this.grid = new THREE.GridHelper(20, 20, 0x444444, 0x222222)
-    this.grid.rotation.x = -Math.PI / 2
     this.scene.add(this.grid)
 
     // объекты

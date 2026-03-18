@@ -141,7 +141,7 @@ const goBack = () => {
 </template>
 
 <style scoped>
-@import '@/ui/styles/main.css'; 
+@import '../styles/main.css'; 
 
 
 .loading-overlay {
