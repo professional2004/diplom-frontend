@@ -19,6 +19,10 @@ export class SceneSystem2D {
     return this.scene
   }
 
+  getObjects() {
+    return this.objects.children
+  }
+
   add(object) { 
     this.objects.add(object) 
   }

@@ -14,7 +14,7 @@ export const useEditorStore = defineStore('editor', {
     },
 
     disposeEngine() {
-      this.sceneManager.dispose?.()
+      this.engine?.dispose()
       this.engine = null
     },
 
