@@ -1,16 +1,12 @@
 <script setup>
 import SceneViewport from './SceneViewport.vue'
 import EditorToolbar from './EditorToolbar.vue'
-import ViewCube from './ViewCube.vue';
 </script>
 
 
 <template>
   <div class="layout">
     <EditorToolbar class="ui-layer" />
-    <div class="cube-wrapper ui-layer">
-      <ViewCube />
-    </div>
     <SceneViewport class="scene-layer" />
   </div>
 </template>

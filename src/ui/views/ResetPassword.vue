@@ -1,13 +1,14 @@
 <script setup>
 import { ref } from 'vue'
 import { useRoute } from 'vue-router'
-import api from '@/services/api'
 import router from '@/router'
+import api from '@/services/api'
 import { useNotificationStore } from '@/stores/notificationsStore'
+import PageHeader from '@/ui/components/page_parts/PageHeader.vue';
 
 const password = ref('')
 const route = useRoute()
-const notify = useNotificationStore()
+const notificationStore = useNotificationStore()
 const token = route.query.token
 
 async function handleResetPassword() {
@@ -17,25 +18,18 @@ async function handleResetPassword() {
       newPassword: password.value
     })
 
-    notify.show({
-      type: 'success',
-      message: 'Пароль успешно изменён'
-    })
+    notificationStore.show({type: 'success', message: 'Пароль успешно изменён'})
 
     router.push('/login')
   } catch {
-    notify.show({
-      type: 'error',
-      message: 'Ссылка недействительна или истекла'
-    })
+    notificationStore.show({type: 'error', message: 'Ссылка недействительна или истекла'})
   }
 }
 </script>
 
 
-
-
 <template>
+  <PageHeader/>
   <h1>Новый пароль</h1>
 
   <label for="input-password">Введите новый пароль пароль</label>

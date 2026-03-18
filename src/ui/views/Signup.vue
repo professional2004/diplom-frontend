@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/services/api';
+import PageHeader from '@/ui/components/page_parts/PageHeader.vue';
 
 const email = ref('');
 const password = ref('');
@@ -23,6 +24,7 @@ const handleRegister = async () => {
 
 <template>
   <div>
+    <PageHeader/>
     <h1>Регистрация</h1>
     <label for="input-email">Введите email</label>
     <input v-model="email" id="input-email" type="email">

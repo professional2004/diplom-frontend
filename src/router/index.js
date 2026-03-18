@@ -1,12 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
-import Login from '@/views/Login.vue'
-import Signup from '@/views/Signup.vue'
-import Main from '@/views/Main.vue'
-import Home from '@/views/Home.vue'
-import Error from '@/views/Error.vue'
-import ForgotPassword from '@/views/ForgotPassword.vue'
-import ResetPassword from '@/views/ResetPassword.vue'
+import Login from '@/ui/views/Login.vue'
+import Signup from '@/ui/views/Signup.vue'
+import Main from '@/ui/views/Main.vue'
+import Home from '@/ui/views/Home.vue'
+import Project from '@/ui/views/Project.vue'
+import Error from '@/ui/views/Error.vue'
+import ForgotPassword from '@/ui/views/ForgotPassword.vue'
+import ResetPassword from '@/ui/views/ResetPassword.vue'
 
 const routes = [
   { path: '/', name: 'main', component: Main },
@@ -15,6 +16,7 @@ const routes = [
   { path: '/forgot-password', name: 'forgot-password', component: ForgotPassword },
   { path: '/reset-password', name: 'reset-password', component: ResetPassword },
   { path: '/app', name: 'app', component: Home, meta: { requiresAuth: true } },
+  { path: '/project/:id', name: 'project', component: Project, meta: { requiresAuth: true } },
   { path: '/:pathMatch(.*)*', name: 'error', component: Error }
 ]
 
