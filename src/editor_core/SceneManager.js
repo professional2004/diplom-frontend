@@ -1,9 +1,9 @@
 import * as THREE from 'three'
-import { RendererController } from '@/core/controllers/RendererController'
-import { CameraController } from '@/core/controllers/CameraController'
-import { GridLayerController } from '@/core/controllers/GridLayerController'
-import { InteractionController } from '@/core/controllers/InteractionController'
-import { CommandManager } from '@/core/commands/CommandManager'
+import { RendererController } from '@/editor_core/controllers/RendererController'
+import { CameraController } from '@/editor_core/controllers/CameraController'
+import { GridLayerController } from '@/editor_core/controllers/GridLayerController'
+import { InteractionController } from '@/editor_core/controllers/InteractionController'
+import { CommandManager } from '@/editor_core/commands/CommandManager'
 
 export class SceneManager {
   constructor(container) {

@@ -1,7 +1,7 @@
 import { markRaw } from 'vue' // Важно! Чтобы Vue не делал Three.js объекты реактивными
 import { defineStore } from 'pinia'
-import { SceneManager } from '@/core/SceneManager'
-import { AddCubeCommand } from '@/core/commands/add/AddCubeCommand'
+import { SceneManager } from '@/editor_core/SceneManager'
+import { AddCubeCommand } from '@/editor_core/commands/add/AddCubeCommand'
 
 export const useEditorStore = defineStore('editor', {
   state: () => ({
