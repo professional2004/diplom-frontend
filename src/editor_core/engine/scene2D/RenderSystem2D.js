@@ -24,11 +24,11 @@ export class RenderSystem2D {
   }
 
   update() {
-    render()
+    this.render()
   }
 
   render() {
-    this.renderer.render(engine.sceneSystem2D.getScene(), engine.cameraSystem2D.getCamera())
+    this.renderer.render(this.engine.sceneSystem2D.getScene(), this.engine.cameraSystem2D.getCamera())
   }
 
   setSize(w, h) {

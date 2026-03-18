@@ -21,6 +21,10 @@ export class SceneSystem3D {
     this.scene.add(this.objects)
   }
 
+  getScene() {
+    return this.scene
+  }
+
   add(object) { 
     this.objects.add(object) 
   }

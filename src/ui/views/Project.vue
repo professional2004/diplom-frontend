@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useEditorStore } from '@/stores/editorStore'
 import { useProjectsStore } from '@/stores/projectsStore';
@@ -27,7 +27,8 @@ function applyProjectData(data) {
 }
 
 onMounted(async () => {
-  editorStore.createEngine(container2D.value, container3D.value)
+  editorStore.createEngine(container2D.value, container3D.value);
+
   try {
     project.value = await projectStore.fetchProject(projectId);
 
@@ -51,7 +52,7 @@ onMounted(async () => {
     router.push('/app');
   } finally {
     isLoading.value = false;
-    applyProjectData(projectData.value)
+    applyProjectData(projectData.value);
   }
 });
 
@@ -78,15 +79,15 @@ const goBack = () => {
 
 <template>
   <div style="display: flex; flex-direction: column; width: 100%;">
-    <div v-if="isLoading" style="padding: 20px;">
+    <div class="loading-overlay" v-if="isLoading">
       Загрузка проекта...
     </div>
 
-    <div v-else>
+    <div>
       <div class="header">
         <div class="wrapper">
           <img class="image -logo" src="../materials/images/logo.svg"></img>
-          <div class="text -project-name">Проект: {{ project.name }}</div>
+          <div class="text -project-name">Проект: {{ project?.name }}</div>
         </div>
         <div class="wrapper">
           <button class="button -save" @click="saveProject">Сохранить изменения</button>
@@ -141,6 +142,18 @@ const goBack = () => {
 
 <style scoped>
 @import '@/ui/styles/main.css'; 
+
+
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.8);
+  z-index: 20;
+  pointer-events: none;
+}
 
 /* header */
 .header {
