@@ -59,8 +59,6 @@ const toHomePage = () => {
 </template>
 
 <style scoped>
-@import '@/ui/styles/main.css'; 
-
 /* header */
 .header {
   display: flex;

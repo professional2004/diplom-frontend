@@ -141,9 +141,6 @@ const goBack = () => {
 </template>
 
 <style scoped>
-@import '../styles/main.css'; 
-
-
 .loading-overlay {
   position: absolute;
   inset: 0;
