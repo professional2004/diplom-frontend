@@ -68,6 +68,7 @@ const saveProject = async () => {
     notificationStore.show({type: 'success', message: 'Проект сохранен'})
   } catch (error) {
     notificationStore.show({type: 'error', message: 'Ошибка сохранения проекта: ' + error})
+    throw error
   }
 };
 
@@ -114,11 +115,25 @@ const goBack = () => {
             <div class="scene-layer">
               <div ref="container3D" class="viewport"></div>
             </div>
+            <div class="ui-layer">
+              <div class="scenetoolbar3D">
+                <button>zoom-in</button>
+                <button>zoom-out</button>
+                <button>zoom-reset</button>
+              </div>
+            </div>
           </div>
           <!-- 2D-сцена -->
           <div class="wrapper">
             <div class="scene-layer">
               <div ref="container2D" class="viewport"></div>
+            </div>
+            <div class="ui-layer">
+              <div class="scenetoolbar2D">
+                <button>zoom-in</button>
+                <button>zoom-out</button>
+                <button>zoom-reset</button>
+              </div>
             </div>
           </div>         
         </div>

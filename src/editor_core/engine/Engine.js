@@ -1,3 +1,5 @@
+import * as THREE from 'three'
+
 // 2D системы
 import { CameraSystem2D } from '@/editor_core/engine/scene2D/CameraSystem2D'
 import { InteractionSystem2D } from '@/editor_core/engine/scene2D/InteractionSystem2D'
@@ -8,6 +10,10 @@ import { CameraSystem3D } from '@/editor_core/engine/scene3D/CameraSystem3D'
 import { InteractionSystem3D } from '@/editor_core/engine/scene3D/InteractionSystem3D'
 import { RenderSystem3D } from '@/editor_core/engine/scene3D/RenderSystem3D'
 import { SceneSystem3D } from '@/editor_core/engine/scene3D/SceneSystem3D'
+// Хелперы
+import { GeneratePreviewHelper } from '@/editor_core/utils/GeneratePreviewHelper'
+// Прочее
+import { Project } from '@/editor_core/models/Project'
 
 export class Engine {
   constructor(container2D, container3D) {
@@ -56,10 +62,11 @@ export class Engine {
       this.systems3D
     ]
 
+    this.project = new Project()
+
     this.running = true
     this.loop = this.loop.bind(this)
     requestAnimationFrame(this.loop)
-
   }
 
   loop() {
@@ -79,5 +86,20 @@ export class Engine {
         system.dispose?.()
       }
     }
+  }
+
+  // Функции над проектом
+  
+  deserializeProject(projectData) {
+    this.project.deserialize(projectData)
+  }
+
+  serializeProject() {
+    return this.project.serialize()
+  }
+
+
+  generateProjectPreview() {
+    return GeneratePreviewHelper.do(this.sceneSystem3D)
   }
 }

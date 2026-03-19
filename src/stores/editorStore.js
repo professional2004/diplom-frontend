@@ -18,16 +18,18 @@ export const useEditorStore = defineStore('editor', {
       this.engine = null
     },
 
-    serializeProject() {
+    // Функции с проектом
 
+    serializeProject() {
+      this.engine.serializeProject(this.engine.project)
     },
 
     deserializeProject(data) {
-      
+      this.engine.deserializeProject(data)
     },
 
     generateProjectPreview() {
-
+      return this.engine.generateProjectPreview()
     }
   }
 })
