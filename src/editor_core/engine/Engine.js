@@ -1,5 +1,3 @@
-import * as THREE from 'three'
-
 // 2D системы
 import { CameraSystem2D } from '@/editor_core/engine/scene2D/CameraSystem2D'
 import { InteractionSystem2D } from '@/editor_core/engine/scene2D/InteractionSystem2D'
@@ -12,6 +10,9 @@ import { RenderSystem3D } from '@/editor_core/engine/scene3D/RenderSystem3D'
 import { SceneSystem3D } from '@/editor_core/engine/scene3D/SceneSystem3D'
 // Хелперы
 import { GeneratePreviewHelper } from '@/editor_core/utils/project_helpers/GeneratePreviewHelper'
+import { GenerateConicalSurfaceMeshHelper } from '@/editor_core/utils/geometry_helpers/GenerateConicalSurfaceMeshHelper'
+import { GenerateCylindricalSurfaceMeshHelper } from '@/editor_core/utils/geometry_helpers/GenerateCylindricalSurfaceMeshHelper'
+import { GenerateFlatSurfaceMeshHelper } from '@/editor_core/utils/geometry_helpers/GenerateFlatSurfaceMeshHelper'
 // Прочее
 import { Project } from '@/editor_core/models/Project'
 
@@ -98,8 +99,38 @@ export class Engine {
     return this.project.serialize()
   }
 
-
   generateProjectPreview() {
     return GeneratePreviewHelper.help(this.sceneSystem3D)
+  }
+
+
+  // Функции над моделью
+
+
+  generateConstructionMeshes() {
+    for (let detail in this.project.project_data.data.entities.details) {
+      for (let surface in detail.surfaces) {
+        let mesh = null
+        switch(surface.type) {
+          case "conical": {
+            mesh = GenerateConicalSurfaceMeshHelper.help(surface)
+            break
+          }
+          case "cylindrical": {
+            mesh = GenerateCylindricalSurfaceMeshHelper.help(surface)
+            break
+          }
+          case "flat": {
+            mesh = GenerateFlatSurfaceMeshHelper.help(surface)
+            break
+          }
+          default: {
+            console.log('error: incorrect surface type')
+            break
+          }
+        }
+        this.sceneSystem3D.add(mesh)
+      }
+    }
   }
 }
