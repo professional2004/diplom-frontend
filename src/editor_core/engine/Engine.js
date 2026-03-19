@@ -11,7 +11,7 @@ import { InteractionSystem3D } from '@/editor_core/engine/scene3D/InteractionSys
 import { RenderSystem3D } from '@/editor_core/engine/scene3D/RenderSystem3D'
 import { SceneSystem3D } from '@/editor_core/engine/scene3D/SceneSystem3D'
 // Хелперы
-import { GeneratePreviewHelper } from '@/editor_core/utils/GeneratePreviewHelper'
+import { GeneratePreviewHelper } from '@/editor_core/utils/project_helpers/GeneratePreviewHelper'
 // Прочее
 import { Project } from '@/editor_core/models/Project'
 
@@ -89,7 +89,7 @@ export class Engine {
   }
 
   // Функции над проектом
-  
+
   deserializeProject(projectData) {
     this.project.deserialize(projectData)
   }
@@ -100,6 +100,6 @@ export class Engine {
 
 
   generateProjectPreview() {
-    return GeneratePreviewHelper.do(this.sceneSystem3D)
+    return GeneratePreviewHelper.help(this.sceneSystem3D)
   }
 }

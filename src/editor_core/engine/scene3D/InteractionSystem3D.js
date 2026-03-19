@@ -47,7 +47,6 @@ export class InteractionSystem3D {
   onPointerUp(event) {
     this.updateMouse(event)
     const hitObject = this.getIntersectedObject()
-    console.log('Нажатый объект: ', hitObject)
   }
 
   dispose() {

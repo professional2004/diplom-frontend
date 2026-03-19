@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 
 export class GeneratePreviewHelper {
-  static do(sceneSystem3D) {
+  static help(sceneSystem3D) {
     const scene3D = sceneSystem3D.scene;
 
     // Сохраняем оригинальные настройки сцены
