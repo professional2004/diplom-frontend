@@ -25,67 +25,59 @@ export class StraightRandomDetail {
   }
 
 
-  calculateDetailSurfaces(detail) {
-    const parameters = detail.parameters
-    const shapePolyline = parameters.shape_polyline;
-    const depth = parameters.depth;
-    
-    const isClosed = shapePolyline.type === "closed";
-    const points = shapePolyline.points;
-    
-    // Вычисляем длину контура для развертки боковой поверхности
+
+  calculateDetailSurfaces(parameters) {
+    const { shape_polyline, depth } = parameters;
+    const points = shape_polyline.points;
+    const isClosed = shape_polyline.type === "closed";
+
+    // Рассчитываем периметр основания
+    // Он нужен для формирования прямоугольника развертки боковой (цилиндрической) поверхности
     const perimeter = CalculateGeometryMathHelper.calculatePolylineLength(points, isClosed);
+    const surfaces = [];
 
-    // Формируем массив поверхностей
-    const surfaces = []
+    // Нижняя плоская поверхность
+    surfaces.push({
+      id: uuidv4(),
+      type: "flat",
+      geometry: {
+        position: { x: 0, y: 0, z: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        shape: {
+          // Делаем глубокую копию, чтобы избежать мутаций по ссылке
+          bounding_polyline: JSON.parse(JSON.stringify(shape_polyline))
+        }
+      },
+      unfolding: {
+        material_id: "default"
+      }
+    });
 
-    // Передняя плоская поверхность (Z = depth)
+    // Верхняя плоская поверхность
     surfaces.push({
       id: uuidv4(),
       type: "flat",
       geometry: {
         position: { x: 0, y: 0, z: depth },
-        rotation: { x: 0, y: 0, z: 0 },
-        shape: {
-          bounding_polyline: {
-            type: shapePolyline.type,
-            points: JSON.parse(JSON.stringify(points)) // Глубокая копия точек
-          }
-        }
-      },
-      unfolding: { material_id: "default" }
-    });
-
-    // Задняя плоская поверхность (Z = 0)
-    surfaces.push({
-      id: uuidv4(),
-      type: "flat",
-      geometry: {
-        position: { x: 0, y: 0, z: 0 },
         rotation: { x: 0, y: 0, z: 0 }, 
         shape: {
-          bounding_polyline: {
-            type: shapePolyline.type,
-            points: JSON.parse(JSON.stringify(points))
-          }
+          bounding_polyline: JSON.parse(JSON.stringify(shape_polyline))
         }
       },
-      unfolding: { material_id: "default" }
+      unfolding: {
+        material_id: "default"
+      }
     });
 
-    // Цилиндрическая (боковая) поверхность
-    // Развертка представляет собой прямоугольник: ширина = периметр, высота = depth
+    // Боковая цилиндрическая поверхность
     surfaces.push({
       id: uuidv4(),
       type: "cylindrical",
       geometry: {
-        position: { x: 0, y: 0, z: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
+        position: { x: 0, y: 0, z: depth },
+        rotation: { x: -Math.PI/2, y: 0, z: 0 },
         shape: {
-          base_polyline: {
-            type: shapePolyline.type,
-            points: JSON.parse(JSON.stringify(points))
-          },
+          base_polyline: JSON.parse(JSON.stringify(shape_polyline)),
           bounding_polyline: {
             type: "closed",
             points: [
@@ -97,7 +89,9 @@ export class StraightRandomDetail {
           }
         }
       },
-      unfolding: { material_id: "default" }
+      unfolding: {
+        material_id: "default"
+      }
     });
 
     return surfaces;

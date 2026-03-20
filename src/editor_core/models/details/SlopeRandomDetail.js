@@ -6,8 +6,7 @@ export class SlopeRandomDetail {
   createDetail() {
     
   }
-
-
+  
   calculateDetailSurfaces() {
 
     
