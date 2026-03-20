@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import { CalculateGeometryMathHelper } from '@/editor_core/utils/geometry_math_helpers/CalculateGeometryMathHelper'
 
 export class ConicalSurface {
   
@@ -48,8 +47,8 @@ export class ConicalSurface {
       
       if (Math.abs(det) < 1e-10) continue
 
-      let polySector = CalculateGeometryMathHelper.clipAgainstRay(polygon2D, ray1, true)
-      polySector = CalculateGeometryMathHelper.clipAgainstRay(polySector, ray2, false)
+      let polySector = this.clipAgainstRay(polygon2D, ray1, true)
+      polySector = this.clipAgainstRay(polySector, ray2, false)
 
       const cleaned = polySector.filter((p, i, arr) => 
         p.distanceToSquared(arr[i === 0 ? arr.length - 1 : i - 1]) > 1e-10
@@ -112,5 +111,31 @@ export class ConicalSurface {
     mesh.userData = { id, type }
 
     return mesh
+  }
+
+
+  // Алгоритм Сазерленда-Ходжмена для отсечения 2D-полигона лучом
+  clipAgainstRay(poly, ray, isLeft) {
+    if (poly.length < 3) return []
+    const result = []
+    for (let i = 0; i < poly.length; i++) {
+      const cur = poly[i]
+      const next = poly[(i + 1) % poly.length]
+      const crossCur = ray.x * cur.y - ray.y * cur.x
+      const crossNext = ray.x * next.y - ray.y * next.x
+      const isCurInside = isLeft ? crossCur >= -1e-8 : crossCur <= 1e-8
+      const isNextInside = isLeft ? crossNext >= -1e-8 : crossNext <= 1e-8
+
+      if (isCurInside) result.push(cur)
+      if (isCurInside !== isNextInside) {
+        const Nx = -ray.y, Ny = ray.x
+        const denom = Nx * (next.x - cur.x) + Ny * (next.y - cur.y)
+        if (Math.abs(denom) > 1e-12) {
+          const t = -(Nx * cur.x + Ny * cur.y) / denom
+          result.push(new THREE.Vector2(cur.x + t * (next.x - cur.x), cur.y + t * (next.y - cur.y)))
+        }
+      }
+    }
+    return result
   }
 }
