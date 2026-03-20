@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useEditorStore } from '@/stores/editorStore'
 import { useProjectsStore } from '@/stores/projectsStore';
@@ -43,7 +43,16 @@ onMounted(async () => {
     notificationStore.show({type: 'error', message: 'Ошибка загрузки проекта'})
     router.push('/app');
   } finally {
-    editorStore.deserializeProject(projectData.value);
+    editorStore.deserializeProject({
+      id: project.value.id,
+      name: project.value.name,
+      description: project.value.description,
+      project_data: projectData.value,
+      created_at: project.value.created_at,
+      updated_at: project.value.updated_at,
+      category_id: project.value.category_id,
+      user_id: project.value.user_id
+    });
     isLoading.value = false;
   }
 });
@@ -88,6 +97,8 @@ const goBack = () => {
         </div>
         <div class="wrapper">
           <button :class="['button', '-save', { 'unsaved_changes': editorStore.is_unsaved }]" @click="saveProject">Сохранить изменения</button>
+          <button class="button" @click="editorStore.exportProjectUnfoldingsSVG()">Экспорт в SVG</button>
+          <button class="button" @click="editorStore.exportProjectUnfoldingsPDF()">Экспорт в PDF</button>
           <button class="button -back" @click="goBack">Назад</button>
         </div>
       </div>

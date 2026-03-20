@@ -25,8 +25,8 @@ export const useEditorStore = defineStore('editor', {
 
     // ----------- функции с проектом -----------
 
-    deserializeProject(projectData) {
-      this.engine.deserializeProject(projectData)
+    deserializeProject(project) {
+      this.engine.deserializeProject(project)
     },
 
     serializeProject() {
@@ -44,6 +44,14 @@ export const useEditorStore = defineStore('editor', {
     clearProject() {
       this.engine.clearProject()
       this.is_unsaved = true
+    },
+
+    exportProjectUnfoldingsSVG() {
+      this.engine.exportProjectUnfoldingsSVG()
+    },
+
+    exportProjectUnfoldingsPDF() {
+      this.engine.exportProjectUnfoldingsPDF()
     },
 
 

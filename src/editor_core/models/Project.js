@@ -11,6 +11,7 @@ import { Unfolding } from '@/editor_core/models/unfoldings/Unfolding'
 export class Project {
   constructor() {
     this.project_data = {}
+    this.project_extra = {}
 
     // инициализация классов поверхностей
     this.conicalSurface = new ConicalSurface()
@@ -37,8 +38,17 @@ export class Project {
   }
 
   // установить данные проекта
-  setProjectData(projectData) {
-    this.project_data = projectData
+  setProjectData(project) {
+    this.project_data = project.project_data
+    this.project_extra = {
+      id: project.id,
+      name: project.name,
+      description: project.description,
+      created_at: project.created_at,
+      updated_at: project.updated_at,
+      category_id: project.category_id,
+      user_id: project.user_id
+    }
   }
 
   // получить данные проекта
@@ -53,7 +63,9 @@ export class Project {
 
   // ----- геттеры -----
   getDetails() { return this.project_data?.entities?.details }
+  getUnfoldings() { return this.project_data?.entities?.details ? this.project_data.entities.details.map(d => d.surfaces.map(s => s.unfolding)).flat() : [] }
   getMaterials() { return this.project_data?.materials }
+  getProjectName() { return this.project_extra?.name }
 
 
 

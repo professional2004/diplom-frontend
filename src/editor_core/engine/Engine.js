@@ -1,3 +1,4 @@
+import { Project } from '@/editor_core/models/Project'
 // 2D системы
 import { CameraSystem2D } from '@/editor_core/engine/scene2D/CameraSystem2D'
 import { InteractionSystem2D } from '@/editor_core/engine/scene2D/InteractionSystem2D'
@@ -10,8 +11,8 @@ import { RenderSystem3D } from '@/editor_core/engine/scene3D/RenderSystem3D'
 import { SceneSystem3D } from '@/editor_core/engine/scene3D/SceneSystem3D'
 // Хелперы
 import { GeneratePreviewHelper } from '@/editor_core/utils/project_helpers/GeneratePreviewHelper'
-// Прочее
-import { Project } from '@/editor_core/models/Project'
+import { ExportUnfoldingsSVGHelper } from '@/editor_core/utils/project_helpers/ExportUnfoldingsSVGHelper'
+import { ExportUnfoldingsPDFHelper } from '@/editor_core/utils/project_helpers/ExportUnfoldingsPDFHelper'
 
 export class Engine {
   constructor(container2D, container3D) {
@@ -92,8 +93,8 @@ export class Engine {
 
 
   // развернуть проект
-  deserializeProject(projectData) {
-    this.project.setProjectData(projectData)
+  deserializeProject(project) {
+    this.project.setProjectData(project)
     this.buildProject()
   }
 
@@ -130,6 +131,22 @@ export class Engine {
     this.project.clearProjectData()
     this.sceneSystem3D.clearObjects()
     this.sceneSystem2D.clearObjects()
+  }
+
+  // экспортировать в SVG
+  exportProjectUnfoldingsSVG() {
+    const unfoldings = this.project.getUnfoldings()
+    const materials = this.project.getMaterials()
+    const projectName = this.project.getProjectName()
+    ExportUnfoldingsSVGHelper.help(unfoldings, materials, projectName)
+  }
+
+  // экспортировать в PDF
+  exportProjectUnfoldingsPDF() {
+    const unfoldings = this.project.getUnfoldings()
+    const materials = this.project.getMaterials()
+    const projectName = this.project.getProjectName()
+    ExportUnfoldingsPDFHelper.help(unfoldings, materials, projectName)
   }
 
 
