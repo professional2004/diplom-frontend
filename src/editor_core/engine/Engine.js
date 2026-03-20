@@ -86,31 +86,52 @@ export class Engine {
     }
   }
 
-  // Функции над проектом
 
+
+  // ----------- функции над проектом -----------
+
+
+  // развернуть проект
   deserializeProject(projectData) {
-    this.project.deserialize(projectData)
+    this.project.setProjectData(projectData)
+    this.buildProject()
   }
 
+  // запаковать проект
   serializeProject() {
-    return this.project.serialize()
+    return JSON.stringify(this.project.getProjectData())
   }
 
+  // построить все детали
+  buildProject() {
+    const details = this.project.getDetails()
+    if (details) {
+      for (const detail of details) {
+        const detailMeshes = this.project.generateDetailMeshes(detail)
+        for (const detailMesh of detailMeshes) {
+          this.sceneSystem3D.add(detailMesh)
+        }
+      }      
+    }
+  }
+
+  // сгенерировать превью
   generateProjectPreview() {
     return GeneratePreviewHelper.help(this.sceneSystem3D)
   }
 
 
 
-
+  // очистить проект
   clearProject() {
-    this.project.clear()
+    this.project.clearProjectData()
+    this.sceneSystem3D.clearObjects()
   }
 
 
-
+  // добавить деталь
   addDetail(type) {
-    const detailMeshes = this.project.generateDetailSurfaceMeshes(type)
+    const detailMeshes = this.project.createDetail(type)
     for (const detailMesh of detailMeshes) {
       this.sceneSystem3D.add(detailMesh)
     }

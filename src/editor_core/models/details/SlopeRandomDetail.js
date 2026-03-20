@@ -3,11 +3,11 @@ import { CalculateGeometryMathHelper } from '@/editor_core/utils/geometry_math_h
 
 export class SlopeRandomDetail {
   
-  createDetail() {
+  create() {
     
   }
   
-  calculateDetailSurfaces() {
+  calculateSurfaces() {
 
     
   }

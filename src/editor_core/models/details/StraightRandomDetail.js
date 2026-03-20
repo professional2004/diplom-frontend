@@ -3,7 +3,7 @@ import { CalculateGeometryMathHelper } from '@/editor_core/utils/geometry_math_h
 
 export class StraightRandomDetail {
   
-  createDetail() {
+  create() {
     const detail = {
       id: uuidv4(),
       type: "straight_random",
@@ -20,13 +20,13 @@ export class StraightRandomDetail {
         depth: 4
       }
     }
-    detail.surfaces = this.calculateDetailSurfaces(detail.parameters)
+    detail.surfaces = this.calculateSurfaces(detail.parameters)
     return detail
   }
 
 
 
-  calculateDetailSurfaces(parameters) {
+  calculateSurfaces(parameters) {
     const { shape_polyline, depth } = parameters;
     const points = shape_polyline.points;
     const isClosed = shape_polyline.type === "closed";

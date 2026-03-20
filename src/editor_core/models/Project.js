@@ -31,35 +31,52 @@ export class Project {
     }
   }
 
-  // десериализация данных проекта
-  deserialize(jsonData) {
-    try {
-      const parsed = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData
-      this.project_data = parsed?.project_data || {}
-    } catch (error) {
-      console.error('Ошибка десериализации проекта:', error)
-      this.project_data = {}
-    }
+  // установить данные проекта
+  setProjectData(projectData) {
+    this.project_data = projectData
   }
 
-  // сериализация данных проекта
-  serialize() {
-    return JSON.stringify(this.project_data)
+  // получить данные проекта
+  getProjectData() {
+    return this.project_data
   }
 
-  // очистить проект
-  clear() {
+  // очистить данные проекта
+  clearProjectData() {
     this.project_data = {}
   }
 
+  // ----- геттеры -----
+  getDetails() { return this.project_data?.entities?.details }
+  getMaterials() { return this.project_data?.materials }
 
 
-  // ------------------------------- хелперы -------------------------------
 
 
-  generateDetailSurfaceMeshes(type){
+
+  // создать деталь
+  createDetail(type) {
+    // создание данных детали
     const detailClass = this.detailClasses[type]
-    const detail = detailClass.createDetail()
+    const detail = detailClass.create()
+
+    // регистрация
+    if (!this.project_data.entities) {
+      this.project_data.entities = {
+        details: []
+      }
+    }
+    this.project_data.entities.details.push(detail)
+
+    // генерация мешей
+    const meshes = this.generateDetailMeshes(detail)
+
+    return meshes
+  }
+
+
+  // сгенерировать меши поверхностей детали
+  generateDetailMeshes(detail) {
     const meshes = []
     if (!this.project_data.materials) {
       this.project_data.materials = [
@@ -76,6 +93,9 @@ export class Project {
       let mesh = surfaceClass.generateMesh(surface, materials);
       meshes.push(mesh)
     }
+
     return meshes
   }
+
+
 }

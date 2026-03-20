@@ -22,37 +22,31 @@ const isLoading = ref(true);
 
 const openedEditorSection = ref('project');
 
-function applyProjectData(data) {
-  editorStore.deserializeProject(data);
-}
 
 onMounted(async () => {
-  editorStore.createEngine(container2D.value, container3D.value);
-
   try {
+    editorStore.createEngine(container2D.value, container3D.value);
     project.value = await projectStore.fetchProject(projectId);
-
-    // Подготовить данные для десериализации (без выполнения)
-    let raw = project.value.projectData;
-    if (raw) {
-      if (typeof raw === 'string') {
+    let rawData = project.value.projectData;
+    if (rawData) {
+      if (typeof rawData === 'string') {
         try {
-          projectData.value = JSON.parse(raw);
-          editorStore.editorSettings.openSection = 'project'
+          projectData.value = JSON.parse(rawData);
+          // editorStore.editorSettings.openSection = 'project'
         } catch (e) {
-          notificationStore.show({type: 'error', message: 'Не удалось распарсить projectData: ' + error})
+          console.warn('Не удалось распарсить projectData, используем пустой проект', e);
           projectData.value = null;
         }
-      } else if (typeof raw === 'object') {
-        projectData.value = raw;
+      } else if (typeof rawData === 'object') {
+        projectData.value = rawData;
       }
     }
   } catch (error) {
-    notificationStore.show({type: 'error', message: 'Ошибка загрузки проекта: ' + error})
+    notificationStore.show({type: 'error', message: 'Ошибка загрузки проекта'})
     router.push('/app');
   } finally {
+    editorStore.deserializeProject(projectData.value);
     isLoading.value = false;
-    applyProjectData(projectData.value);
   }
 });
 
