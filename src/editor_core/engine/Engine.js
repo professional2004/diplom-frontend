@@ -129,6 +129,7 @@ export class Engine {
   clearProject() {
     this.project.clearProjectData()
     this.sceneSystem3D.clearObjects()
+    this.sceneSystem2D.clearObjects()
   }
 
 

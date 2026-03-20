@@ -18,17 +18,37 @@ export class Unfolding {
 
     const geometryShape = new THREE.ShapeGeometry(shape);
 
-    // Подготовка цвета (превращаем "cccccc" в "#cccccc")
+    // Находим реальные границы геометрии, чтобы "вписать" текстуру
+    geometryShape.computeBoundingBox();
+    const { min, max } = geometryShape.boundingBox;
+    const width = max.x - min.x;
+    const height = max.y - min.y;
+
+    const uvAttribute = geometryShape.attributes.uv;
+    for (let i = 0; i < uvAttribute.count; i++) {
+      let u = uvAttribute.getX(i);
+      let v = uvAttribute.getY(i);
+
+      // Нормализуем: (значение - минимум) / ширина (координаты будут строго от 0 до 1)
+      u = (u - min.x) / (width || 1);
+      v = (v - min.y) / (height || 1);
+
+      uvAttribute.setXY(i, u, v);
+    }
+    uvAttribute.needsUpdate = true;
+
+    // Подготовка цвета (добавляем "#" к "cccccc")
     const materialData = materials.find(m => m.id === material_id)
     const materialColor = "#" + materialData.color;
 
-    // Генерируем текстуру "на лету"
-    const texture = this.createUnfoldingTexture(shapePoints, foldLines, materialColor);
+    // Генерируем текстуру (передаем уже вычисленные width/height)
+    const texture = this.createUnfoldingTexture(width, height, foldLines, min, materialColor);
 
     // Применяем материал
     const material = new THREE.MeshBasicMaterial({
       map: texture,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
+      color: 0xffffff 
     });
 
     const mesh = new THREE.Mesh(geometryShape, material);
@@ -45,41 +65,33 @@ export class Unfolding {
 
 
 
-  createUnfoldingTexture(points, foldLines = [], color) {
-    // Pixels Per Unit (качество текстуры)
-    const ppu = 100
-
-    // Находим границы (Bounding Box) для определения размера холста
-    const xs = points.map(p => p.x);
-    const ys = points.map(p => p.y);
-    const minX = Math.min(...xs);
-    const maxX = Math.max(...xs);
-    const minY = Math.min(...ys);
-    const maxY = Math.max(...ys);
-
-    const width = (maxX - minX) || 1;
-    const height = (maxY - minY) || 1;
-
-    // Создаем canvas
+  createUnfoldingTexture(width, height, foldLines, minCoord, color) {
+    const ppu = 100; // Качество текстуры
+    
     const canvas = document.createElement('canvas');
-    canvas.width = width * ppu;
-    canvas.height = height * ppu;
+    // Ограничиваем размер, чтобы браузер не "упал" на огромных деталях
+    canvas.width = Math.min(width * ppu, 4096);
+    canvas.height = Math.min(height * ppu, 4096);
+    
     const ctx = canvas.getContext('2d');
 
-    // Функция перевода координат детали в координаты холста
+    // Масштабируем всё рисование под размер канваса
+    const scaleX = canvas.width / width;
+    const scaleY = canvas.height / height;
+
     const toCanvas = (x, y) => ({
-      x: (x - minX) * ppu,
-      y: (height - (y - minY)) * ppu // Инвертируем Y, так как в Canvas 0 вверху
+      x: (x - minCoord.x) * scaleX,
+      y: canvas.height - (y - minCoord.y) * scaleY // Переворачиваем Y
     });
 
-    // Заливка основным цветом
+    // Рисуем фон
     ctx.fillStyle = color;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Отрисовка линий сгиба
-    ctx.strokeStyle = '#000000'; // Цвет линий
-    ctx.lineWidth = 2;            // Толщина линий в пикселях
-    ctx.setLineDash([5, 5]);      // Делаем пунктир
+    // Рисуем линии сгиба
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 4; // Сделаем потолще для заметности
+    ctx.setLineDash([15, 10]); 
 
     foldLines.forEach(line => {
       const start = toCanvas(line[0].x, line[0].y);
@@ -92,6 +104,9 @@ export class Unfolding {
     });
 
     const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.needsUpdate = true;
+    
     return texture;
   }
 }
