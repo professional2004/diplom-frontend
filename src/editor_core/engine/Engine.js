@@ -111,7 +111,7 @@ export class Engine {
 
   addDetail(type) {
     const detailMeshes = this.project.generateDetailSurfaceMeshes(type)
-    for (let detailMesh in detailMeshes) {
+    for (const detailMesh of detailMeshes) {
       this.sceneSystem3D.add(detailMesh)
     }
   }

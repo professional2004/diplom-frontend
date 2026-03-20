@@ -20,7 +20,7 @@ export class StraightRandomDetail {
         depth: 4
       }
     }
-    detail.surfaces = this.calculateDetailSurfaces(detail)
+    detail.surfaces = this.calculateDetailSurfaces(detail.parameters)
     return detail
   }
 

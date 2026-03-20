@@ -91,11 +91,12 @@ export class ConicalSurface {
     }    
     
     // Подготовка цвета (превращаем "cccccc" в 0xcccccc)
-    const matColor = parseInt(materials[unfolding.material_id].color, 16);
+    const materialData = materials.find(m => m.id === unfolding.material_id)
+    const materialColor = parseInt(materialData.color, 16);
 
     // Применяем материал
     const material = new THREE.MeshStandardMaterial({
-      color: matColor,
+      color: materialColor,
       side: THREE.DoubleSide,
       metalness: 0.1,
       roughness: 0.5

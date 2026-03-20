@@ -64,7 +64,7 @@ export class Project {
     const detailClass = this.detailClasses[type]
     const detail = detailClass.createDetail()
     const meshes = []
-    for (let surface in detail.surfaces) {
+    for (const surface of detail.surfaces) {
       const surfaceClass = this.surfaceClasses[surface.type]
       let materials = []
       if (this.project_data?.data?.materials) {
