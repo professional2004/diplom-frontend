@@ -5,6 +5,8 @@ import { FlatSurface } from '@/editor_core/models/surfaces/FlatSurface'
 // детали
 import { StraightRandomDetail } from '@/editor_core/models/details/StraightRandomDetail'
 import { SlopeRandomDetail } from '@/editor_core/models/details/SlopeRandomDetail'
+// развертки
+import { Unfolding } from '@/editor_core/models/unfoldings/Unfolding'
 
 export class Project {
   constructor() {
@@ -29,6 +31,9 @@ export class Project {
       "straight_random": this.straightRandomDetail,
       "slope_random": this.slopeRandomDetail,
     }
+
+    // инициализация разверток
+    this.unfoldingClass = new Unfolding()
   }
 
   // установить данные проекта
@@ -54,30 +59,28 @@ export class Project {
 
 
 
-  // создать деталь
+  // создание данных детали
   createDetail(type) {
-    // создание данных детали
     const detailClass = this.detailClasses[type]
     const detail = detailClass.create()
+    return detail
+  }
 
-    // регистрация
+  // зарегистрировать деталь
+  registerDetail(detail) {
     if (!this.project_data.entities) {
       this.project_data.entities = {
         details: []
       }
     }
     this.project_data.entities.details.push(detail)
-
-    // генерация мешей
-    const meshes = this.generateDetailMeshes(detail)
-
-    return meshes
   }
 
 
-  // сгенерировать меши поверхностей детали
+  // сгенерировать меши поверхностей и разверток детали
   generateDetailMeshes(detail) {
-    const meshes = []
+    const surfaceMeshes = []
+    const unfoldingMeshes = []
     if (!this.project_data.materials) {
       this.project_data.materials = [
         {
@@ -90,11 +93,13 @@ export class Project {
     const materials = this.project_data.materials
     for (const surface of detail.surfaces) {
       const surfaceClass = this.surfaceClasses[surface.type]
-      let mesh = surfaceClass.generateMesh(surface, materials);
-      meshes.push(mesh)
+      let surfaceMesh = surfaceClass.generateMesh(surface, materials);
+      surfaceMeshes.push(surfaceMesh)
+      let unfoldingMesh = this.unfoldingClass.generateMesh(surface.unfolding, materials);
+      unfoldingMeshes.push(unfoldingMesh)
     }
 
-    return meshes
+    return { surfaceMeshes, unfoldingMeshes }
   }
 
 

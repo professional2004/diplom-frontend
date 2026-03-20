@@ -1,23 +1,5 @@
 export class CalculateGeometryMathHelper {
 
-  // Вычисляет длину (периметр) полилинии
-  static calculatePolylineLength(points, isClosed) {
-    let length = 0;
-    for (let i = 0; i < points.length; i++) {
-      // Если полилиния незамкнутая, пропускаем замыкающий отрезок
-      if (!isClosed && i === points.length - 1) break;
-      
-      const p1 = points[i];
-      const p2 = points[(i + 1) % points.length];
-      
-      const dx = p2.x - p1.x;
-      const dy = p2.y - p1.y;
-      length += Math.sqrt(dx * dx + dy * dy);
-    }
-    return length;
-  }
-
-
   
   // Оптимизированная версия Sutherland-Hodgman для триангуляции (разрезает треугольники вертикальной линией X = L)
   static sliceTriangles(triangles, L) {

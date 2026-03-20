@@ -107,9 +107,12 @@ export class Engine {
     const details = this.project.getDetails()
     if (details) {
       for (const detail of details) {
-        const detailMeshes = this.project.generateDetailMeshes(detail)
-        for (const detailMesh of detailMeshes) {
-          this.sceneSystem3D.add(detailMesh)
+        const { surfaceMeshes, unfoldingMeshes } = this.project.generateDetailMeshes(detail)
+        for (const surfaceMesh of surfaceMeshes) {
+          this.sceneSystem3D.add(surfaceMesh)
+        }
+        for (const unfoldingMesh of unfoldingMeshes) {
+          this.sceneSystem2D.add(unfoldingMesh)
         }
       }      
     }
@@ -142,9 +145,15 @@ export class Engine {
 
   // добавить деталь
   addDetail(type) {
-    const detailMeshes = this.project.createDetail(type)
-    for (const detailMesh of detailMeshes) {
-      this.sceneSystem3D.add(detailMesh)
+    const detail = this.project.createDetail(type)
+    this.project.registerDetail(detail)
+
+    const { surfaceMeshes, unfoldingMeshes } = this.project.generateDetailMeshes(detail)
+    for (const surfaceMesh of surfaceMeshes) {
+      this.sceneSystem3D.add(surfaceMesh)
+    }
+    for (const unfoldingMesh of unfoldingMeshes) {
+      this.sceneSystem2D.add(unfoldingMesh)
     }
   }
 

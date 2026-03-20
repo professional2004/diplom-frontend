@@ -4,6 +4,7 @@ import { Engine } from '@/editor_core/engine/Engine'
 
 export const useEditorStore = defineStore('editor', {
   state: () => ({
+    is_unsaved: false,
     selectedThing: {}
   }),
 
@@ -31,6 +32,10 @@ export const useEditorStore = defineStore('editor', {
     serializeProject() {
       return this.engine.serializeProject()
     },
+
+    projectIsSaved() {
+      this.is_unsaved = false
+    },
     
     generateProjectPreview() {
       return this.engine.generateProjectPreview()
@@ -38,6 +43,7 @@ export const useEditorStore = defineStore('editor', {
 
     clearProject() {
       this.engine.clearProject()
+      this.is_unsaved = true
     },
 
 
@@ -56,6 +62,7 @@ export const useEditorStore = defineStore('editor', {
 
     addDetail(type) {
       this.engine.addDetail(type)
+      this.is_unsaved = true
     }
 
 

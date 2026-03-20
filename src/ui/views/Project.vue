@@ -59,6 +59,7 @@ const saveProject = async () => {
     const projectData = editorStore.serializeProject();
     const preview = editorStore.generateProjectPreview();
     await projectStore.saveProject(projectId, projectData, preview);
+    editorStore.projectIsSaved()
     notificationStore.show({type: 'success', message: 'Проект сохранен'})
   } catch (error) {
     notificationStore.show({type: 'error', message: 'Ошибка сохранения проекта: ' + error})
@@ -86,7 +87,7 @@ const goBack = () => {
           <div class="text -project-name">Проект: {{ project?.name }}</div>
         </div>
         <div class="wrapper">
-          <button class="button -save" @click="saveProject">Сохранить изменения</button>
+          <button :class="['button', '-save', { 'unsaved_changes': editorStore.is_unsaved }]" @click="saveProject">Сохранить изменения</button>
           <button class="button -back" @click="goBack">Назад</button>
         </div>
       </div>
@@ -182,6 +183,7 @@ const goBack = () => {
 .header .button.-save {
   height: fit-content;
 }
+.header .button.-save.unsaved_changes { background-color: #d3d0ab; }
 
 /* project-menu */
 .project-menu {
