@@ -1,13 +1,12 @@
 import * as THREE from 'three'
+import { CalculateGeometryMathHelper } from '@/editor_core/utils/geometry_math_helpers/CalculateGeometryMathHelper'
 
-export class GenerateCylindricalSurfaceMeshHelper {
-  static help(surface) {
+export class CylindricalSurface {
+  
+  generateMesh(surface, materials) {
     const { geometry, unfolding, id, type } = surface;
     const { shape, position, rotation } = geometry;
     const { base_polyline, bounding_polyline } = shape;
-
-    // Подготовка цвета (превращаем "cccccc" в 0xcccccc)
-    const matColor = unfolding?.material?.color ? parseInt(unfolding.material.color, 16) : 0xcccccc;
     
     // Подготовка базовой полилинии и расчет длин дуг (развертки)
     let basePts = base_polyline.points.map(p => new THREE.Vector3(p.x, 0, p.y));
@@ -56,7 +55,7 @@ export class GenerateCylindricalSurfaceMeshHelper {
 
     // Разрезание треугольников по линиям изгиба основания (U-координаты)
     for (let i = 1; i < lens.length - 1; i++) {
-      triangles = this._sliceTriangles(triangles, lens[i]);
+      triangles = CalculateGeometryMathHelper.sliceTriangles(triangles, lens[i]);
     }
 
     // Проецирование в 3D пространство
@@ -92,6 +91,9 @@ export class GenerateCylindricalSurfaceMeshHelper {
     meshGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     meshGeom.computeVertexNormals();
 
+    // Подготовка цвета (превращаем "cccccc" в 0xcccccc)
+    const matColor = parseInt(materials[unfolding.material_id].color, 16);
+
     // Применяем материал
     const material = new THREE.MeshStandardMaterial({
       color: matColor,
@@ -110,37 +112,5 @@ export class GenerateCylindricalSurfaceMeshHelper {
     mesh.userData = { id, type };
 
     return mesh;
-  }
-
-
-
-
-  
-  // Оптимизированная версия Sutherland-Hodgman для триангуляции (разрезает треугольники вертикальной линией X = L)
-  static _sliceTriangles(triangles, L) {
-    const out = [];
-    for (const tri of triangles) {
-      const aL = tri[0].x < L, bL = tri[1].x < L, cL = tri[2].x < L;
-
-      if ((aL && bL && cL) || (!aL && !bL && !cL)) {
-        out.push(tri);
-        continue;
-      }
-
-      let v0, v1, v2;
-      if (bL === cL) { v0 = tri[0]; v1 = tri[1]; v2 = tri[2]; }
-      else if (aL === cL) { v0 = tri[1]; v1 = tri[2]; v2 = tri[0]; }
-      else { v0 = tri[2]; v1 = tri[0]; v2 = tri[1]; }
-
-      const t1 = (L - v0.x) / (v1.x - v0.x);
-      const i1 = { x: L, y: v0.y + t1 * (v1.y - v0.y) };
-      const t2 = (L - v0.x) / (v2.x - v0.x);
-      const i2 = { x: L, y: v0.y + t2 * (v2.y - v0.y) };
-
-      out.push([v0, i1, i2]);
-      out.push([v1, v2, i2]);
-      out.push([v1, i2, i1]);
-    }
-    return out;
   }
 }

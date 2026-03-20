@@ -36,4 +36,4 @@ coverage
 __screenshots__/
 
 # My testy things
-src/editor_core/models/structures
+src/editor_core/models/-structures

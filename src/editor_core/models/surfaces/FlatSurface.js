@@ -1,13 +1,11 @@
 import * as THREE from 'three'
 
-export class GenerateFlatSurfaceMeshHelper {
-  static help(surface) {
+export class FlatSurface {
+  
+  generateMesh(surface, materials) {
     const { geometry, unfolding, id, type } = surface;
     const { shape, position, rotation } = geometry;
     const { points } = shape.bounding_polyline;
-
-    // Подготовка цвета (превращаем "cccccc" в 0xcccccc)
-    const matColor = unfolding?.material?.color ? parseInt(unfolding.material.color, 16) : 0xcccccc;
     
     // Создание формы на основе точек ограничивающего многоугольника
     const threeShape = new THREE.Shape();
@@ -20,6 +18,9 @@ export class GenerateFlatSurfaceMeshHelper {
     // Создание геометрии и расчет нормалей
     const meshGeom = new THREE.ShapeGeometry(threeShape);
     meshGeom.computeVertexNormals();
+
+    // Подготовка цвета (превращаем "cccccc" в 0xcccccc)
+    const matColor = parseInt(materials[unfolding.material_id].color, 16);
 
     // Применяем материал
     const material = new THREE.MeshStandardMaterial({

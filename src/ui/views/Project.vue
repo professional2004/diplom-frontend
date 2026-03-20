@@ -107,7 +107,8 @@ const goBack = () => {
 
       <div class="section -project" v-show="openedEditorSection === 'project'">
         <div class="editor-menu">
-
+          <button @click="editorStore.addDetail('straight_random')">Добавить деталь "прямая произвольная"</button>
+          <button @click="editorStore.clearProject()">Очистить проект</button>
         </div>
         <div class="wrapper -horizontal-layout">
           <div class="wrapper">
@@ -115,12 +116,10 @@ const goBack = () => {
             <div class="scene-layer">
               <div ref="container3D" class="viewport"></div>
             </div>
-            <div class="ui-layer">
-              <div class="scenetoolbar3D">
-                <button>zoom-in</button>
-                <button>zoom-out</button>
-                <button>zoom-reset</button>
-              </div>
+            <div class="ui-layer scenetoolbar scenetoolbar3D">
+              <button>zoom-in</button>
+              <button>zoom-out</button>
+              <button>zoom-reset</button>
             </div>
           </div>
           <!-- 2D-сцена -->
@@ -128,12 +127,10 @@ const goBack = () => {
             <div class="scene-layer">
               <div ref="container2D" class="viewport"></div>
             </div>
-            <div class="ui-layer">
-              <div class="scenetoolbar2D">
-                <button>zoom-in</button>
-                <button>zoom-out</button>
-                <button>zoom-reset</button>
-              </div>
+            <div class="ui-layer scenetoolbar scenetoolbar2D">
+              <button>zoom-in</button>
+              <button>zoom-out</button>
+              <button>zoom-reset</button>
             </div>
           </div>         
         </div>
@@ -261,5 +258,12 @@ const goBack = () => {
   width: 100%;
   height: 100%;
   z-index: 1;
+}
+
+.scenetoolbar {
+  position: absolute;
+  background-color: #ffffff;
+  top: 0px;
+  left: 10px;
 }
 </style>

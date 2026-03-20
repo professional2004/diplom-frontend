@@ -30,6 +30,18 @@ export const useEditorStore = defineStore('editor', {
 
     generateProjectPreview() {
       return this.engine.generateProjectPreview()
+    },
+
+
+
+
+    clearProject() {
+      this.engine.clearProject()
+    },
+
+
+    addDetail(type) {
+      this.engine.addDetail(type)
     }
   }
 })
