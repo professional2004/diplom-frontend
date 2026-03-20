@@ -19,7 +19,6 @@ const project = ref(null);
 const projectData = ref(null);
 
 const isLoading = ref(true);
-
 const openedEditorSection = ref('project');
 
 
@@ -32,7 +31,6 @@ onMounted(async () => {
       if (typeof rawData === 'string') {
         try {
           projectData.value = JSON.parse(rawData);
-          // editorStore.editorSettings.openSection = 'project'
         } catch (e) {
           console.warn('Не удалось распарсить projectData, используем пустой проект', e);
           projectData.value = null;
@@ -50,9 +48,11 @@ onMounted(async () => {
   }
 });
 
+
 onUnmounted(() => {
   editorStore.disposeEngine()
 });
+
 
 const saveProject = async () => {
   try {
@@ -65,6 +65,7 @@ const saveProject = async () => {
     throw error
   }
 };
+
 
 const goBack = () => {
   router.push('/app');
@@ -111,9 +112,9 @@ const goBack = () => {
               <div ref="container3D" class="viewport"></div>
             </div>
             <div class="ui-layer scenetoolbar scenetoolbar3D">
-              <button>zoom-in</button>
-              <button>zoom-out</button>
-              <button>zoom-reset</button>
+              <button @click="editorStore.zoomIn3D()">zoom-in</button>
+              <button @click="editorStore.zoomOut3D()">zoom-out</button>
+              <button @click="editorStore.resetView3D()">zoom-reset</button>
             </div>
           </div>
           <!-- 2D-сцена -->
@@ -122,9 +123,9 @@ const goBack = () => {
               <div ref="container2D" class="viewport"></div>
             </div>
             <div class="ui-layer scenetoolbar scenetoolbar2D">
-              <button>zoom-in</button>
-              <button>zoom-out</button>
-              <button>zoom-reset</button>
+              <button @click="editorStore.zoomIn2D()">zoom-in</button>
+              <button @click="editorStore.zoomOut2D()">zoom-out</button>
+              <button @click="editorStore.resetView2D()">zoom-reset</button>
             </div>
           </div>         
         </div>

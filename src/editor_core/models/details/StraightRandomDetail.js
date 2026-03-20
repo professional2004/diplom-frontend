@@ -12,12 +12,12 @@ export class StraightRandomDetail {
           type: "closed",
           points: [
             { x: 0, y: 0 },
-            { x: 0, y: 6 },
-            { x: 10, y: 6 },
-            { x: 10, y: 0 }
+            { x: 0, y: 5 },
+            { x: 4, y: 5 },
+            { x: 4, y: 0 }
           ]
         },
-        depth: 4
+        depth: 1
       }
     }
     detail.surfaces = this.calculateSurfaces(detail.parameters)

@@ -37,7 +37,7 @@ export class CameraSystem3D {
   }
 
   zoom(where) {
-    const factor = where ? 1.1 : 0.9
+    const factor = where ? 0.9 : 1.1
     const direction = new THREE.Vector3()
     direction.subVectors(this.camera.position, this.controls.target).multiplyScalar(factor)
     this.camera.position.copy(this.controls.target).add(direction)

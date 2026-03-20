@@ -129,6 +129,17 @@ export class Engine {
   }
 
 
+
+  // ----------- функции проекта -----------
+
+  // зум и сброс сцены
+  zoomIn3D() { this.cameraSystem3D.zoom(true) }
+  zoomOut3D() { this.cameraSystem3D.zoom(false) }
+  resetView3D() { this.cameraSystem3D.reset() }
+  zoomIn2D() { this.cameraSystem2D.zoom(true) }
+  zoomOut2D() { this.cameraSystem2D.zoom(false) }
+  resetView2D() { this.cameraSystem2D.reset() }
+
   // добавить деталь
   addDetail(type) {
     const detailMeshes = this.project.createDetail(type)
