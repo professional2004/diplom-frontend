@@ -63,6 +63,7 @@ export class Engine {
     // Установить ссылки на движок и store
     this.interactionSystem3D.setEngine(this, this.store)
     this.renderSystem3D.setEngine(this)
+    this.sceneSystem3D.setEngine(this)
 
     this.systems3D = [
       this.cameraSystem3D,
@@ -104,7 +105,9 @@ export class Engine {
     this.project = new Project()
 
     // подписываемся на изменения в editorStore
-    watch(() => this.store.selectedThing, () => { this.onSelectedThingChanged()})
+    watch(() => this.store.scene3DState, () => { this.onScene3DInteractionChanged()})
+    watch(() => this.store.scene2DState, () => { this.onScene2DInteractionChanged()})
+    watch(() => this.store.sceneMiniState, () => { this.onSceneMiniInteractionChanged()})
 
     this.running = true
     this.loop = this.loop.bind(this)
@@ -250,9 +253,27 @@ export class Engine {
 
 
 
+  // Обработчики событий из InteractionSystems 
 
+  onScene3DInteractionChanged() {
+    const { pointeredThing, selectedThing } = this.store.getScene3DState()
+    if (pointeredThing) {
+      this.sceneSystem3D.setHightlightForHoveredObject(pointeredThing)
+    } else {
+      this.sceneSystem3D.clearHightlightForHoveredObject()
+    }
+    if (selectedThing) {
+      this.sceneSystem3D.setHightlightForSelectedObject(selectedThing)
+    } else {
+      this.sceneSystem3D.clearHightlightForSelectedObject()
+    }
+  }
 
-  onSelectedThingChanged() {
+  onScene2DInteractionChanged() {
+
+  }
+
+  onSceneMiniInteractionChanged() {
 
   }
 }

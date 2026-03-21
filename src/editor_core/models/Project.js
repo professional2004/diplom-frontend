@@ -37,6 +37,20 @@ export class Project {
     this.unfoldingClass = new Unfolding()
   }
 
+  // ---------------- геттеры и сеттеры ----------------
+
+  // ----- геттеры -----
+  getDetails() { return this.project_data?.entities?.details }
+  getUnfoldings() { return this.project_data?.entities?.details ? this.project_data.entities.details.map(d => d.surfaces.map(s => s.unfolding)).flat() : [] }
+  getMaterials() { return this.project_data?.materials }
+  getProjectName() { return this.project_extra?.name }
+
+
+  // получить данные проекта
+  getProjectData() {
+    return this.project_data
+  }
+
   // установить данные проекта
   setProjectData(project) {
     this.project_data = project.project_data
@@ -51,21 +65,18 @@ export class Project {
     }
   }
 
-  // получить данные проекта
-  getProjectData() {
-    return this.project_data
-  }
+
+
+  // ---------------- методы ----------------
+
+
+
 
   // очистить данные проекта
   clearProjectData() {
     this.project_data = {}
   }
 
-  // ----- геттеры -----
-  getDetails() { return this.project_data?.entities?.details }
-  getUnfoldings() { return this.project_data?.entities?.details ? this.project_data.entities.details.map(d => d.surfaces.map(s => s.unfolding)).flat() : [] }
-  getMaterials() { return this.project_data?.materials }
-  getProjectName() { return this.project_extra?.name }
 
 
 

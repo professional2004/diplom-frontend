@@ -146,7 +146,9 @@ const goBack = () => {
             <div class="ui-layer actionsPanel" style="position: absolute; bottom: 5px; left: 5px;">
               <span style="font-size: 9px;">scene3DState {{ JSON.stringify(scene3DState.pointeredThing) }}<br></span>
               <span style="font-size: 9px;">scene2DState {{ JSON.stringify(scene2DState.pointeredThing) }}<br></span>
-              <span style="font-size: 9px;">sceneMiniState {{ JSON.stringify(sceneMiniState.pointeredThing) }}</span>
+              <span style="font-size: 9px;">sceneMiniState {{ JSON.stringify(sceneMiniState.pointeredThing) }}<br></span>
+              <span style="font-size: 9px;">scene3DState selected {{ JSON.stringify(scene3DState.selectedThing) }}<br></span>
+              <span style="font-size: 9px;">scene2DState selected {{ JSON.stringify(scene2DState.selectedThing) }}<br></span>
             </div>
           </div>
           <!-- 2D-сцена -->

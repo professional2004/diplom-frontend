@@ -10,6 +10,8 @@ export class InteractionSystem2D {
 
     this.pointeredThing = null
     this.selectedThing = null
+    // вспомогательные временные переменные
+    this.pointeredAtPointerDownThing = null
 
     this.onPointerDown = this.onPointerDown.bind(this)
     this.onPointerMove = this.onPointerMove.bind(this)
@@ -50,6 +52,8 @@ export class InteractionSystem2D {
   onPointerDown(event) {
     this.updateMouse(event)
     this.pointeredThing = this.getIntersectedObject()
+    this.pointeredAtPointerDownThing = this.pointeredThing
+    this.selectedThing = this.pointeredThing
     this.updateStore()
   }
 
@@ -62,6 +66,8 @@ export class InteractionSystem2D {
   onPointerUp(event) {
     this.updateMouse(event)
     this.pointeredThing = this.getIntersectedObject()
+    if (this.pointeredAtPointerDownThing != this.pointeredThing) { this.selectedThing = null }
+    this.pointeredAtPointerDownThing = null
     this.updateStore()
   }
 

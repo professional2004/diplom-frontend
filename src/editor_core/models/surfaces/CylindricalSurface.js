@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { CreateMeshMaterialHelper } from '@/editor_core/utils/editor_helpers/CreateMeshMaterialHelper'
 
 export class CylindricalSurface {
   
@@ -89,18 +90,20 @@ export class CylindricalSurface {
     const meshGeom = new THREE.BufferGeometry()
     meshGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3))
     meshGeom.computeVertexNormals()
-    
-    // Подготовка цвета (превращаем "cccccc" в 0xcccccc)
-    const materialData = materials.find(m => m.id === unfolding.material_id)
-    const materialColor = parseInt(materialData.color, 16)
 
-    // Применяем материал
-    const material = new THREE.MeshStandardMaterial({
-      color: materialColor,
-      side: THREE.DoubleSide,
-      metalness: 0.1,
-      roughness: 0.5
-    })
+    const material = CreateMeshMaterialHelper.help(materials, unfolding.material_id, 'surface')
+    
+    // // Подготовка цвета (превращаем "cccccc" в 0xcccccc)
+    // const materialData = materials.find(m => m.id === unfolding.material_id)
+    // const materialColor = parseInt(materialData.color, 16)
+
+    // // Применяем материал
+    // const material = new THREE.MeshStandardMaterial({
+    //   color: materialColor,
+    //   side: THREE.DoubleSide,
+    //   metalness: 0.1,
+    //   roughness: 0.5
+    // })
 
     const mesh = new THREE.Mesh(meshGeom, material)
     
@@ -109,7 +112,7 @@ export class CylindricalSurface {
     mesh.rotation.set(rotation.x, rotation.y, rotation.z)
     
     // Сохраняем метаданные
-    mesh.userData = { id, type, selectable: true }
+    mesh.userData = { id, class: 'surface', type, material_id: unfolding.material_id, selectable: true }
 
     return mesh
   }
