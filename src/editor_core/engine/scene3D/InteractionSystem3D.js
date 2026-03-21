@@ -1,11 +1,15 @@
 import * as THREE from 'three'
 
 export class InteractionSystem3D {
-  constructor(engine, container) {
-    this.engine = engine
+  constructor(container) {
+    this.store = null
+    this.engine = null
     this.container = container
     this.raycaster = new THREE.Raycaster()
     this.mouse = new THREE.Vector2()
+
+    this.pointeredThing = null
+    this.selectedThing = null
 
     this.onPointerDown = this.onPointerDown.bind(this)
     this.onPointerMove = this.onPointerMove.bind(this)
@@ -15,6 +19,12 @@ export class InteractionSystem3D {
     container.addEventListener('pointermove', this.onPointerMove)
     container.addEventListener('pointerup', this.onPointerUp)
   }
+
+  setEngine(engine, store) { 
+    this.engine = engine 
+    this.store = store
+  }
+
 
   // Вспомогательный метод обновления координат мыши
   updateMouse(event) {
@@ -30,7 +40,7 @@ export class InteractionSystem3D {
 
     if (intersects.length > 0) {
       const hit = intersects[0]
-      return hit
+      return hit?.userData?.id
     } else {
       return null
     }
@@ -38,15 +48,28 @@ export class InteractionSystem3D {
 
   onPointerDown(event) {
     this.updateMouse(event)
+    this.pointeredThing = this.getIntersectedObject()
+    this.updateStore()
   }
 
   onPointerMove(event) {
     this.updateMouse(event)
+    this.pointeredThing = this.getIntersectedObject()
+    this.updateStore()
   }
 
   onPointerUp(event) {
     this.updateMouse(event)
-    const hitObject = this.getIntersectedObject()
+    this.pointeredThing = this.getIntersectedObject()
+    this.updateStore()
+  }
+
+  // обновить состояние store
+  updateStore() { 
+    this.store.setScene3DState({
+      pointeredThing: this.pointeredThing,
+      selectedThing: this.selectedThing
+    })
   }
 
   dispose() {

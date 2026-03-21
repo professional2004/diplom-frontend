@@ -21,7 +21,7 @@ import { ExportUnfoldingsSVGHelper } from '@/editor_core/utils/project_helpers/E
 import { ExportUnfoldingsPDFHelper } from '@/editor_core/utils/project_helpers/ExportUnfoldingsPDFHelper'
 
 export class Engine {
-  constructor(container2D, container3D, containerMini, store) {
+  constructor(store, container2D, container3D, containerMini) {
     this.store = store
     this.container2D = container2D
     this.container3D = container3D
@@ -29,14 +29,18 @@ export class Engine {
 
     // Инициализация систем 2D
     this.cameraSystem2D = new CameraSystem2D(this.container2D)
-    this.interactionSystem2D = new InteractionSystem2D(this, this.container2D)
-    this.renderSystem2D = new RenderSystem2D(this, this.container2D)
+    this.interactionSystem2D = new InteractionSystem2D(this.container2D)
+    this.renderSystem2D = new RenderSystem2D(this.container2D)
     this.sceneSystem2D = new SceneSystem2D()
 
     this.renderSystem2D.onResize = (w, h) => {
       this.cameraSystem2D.setAspect(w, h)
       this.renderSystem2D.setSize(w, h)
     }
+
+    // Установить ссылки на движок и store
+    this.interactionSystem2D.setEngine(this, this.store)
+    this.renderSystem2D.setEngine(this)
 
     this.systems2D = [
       this.cameraSystem2D,
@@ -47,14 +51,18 @@ export class Engine {
 
     // Инициализация систем 3D
     this.cameraSystem3D = new CameraSystem3D(this.container3D)
-    this.interactionSystem3D = new InteractionSystem3D(this, this.container3D)
-    this.renderSystem3D = new RenderSystem3D(this, this.container3D)
+    this.interactionSystem3D = new InteractionSystem3D(this.container3D)
+    this.renderSystem3D = new RenderSystem3D(this.container3D)
     this.sceneSystem3D = new SceneSystem3D()
 
     this.renderSystem3D.onResize = (w, h) => {
       this.cameraSystem3D.setAspect(w, h)
       this.renderSystem3D.setSize(w, h)
     }
+
+    // Установить ссылки на движок и store
+    this.interactionSystem3D.setEngine(this, this.store)
+    this.renderSystem3D.setEngine(this)
 
     this.systems3D = [
       this.cameraSystem3D,
@@ -65,8 +73,8 @@ export class Engine {
 
     // Инициализация систем мини
     this.cameraSystemMini2D = new CameraSystemMini2D(this.containerMini)
-    this.interactionSystemMini2D = new InteractionSystemMini2D(this, this.containerMini)
-    this.renderSystemMini2D = new RenderSystemMini2D(this, this.containerMini)
+    this.interactionSystemMini2D = new InteractionSystemMini2D(this.containerMini)
+    this.renderSystemMini2D = new RenderSystemMini2D(this.containerMini)
     this.sceneSystemMini2D = new SceneSystemMini2D()
 
     this.renderSystemMini2D.onResize = (w, h) => {
@@ -80,6 +88,10 @@ export class Engine {
       this.renderSystemMini2D, 
       this.sceneSystemMini2D
     ]
+
+    // Установить ссылки на движок и store
+    this.interactionSystemMini2D.setEngine(this, this.store)
+    this.renderSystemMini2D.setEngine(this)
 
     // Итоговая инициализация и задание состояния движка
     this.systems = [
@@ -119,7 +131,6 @@ export class Engine {
   }
 
 
-
   // ----------- функции над проектом -----------
 
 
@@ -148,6 +159,7 @@ export class Engine {
         }
       }      
     }
+    this.restoreStoreDetails()
   }
 
   // сгенерировать превью
@@ -162,6 +174,8 @@ export class Engine {
     this.project.clearProjectData()
     this.sceneSystem3D.clearObjects()
     this.sceneSystem2D.clearObjects()
+    this.restoreStoreDetails()
+    this.store.getIsUnsaved(true)
   }
 
   // экспортировать в SVG
@@ -204,6 +218,8 @@ export class Engine {
     for (const unfoldingMesh of unfoldingMeshes) {
       this.sceneSystem2D.add(unfoldingMesh)
     }
+    this.restoreStoreDetails()
+    this.store.getIsUnsaved(true)
   }
 
 
@@ -213,6 +229,29 @@ export class Engine {
 
   
   // ----------- обработчики изменения состояний store -----------
+
+  restoreStoreDetails() {
+    // обновить details в store
+    const detailsToStore = []
+    const details = this.project.getDetails()
+    if (!details) { return }
+    for (const detail of details) {
+      const detailToStore = {
+        id: detail.id,
+        surfaces: []
+      }
+      for (const surface of detail.surfaces) {
+        detailToStore.surfaces.push({ id: surface.id })
+      }
+      detailsToStore.push(detailToStore)
+    }
+    this.store.setDetails(detailsToStore)
+  }
+
+
+
+
+
   onSelectedThingChanged() {
 
   }

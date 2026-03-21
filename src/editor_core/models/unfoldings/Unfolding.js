@@ -58,7 +58,7 @@ export class Unfolding {
     mesh.rotation.set(0, 0, rotation.z)
     
     // Сохраняем метаданные
-    mesh.userData = { id }
+    mesh.userData = { id, selectable: true }
 
     return mesh;
   }

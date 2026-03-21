@@ -5,15 +5,41 @@ import { Engine } from '@/editor_core/engine/Engine'
 export const useEditorStore = defineStore('editor', {
   state: () => ({
     is_unsaved: false,
-    selectedThing: {}
+    scene3DState: {
+      pointeredThing: null,
+      selectedThing: null
+    },
+    scene2DState: {
+      pointeredThing: null,
+      selectedThing: null
+    },
+    sceneMiniState: {
+      pointeredThing: null,
+      selectedThing: null
+    },
+    details: []
   }),
 
   actions: {
+    // ----------- геттеры -----------
+    getIsUnsaved() { return this.is_unsaved },
+    getScene3DState() { return this.scene3DState },
+    getScene2DState() { return this.scene2DState },
+    getSceneMiniState() { return this.sceneMiniState },
+    getDetails() { return this.details },
+    // ----------- сеттеры -----------
+    setIsUnsaved(is_unsaved) { this.is_unsaved = is_unsaved },
+    setScene3DState(scene3DState) { this.scene3DState = scene3DState },
+    setScene2DState(scene2DState) { this.scene2DState = scene2DState },
+    setSceneMiniState(sceneMiniState) { this.sceneMiniState = sceneMiniState },
+    setDetails(details) { this.details = details },
+
+    
 
     // ----------- функции с движком -----------
 
     createEngine(container2D, container3D, containerMini) {
-      const engine = new Engine(container2D, container3D, containerMini, this)
+      const engine = new Engine(this, container2D, container3D, containerMini)
       this.engine = markRaw(engine) 
     },
 
@@ -32,10 +58,6 @@ export const useEditorStore = defineStore('editor', {
     serializeProject() {
       return this.engine.serializeProject()
     },
-
-    projectIsSaved() {
-      this.is_unsaved = false
-    },
     
     generateProjectPreview() {
       return this.engine.generateProjectPreview()
@@ -43,7 +65,6 @@ export const useEditorStore = defineStore('editor', {
 
     clearProject() {
       this.engine.clearProject()
-      this.is_unsaved = true
     },
 
     exportProjectUnfoldingsSVG() {
@@ -70,7 +91,6 @@ export const useEditorStore = defineStore('editor', {
 
     addDetail(type) {
       this.engine.addDetail(type)
-      this.is_unsaved = true
     }
 
 

@@ -1,9 +1,10 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useEditorStore } from '@/stores/editorStore'
 import { useProjectsStore } from '@/stores/projectsStore';
 import { useNotificationStore } from '@/stores/notificationsStore'
+import { storeToRefs } from 'pinia';
 
 const route = useRoute();
 const router = useRouter();
@@ -21,6 +22,11 @@ const projectData = ref(null);
 
 const isLoading = ref(true);
 const openedEditorSection = ref('project');
+
+// переменные из store
+const { is_unsaved } = storeToRefs(editorStore);
+const { scene3DState, scene2DState, sceneMiniState } = storeToRefs(editorStore);
+const { details } = storeToRefs(editorStore);
 
 
 onMounted(async () => {
@@ -69,7 +75,7 @@ const saveProject = async () => {
     const projectData = editorStore.serializeProject();
     const preview = editorStore.generateProjectPreview();
     await projectStore.saveProject(projectId, projectData, preview);
-    editorStore.projectIsSaved()
+    editorStore.setIsUnsaved(false)
     notificationStore.show({type: 'success', message: 'Проект сохранен'})
   } catch (error) {
     notificationStore.show({type: 'error', message: 'Ошибка сохранения проекта: ' + error})
@@ -97,7 +103,7 @@ const goBack = () => {
           <div class="text -project-name">Проект: {{ project?.name }}</div>
         </div>
         <div class="wrapper">
-          <button :class="['button', '-save', { 'unsaved_changes': editorStore.is_unsaved }]" @click="saveProject">Сохранить изменения</button>
+          <button :class="['button', '-save', { 'unsaved_changes': is_unsaved }]" @click="saveProject">Сохранить изменения</button>
           <button class="button" @click="editorStore.exportProjectUnfoldingsSVG()">Экспорт в SVG</button>
           <button class="button" @click="editorStore.exportProjectUnfoldingsPDF()">Экспорт в PDF</button>
           <button class="button -back" @click="goBack">Назад</button>
@@ -128,6 +134,19 @@ const goBack = () => {
               <button @click="editorStore.zoomIn3D()">zoom-in</button>
               <button @click="editorStore.zoomOut3D()">zoom-out</button>
               <button @click="editorStore.resetView3D()">zoom-reset</button>
+            </div>
+            <div class="ui-layer detailsPanel3D">
+              <div v-for="detail in details" :key="detail.id">
+                <span style="font-size: 9px;">detail {{ detail.id }}</span>
+                <div v-for="surface of detail.surfaces" :key="surface.id">
+                  <span style="font-size: 9px;">surface {{ surface.id }}</span>
+                </div>   
+              </div>
+            </div>
+            <div class="ui-layer actionsPanel" style="position: absolute; bottom: 5px; left: 5px;">
+              <span style="font-size: 9px;">scene3DState {{ JSON.stringify(scene3DState.pointeredThing) }}<br></span>
+              <span style="font-size: 9px;">scene2DState {{ JSON.stringify(scene2DState.pointeredThing) }}<br></span>
+              <span style="font-size: 9px;">sceneMiniState {{ JSON.stringify(sceneMiniState.pointeredThing) }}</span>
             </div>
           </div>
           <!-- 2D-сцена -->
@@ -251,20 +270,8 @@ const goBack = () => {
   height: 100% !important;
 }
 
-.ui-layer {
-  z-index: 10;
-  pointer-events: none;
-}
+.ui-layer { z-index: 10; }
 
-.ui-layer :deep(*) {
-  pointer-events: auto;
-}
-
-/* Позиционирование куба */
-.cube-wrapper {
-  top: 10px;
-  right: 10px;
-}
 
 .scene-layer {
   position: absolute;
@@ -281,4 +288,21 @@ const goBack = () => {
   top: 0px;
   left: 10px;
 }
+
+
+/* ---------------- панели ---------------- */
+
+
+
+.detailsPanel3D {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: fit-content;
+  height: fit-content;
+  padding: 5px;
+  background-color: #ffffff;
+  border-radius: 5px;
+}
+
 </style>

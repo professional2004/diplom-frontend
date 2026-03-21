@@ -1,8 +1,8 @@
 import * as THREE from 'three'
 
 export class RenderSystem2D {
-  constructor(engine, container) {
-    this.engine = engine
+  constructor(container) {
+    this.engine = null
     this.renderer = new THREE.WebGLRenderer({ antialias: true })
     this.renderer.setSize(container.clientWidth, container.clientHeight)
     this.renderer.setPixelRatio(window.devicePixelRatio)
@@ -22,6 +22,10 @@ export class RenderSystem2D {
       }
     })
     this.resizeObserver.observe(container)
+  }
+
+  setEngine(engine) {
+    this.engine = engine 
   }
 
   update() {

@@ -38,7 +38,7 @@ export class FlatSurface {
     mesh.rotation.set(rotation.x, rotation.y, rotation.z);
 
     // Сохраняем метаданные
-    mesh.userData = { id, type }
+    mesh.userData = { id, type, selectable: true }
 
     return mesh;
   }
