@@ -146,6 +146,24 @@ export const useProjectsStore = defineStore('projects', {
         console.error('Failed to create category:', error)
         throw error
       }
+    },
+
+    async deleteCategory(categoryId) {
+      try {
+        await projectsApi.deleteCategory(categoryId)
+        this.categories = this.categories.filter(p => p.id !== categoryId)
+      } catch (error) {
+        throw error
+      }
+    },
+
+    async renameCategory(categoryId, name) {
+      try {
+        const { data } = await projectsApi.renameCategory(categoryId, name)
+        return data
+      } catch (error) {
+        throw error
+      }
     }
   }
 })

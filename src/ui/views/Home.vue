@@ -57,6 +57,41 @@ const addCategory = async () => {
   }
 };
 
+const renameCategory = async (category) => {
+  const newName = prompt('Введите новое название категории:', category.name);
+  if (newName && newName.trim()) {
+    try {
+      await projectsStore.renameCategory(category.id, newName.trim());
+      notificationStore.show({type: 'success', message: 'Категория переименована'})
+    } catch (error) {
+      notificationStore.show({type: 'error', message: 'Ошибка переименования категории'})
+      console.log('Ошибка переименования категории: ' + error.message);
+    }
+    try {
+      await projectsStore.fetchProjectsAndCategories();
+    } catch (error) {
+      console.log('Ошибка перезагрузки проектов: ' + error.message);
+    }
+  }
+};
+
+const deleteCategory = async (category) => {
+  if (confirm('Удалить категорию "' + category.name + '"?')) {
+    try {
+      await projectsStore.deleteCategory(category.id);
+      notificationStore.show({type: 'success', message: 'Категория удалена'})
+    } catch (error) {
+      notificationStore.show({type: 'error', message: 'Ошибка удаления категории'})
+      console.log('Ошибка удаления категории: ' + error.message);
+    }
+    try {
+      await projectsStore.fetchProjectsAndCategories();
+    } catch (error) {
+      console.log('Ошибка перезагрузки проектов: ' + error.message);
+    }
+  }
+};
+
 const createNewProject = async () => {
   let project = null;
   const preview = GeneratePreviewHelper.help();
@@ -214,6 +249,8 @@ const onModalClose = () => {
           <div :style="{ fontWeight: selectedCategoryId === category.id ? 'bold' : 'normal', cursor: 'pointer' }">
             <h3>{{ category.name }}</h3>
           </div>
+          <button @click.stop="renameCategory(category)">Переименовать</button>
+          <button @click.stop="deleteCategory(category)">Удалить</button>
         </div>   
       </div>
 

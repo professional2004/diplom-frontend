@@ -37,9 +37,7 @@ export const projectsApi = {
       description: String(description || ''),
       preview: preview || null
     }, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers: { 'Content-Type': 'application/json' }
     })
     return response.data
   },
@@ -60,9 +58,7 @@ export const projectsApi = {
     const response = await api.put(`/api/projects/${projectId}/rename`, {
       name: String(name || '')
     }, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers: { 'Content-Type': 'application/json' }
     })
     return response.data
   },
@@ -72,9 +68,7 @@ export const projectsApi = {
     const response = await api.put(`/api/projects/${projectId}/category`, {
       categoryId: Number(categoryId)
     }, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers: { 'Content-Type': 'application/json' }
     })
     return response.data
   },
@@ -84,9 +78,7 @@ export const projectsApi = {
     const response = await api.put(`/api/projects/${projectId}/description`, {
       description: String(description || '')
     }, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers: { 'Content-Type': 'application/json' }
     })
     return response.data
   },
@@ -94,9 +86,7 @@ export const projectsApi = {
   
   async duplicateProject(projectId) {
     const response = await api.post(`/api/projects/${projectId}/duplicate`, {}, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers: { 'Content-Type': 'application/json' }
     })
     return response.data
   },
@@ -107,14 +97,29 @@ export const projectsApi = {
     return response.data
   },
 
-  
+
+  // создать категорию
   async createCategory(name) {
     const response = await api.post('/api/categories', {
       name: String(name || '')
     }, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers: { 'Content-Type': 'application/json' }
+    })
+    return response.data
+  },
+
+  // удалить категорию
+  async deleteCategory(categoryId) {
+    const response = await api.delete(`/api/categories/${categoryId}`)
+    return response.data
+  },
+
+  // переименовать категорию
+  async renameCategory(categoryId, name) {
+    const response = await api.put(`/api/categories/${categoryId}/rename`, {
+      name: String(name || '')
+    }, {
+      headers: { 'Content-Type': 'application/json' }
     })
     return response.data
   }
