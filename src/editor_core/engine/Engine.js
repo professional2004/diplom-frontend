@@ -9,15 +9,21 @@ import { CameraSystem3D } from '@/editor_core/engine/scene3D/CameraSystem3D'
 import { InteractionSystem3D } from '@/editor_core/engine/scene3D/InteractionSystem3D'
 import { RenderSystem3D } from '@/editor_core/engine/scene3D/RenderSystem3D'
 import { SceneSystem3D } from '@/editor_core/engine/scene3D/SceneSystem3D'
+// мини системы
+import { CameraSystemMini2D } from '@/editor_core/engine/sceneMini/CameraSystemMini2D'
+import { InteractionSystemMini2D } from '@/editor_core/engine/sceneMini/InteractionSystemMini2D'
+import { RenderSystemMini2D } from '@/editor_core/engine/sceneMini/RenderSystemMini2D'
+import { SceneSystemMini2D } from '@/editor_core/engine/sceneMini/SceneSystemMini2D'
 // Хелперы
 import { GeneratePreviewHelper } from '@/editor_core/utils/project_helpers/GeneratePreviewHelper'
 import { ExportUnfoldingsSVGHelper } from '@/editor_core/utils/project_helpers/ExportUnfoldingsSVGHelper'
 import { ExportUnfoldingsPDFHelper } from '@/editor_core/utils/project_helpers/ExportUnfoldingsPDFHelper'
 
 export class Engine {
-  constructor(container2D, container3D) {
+  constructor(container2D, container3D, containerMini) {
     this.container2D = container2D
     this.container3D = container3D
+    this.containerMini = containerMini
 
     // Инициализация систем 2D
     this.cameraSystem2D = new CameraSystem2D(this.container2D)
@@ -55,10 +61,29 @@ export class Engine {
       this.sceneSystem3D
     ]
 
+    // Инициализация систем мини
+    this.cameraSystemMini2D = new CameraSystemMini2D(this.containerMini)
+    this.interactionSystemMini2D = new InteractionSystemMini2D(this, this.containerMini)
+    this.renderSystemMini2D = new RenderSystemMini2D(this, this.containerMini)
+    this.sceneSystemMini2D = new SceneSystemMini2D()
+
+    this.renderSystemMini2D.onResize = (w, h) => {
+      this.cameraSystemMini2D.setAspect(w, h)
+      this.renderSystemMini2D.setSize(w, h)
+    }
+
+    this.systemsMini = [
+      this.cameraSystemMini2D,
+      this.interactionSystemMini2D,
+      this.renderSystemMini2D, 
+      this.sceneSystemMini2D
+    ]
+
     // Итоговая инициализация и задание состояния движка
     this.systems = [
       this.systems2D,
-      this.systems3D
+      this.systems3D,
+      this.systemsMini
     ]
 
     this.project = new Project()

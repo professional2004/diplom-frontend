@@ -14,6 +14,7 @@ const notificationStore = useNotificationStore()
 const projectId = route.params.id;
 const container2D = ref(null)
 const container3D = ref(null)
+const containerMini = ref(null)
 
 const project = ref(null);
 const projectData = ref(null);
@@ -24,7 +25,7 @@ const openedEditorSection = ref('project');
 
 onMounted(async () => {
   try {
-    editorStore.createEngine(container2D.value, container3D.value);
+    editorStore.createEngine(container2D.value, container3D.value, containerMini.value);
     project.value = await projectStore.fetchProject(projectId);
     let rawData = project.value.projectData;
     if (rawData) {
@@ -139,7 +140,13 @@ const goBack = () => {
               <button @click="editorStore.zoomOut2D()">zoom-out</button>
               <button @click="editorStore.resetView2D()">zoom-reset</button>
             </div>
-          </div>         
+          </div>
+          <!-- мини-сцена -->
+          <div class="wrapper">
+            <div class="scene-layer">
+              <div ref="containerMini" class="viewport"></div>
+            </div>
+          </div>        
         </div>
       </div>
 
