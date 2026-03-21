@@ -1,3 +1,4 @@
+import { watch } from 'vue'
 import { Project } from '@/editor_core/models/Project'
 // 2D системы
 import { CameraSystem2D } from '@/editor_core/engine/scene2D/CameraSystem2D'
@@ -20,7 +21,8 @@ import { ExportUnfoldingsSVGHelper } from '@/editor_core/utils/project_helpers/E
 import { ExportUnfoldingsPDFHelper } from '@/editor_core/utils/project_helpers/ExportUnfoldingsPDFHelper'
 
 export class Engine {
-  constructor(container2D, container3D, containerMini) {
+  constructor(container2D, container3D, containerMini, store) {
+    this.store = store
     this.container2D = container2D
     this.container3D = container3D
     this.containerMini = containerMini
@@ -86,7 +88,11 @@ export class Engine {
       this.systemsMini
     ]
 
+    // создает модель данных проекта
     this.project = new Project()
+
+    // подписываемся на изменения в editorStore
+    watch(() => this.store.selectedThing, () => { this.onSelectedThingChanged()})
 
     this.running = true
     this.loop = this.loop.bind(this)
@@ -201,4 +207,13 @@ export class Engine {
   }
 
 
+
+
+
+
+  
+  // ----------- обработчики изменения состояний store -----------
+  onSelectedThingChanged() {
+
+  }
 }

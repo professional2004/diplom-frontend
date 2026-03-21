@@ -13,7 +13,7 @@ export const useEditorStore = defineStore('editor', {
     // ----------- функции с движком -----------
 
     createEngine(container2D, container3D, containerMini) {
-      const engine = new Engine(container2D, container3D, containerMini)
+      const engine = new Engine(container2D, container3D, containerMini, this)
       this.engine = markRaw(engine) 
     },
 
