@@ -55,9 +55,9 @@ export const useProjectsStore = defineStore('projects', {
       }
     },
 
-    async createProject(name, description = '') {
+    async createProject(name, description = '', preview) {
       try {
-        const newProject = await projectsApi.createProject(name, description)
+        const newProject = await projectsApi.createProject(name, description, preview)
         this.projects.push(newProject)
         return newProject
       } catch (error) {

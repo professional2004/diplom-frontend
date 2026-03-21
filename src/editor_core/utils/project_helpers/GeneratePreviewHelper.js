@@ -1,7 +1,9 @@
 import * as THREE from 'three'
 
 export class GeneratePreviewHelper {
-  static help(sceneSystem3D) {
+  static help(sceneSystem3D = null) {
+    if (sceneSystem3D === null) { return this.generateEmptyPreview() }
+
     const scene3D = sceneSystem3D.scene;
 
     // Сохраняем оригинальные настройки сцены
@@ -70,6 +72,20 @@ export class GeneratePreviewHelper {
     // Очищаем память
     renderer.dispose();
 
+    return base64Data;
+  }
+
+
+  // генерация пустого превью (при создании проекта)
+  static generateEmptyPreview(width = 800, height = 600) {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, width, height);
+    const dataUrl = canvas.toDataURL('image/png');
+    const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
     return base64Data;
   }
 }

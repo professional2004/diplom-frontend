@@ -31,10 +31,11 @@ export const projectsApi = {
 
 
   // Создать новый проект
-  async createProject(name, description) {
+  async createProject(name, description, preview) {
     const response = await api.post('/api/projects', {
       name: String(name || ''),
-      description: String(description || '')
+      description: String(description || ''),
+      preview: preview || null
     }, {
       headers: {
         'Content-Type': 'application/json'
