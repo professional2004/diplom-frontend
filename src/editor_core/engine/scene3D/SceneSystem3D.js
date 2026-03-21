@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { CreateMeshMaterialHelper } from '@/editor_core/utils/editor_helpers/CreateMeshMaterialHelper'
 
 export class SceneSystem3D {
   constructor() {
@@ -89,9 +90,9 @@ export class SceneSystem3D {
     const previousMesh = this.findHoveredObject()
     if (previousMesh) {
       const materials = this.engine.project.getMaterials()
-      const previousMaterial = CreateMeshMaterialHelper.help(materials, previousMesh.object.userData.material_id, previousMesh.object.userData.class)
+      const previousMaterial = CreateMeshMaterialHelper.help(materials, previousMesh.userData.material_id, previousMesh.userData.class)
       previousMesh.material = previousMaterial
-      previousMesh.object.userData.hovered = false
+      previousMesh.userData.hovered = false
     }
   }
 
@@ -100,9 +101,9 @@ export class SceneSystem3D {
     const previousMesh = this.findSelectedObject()
     if (previousMesh) {
       const materials = this.engine.project.getMaterials()
-      const previousMaterial = CreateMeshMaterialHelper.help(materials, previousMesh.object.userData.material_id, previousMesh.object.userData.class)
+      const previousMaterial = CreateMeshMaterialHelper.help(materials, previousMesh.userData.material_id, previousMesh.userData.class)
       previousMesh.material = previousMaterial
-      previousMesh.object.userData.selected = false
+      previousMesh.userData.selected = false
     }
   }
   
