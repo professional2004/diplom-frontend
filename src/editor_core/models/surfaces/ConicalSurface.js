@@ -20,7 +20,7 @@ export class ConicalSurface {
       }
     }
 
-    if (basePoints.length < 2) return new THREE.Mesh()
+    if (basePoints.length < 2) return null
 
     // Вычисление параметров развертки
     const L = basePoints.map(p => p.distanceTo(apex))

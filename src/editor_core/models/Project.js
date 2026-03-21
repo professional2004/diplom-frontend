@@ -106,7 +106,7 @@ export class Project {
     for (const surface of detail.surfaces) {
       const surfaceClass = this.surfaceClasses[surface.type]
       let surfaceMesh = surfaceClass.generateMesh(surface, materials);
-      surfaceMeshes.push(surfaceMesh)
+      if (surfaceMesh) surfaceMeshes.push(surfaceMesh)
       let unfoldingMesh = this.unfoldingClass.generateMesh(surface.unfolding, materials);
       unfoldingMeshes.push(unfoldingMesh)
     }

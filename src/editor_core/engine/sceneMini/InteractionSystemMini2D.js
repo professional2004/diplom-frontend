@@ -36,11 +36,11 @@ export class InteractionSystemMini2D {
   getIntersectedObject() {
     this.raycaster.setFromCamera(this.mouse, this.engine.cameraSystemMini2D.getCamera())
     const objects = this.engine.sceneSystemMini2D.getObjects()
-    const intersects = this.raycaster.intersectObjects(objects).filter(hit => hit.object.userData.selectable)
+    const intersects = this.raycaster.intersectObjects(objects).filter(hit => hit.object.userData?.selectable)
 
     if (intersects.length > 0) {
       const hit = intersects[0]
-      return hit?.userData?.id
+      return hit.object.userData?.id
     } else {
       return null
     }

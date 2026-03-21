@@ -19,7 +19,7 @@ export class CylindricalSurface {
       }
     }
 
-    if (basePts.length < 2) return new THREE.Mesh()
+    if (basePts.length < 2) return null
 
     // Расчет кумулятивных длин для оси U
     const lens = [0]
