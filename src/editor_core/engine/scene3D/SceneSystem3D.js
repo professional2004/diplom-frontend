@@ -70,25 +70,55 @@ export class SceneSystem3D {
   }
 
   // Подсветить наведенную фигуру
-  setHightlightForHoveredObject(id) {
+  setHightlightForHoveredObject(object) {
     this.clearHightlightForHoveredObject()
-    const newObject = this.findObjectById(id)
-    newObject.material = this.materialHighlight
-    newObject.userData.hovered = true
+    if (!object) return
+
+    if (object.class === 'detail') {
+      const surfaceIds = this.getSurfacesForDetail(object.id)
+      for (const surfaceId of surfaceIds) {
+        const mesh = this.findObjectById(surfaceId)
+        if (mesh) {
+          mesh.material = this.materialHighlight
+          mesh.userData.hovered = true
+        }
+      }
+    } else {
+      const mesh = this.findObjectById(object.id)
+      if (mesh) {
+        mesh.material = this.materialHighlight
+        mesh.userData.hovered = true
+      }
+    }
   }
 
   // Подсветить выделенную фигуру
-  setHightlightForSelectedObject(id) {
+  setHightlightForSelectedObject(object) {
     this.clearHightlightForSelectedObject()
-    const newObject = this.findObjectById(id)
-    newObject.material = this.materialSelect
-    newObject.userData.selected = true
+    if (!object) return
+
+    if (object.class === 'detail') {
+      const surfaceIds = this.getSurfacesForDetail(object.id)
+      for (const surfaceId of surfaceIds) {
+        const mesh = this.findObjectById(surfaceId)
+        if (mesh) {
+          mesh.material = this.materialSelect
+          mesh.userData.selected = true
+        }
+      }
+    } else {
+      const mesh = this.findObjectById(object.id)
+      if (mesh) {
+        mesh.material = this.materialSelect
+        mesh.userData.selected = true
+      }
+    }
   }
 
   // очистить подсветку фигур
   clearHightlightForHoveredObject() {
-    const previousMesh = this.findHoveredObject()
-    if (previousMesh) {
+    const previousMeshes = this.findHoveredObject()
+    for (const previousMesh of previousMeshes) {
       const materials = this.engine.project.getMaterials()
       const previousMaterial = CreateMeshMaterialHelper.help(materials, previousMesh.userData.material_id, previousMesh.userData.class)
       previousMesh.material = previousMaterial
@@ -98,8 +128,8 @@ export class SceneSystem3D {
 
   // очистить выделение фигур
   clearHightlightForSelectedObject() {
-    const previousMesh = this.findSelectedObject()
-    if (previousMesh) {
+    const previousMeshes = this.findSelectedObject()
+    for (const previousMesh of previousMeshes) {
       const materials = this.engine.project.getMaterials()
       const previousMaterial = CreateMeshMaterialHelper.help(materials, previousMesh.userData.material_id, previousMesh.userData.class)
       previousMesh.material = previousMaterial
@@ -137,20 +167,33 @@ export class SceneSystem3D {
     return null
   }
 
+  // Получить ids поверхностей для детали
+  getSurfacesForDetail(detailId) {
+    const details = this.engine.project.getDetails()
+    const detail = details.find(d => d.id === detailId)
+    return detail ? detail.surfaces.map(s => s.id) : []
+  }
+
   // Найти подсвеченный mesh
   findHoveredObject() {
+    const hoveredObjects = []
     for (const child of this.objects.children) {
-      if (child.userData?.hovered === true) { return child }
+      if (child.userData?.hovered === true) {
+        hoveredObjects.push(child)
+      }
     }
-    return null
+    return hoveredObjects
   }
 
   // Найти выделенный mesh
   findSelectedObject() {
+    const selectedObjects = []
     for (const child of this.objects.children) {
-      if (child.userData?.selected === true) { return child }
+      if (child.userData?.selected === true) {
+        selectedObjects.push(child)
+      }
     }
-    return null
+    return selectedObjects
   }
 
 

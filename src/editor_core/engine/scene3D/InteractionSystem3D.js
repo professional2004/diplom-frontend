@@ -35,17 +35,44 @@ export class InteractionSystem3D {
     this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
   }
 
+  // Возвращает id детали по id поверхности
+  getDetailIdBySurfaceId(surfaceId) {
+    if (!surfaceId || !this.engine?.project?.getDetails) return null
+
+    const details = this.engine.project.getDetails() || []
+    for (const detail of details) {
+      if (detail?.surfaces?.some(surface => surface?.id === surfaceId)) {
+        return detail.id
+      }
+    }
+    return null
+  }
+
   getIntersectedObject() {
+    const selectingMode = this.store.getScene3DSettings().selectingMode || 'surface'
+
     this.raycaster.setFromCamera(this.mouse, this.engine.cameraSystem3D.getCamera())
     const objects = this.engine.sceneSystem3D.getObjects()
     const intersects = this.raycaster.intersectObjects(objects).filter(hit => hit.object.userData?.selectable)
 
-    if (intersects.length > 0) {
-      const hit = intersects[0]
-      return hit.object.userData?.id
-    } else {
+    if (intersects.length === 0) {
       return null
     }
+
+    const hit = intersects[0]
+    const surfaceId = hit.object.userData?.id
+    const surfaceClass = hit.object.userData?.class
+
+    if (selectingMode === 'detail') {
+      // получаем id родительской детали
+      if (surfaceClass === 'surface') {
+        const detailId = this.getDetailIdBySurfaceId(surfaceId)
+        return detailId ? { id: detailId, class: 'detail' } : { id: surfaceId, class: 'surface' }
+      }
+      // если по какой-то причине попалось не surface, возвращаем исходный id
+      return { id: surfaceId, class: surfaceClass || 'surface' }
+    }
+    return { id: surfaceId, class: surfaceClass || 'surface' }
   }
 
   onPointerDown(event) {

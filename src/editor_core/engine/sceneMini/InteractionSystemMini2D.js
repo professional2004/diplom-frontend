@@ -42,7 +42,9 @@ export class InteractionSystemMini2D {
 
     if (intersects.length > 0) {
       const hit = intersects[0]
-      return hit.object.userData?.id
+      const id = hit.object.userData?.id
+      const classType = hit.object.userData?.class || 'none'
+      return { id, class: classType }
     } else {
       return null
     }

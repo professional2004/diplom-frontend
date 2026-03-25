@@ -5,14 +5,20 @@ import { Engine } from '@/editor_core/engine/Engine'
 export const useEditorStore = defineStore('editor', {
   state: () => ({
     is_unsaved: false,
+    // 3D-сцена
     scene3DState: {
       pointeredThing: null,
       selectedThing: null
     },
+    scene3DSettings: {
+      selectingMode: 'detail'
+    },
+    // 2D-сцена
     scene2DState: {
       pointeredThing: null,
       selectedThing: null
     },
+    // мини-сцена
     sceneMiniState: {
       pointeredThing: null,
       selectedThing: null
@@ -24,12 +30,14 @@ export const useEditorStore = defineStore('editor', {
     // ----------- геттеры -----------
     getIsUnsaved() { return this.is_unsaved },
     getScene3DState() { return this.scene3DState },
+    getScene3DSettings() { return this.scene3DSettings },
     getScene2DState() { return this.scene2DState },
     getSceneMiniState() { return this.sceneMiniState },
     getDetails() { return this.details },
     // ----------- сеттеры -----------
     setIsUnsaved(is_unsaved) { this.is_unsaved = is_unsaved },
     setScene3DState(scene3DState) { this.scene3DState = scene3DState },
+    setScene3DSettings(scene3DSettings) { this.scene3DSettings = scene3DSettings },
     setScene2DState(scene2DState) { this.scene2DState = scene2DState },
     setSceneMiniState(sceneMiniState) { this.sceneMiniState = sceneMiniState },
     setDetails(details) { this.details = details },

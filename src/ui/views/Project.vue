@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useEditorStore } from '@/stores/editorStore'
 import { useProjectsStore } from '@/stores/projectsStore';
@@ -27,6 +27,18 @@ const openedEditorSection = ref('project');
 const { is_unsaved } = storeToRefs(editorStore);
 const { scene3DState, scene2DState, sceneMiniState } = storeToRefs(editorStore);
 const { details } = storeToRefs(editorStore);
+
+const scene3DSelectionType = computed({
+  get() {
+    return editorStore.scene3DSettings?.selectingMode ?? 'detail'
+  },
+  set(mode) {
+    editorStore.setScene3DSettings({
+      ...editorStore.scene3DSettings,
+      selectingMode: mode
+    })
+  }
+})
 
 
 onMounted(async () => {
@@ -134,12 +146,20 @@ const goBack = () => {
               <button @click="editorStore.zoomIn3D()">zoom-in</button>
               <button @click="editorStore.zoomOut3D()">zoom-out</button>
               <button @click="editorStore.resetView3D()">zoom-reset</button>
+                    <div>
+                      <label>
+                        <input type="radio" value="detail" v-model="scene3DSelectionType" /> детали
+                      </label>
+                      <label>
+                        <input type="radio" value="surface" v-model="scene3DSelectionType" /> поверхности
+                      </label>
+                    </div>
             </div>
             <div class="ui-layer detailsPanel3D">
               <div v-for="detail in details" :key="detail.id">
-                <span style="font-size: 9px;">detail {{ detail.id }}</span>
+                <span style="font-size: 9px;">{{ detail.category }} - {{ detail.id }}</span>
                 <div v-for="surface of detail.surfaces" :key="surface.id">
-                  <span style="font-size: 9px;">surface {{ surface.id }}</span>
+                  <span style="font-size: 9px;">{{ surface.category }} - {{ surface.id }}</span>
                 </div>   
               </div>
             </div>

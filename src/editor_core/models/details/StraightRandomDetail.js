@@ -4,7 +4,7 @@ export class StraightRandomDetail {
   
   create() {
     const detail = {
-      id: uuidv4(),
+      id: 'detail' + uuidv4(),
       type: "straight_random",
       parameters: {
         shape_polyline: {
@@ -75,7 +75,7 @@ export class StraightRandomDetail {
 
     // Нижняя плоская поверхность (z = 0)
     surfaces.push({
-      id: uuidv4(),
+      id: 'surface' + uuidv4(),
       type: "flat",
       geometry: {
         position: { x: 0, y: 0, z: 0 },
@@ -85,7 +85,7 @@ export class StraightRandomDetail {
         }
       },
       unfolding: {
-        id: uuidv4(),
+        id: 'unfolding' + uuidv4(),
         material_id: "default",
         geometry: {
           position: { x: this.randomPosition(), y: this.randomPosition() },
@@ -102,7 +102,7 @@ export class StraightRandomDetail {
 
     // Верхняя плоская поверхность (сдвинута по оси Z на значение depth)
     surfaces.push({
-      id: uuidv4(),
+      id: 'surface' + uuidv4(),
       type: "flat",
       geometry: {
         position: { x: 0, y: 0, z: depth },
@@ -112,7 +112,7 @@ export class StraightRandomDetail {
         }
       },
       unfolding: {
-        id: uuidv4(),
+        id: 'unfolding' + uuidv4(),
         material_id: "default",
         geometry: {
           position: { x: this.randomPosition(), y: this.randomPosition() },
@@ -129,7 +129,7 @@ export class StraightRandomDetail {
 
     // Боковая цилиндрическая поверхность
     surfaces.push({
-      id: uuidv4(),
+      id: 'surface' + uuidv4(),
       type: "cylindrical",
       geometry: {
         position: { x: 0, y: 0, z: depth },
@@ -140,7 +140,7 @@ export class StraightRandomDetail {
         }
       },
       unfolding: {
-        id: uuidv4(),
+        id: 'unfolding' + uuidv4(),
         material_id: "default",
         geometry: {
           position: { x: this.randomPosition(), y: this.randomPosition() },
