@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import _ from 'lodash'
 
 export class InteractionSystem3D {
   constructor(container) {
@@ -92,7 +93,15 @@ export class InteractionSystem3D {
   onPointerUp(event) {
     this.updateMouse(event)
     this.pointeredThing = this.getIntersectedObject()
-    if (this.pointeredAtPointerDownThing != this.pointeredThing) { this.selectedThing = null }
+    if (!_.isEqual(this.pointeredAtPointerDownThing, this.pointeredThing)) { this.selectedThing = null }
+    this.pointeredAtPointerDownThing = null
+    this.updateStore()
+  }
+
+  // сбросить наведение и выделение фигур
+  resetInteraction() { 
+    this.pointeredThing = null
+    this.selectedThing = null
     this.pointeredAtPointerDownThing = null
     this.updateStore()
   }

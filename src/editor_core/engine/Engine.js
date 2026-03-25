@@ -105,9 +105,10 @@ export class Engine {
     this.project = new Project()
 
     // подписываемся на изменения в editorStore
-    watch(() => this.store.scene3DState, () => { this.onScene3DInteractionChanged()})
-    watch(() => this.store.scene2DState, () => { this.onScene2DInteractionChanged()})
-    watch(() => this.store.sceneMiniState, () => { this.onSceneMiniInteractionChanged()})
+    watch(() => this.store.scene3DState, () => { this.onScene3DStateChanged()})
+    watch(() => this.store.scene3DSettings, () => { this.onScene3DSettingsChanged()})
+    watch(() => this.store.scene2DState, () => { this.onScene2DStateChanged()})
+    watch(() => this.store.sceneMiniState, () => { this.onSceneMiniStateChanged()})
 
     this.running = true
     this.loop = this.loop.bind(this)
@@ -255,7 +256,19 @@ export class Engine {
 
   // Обработчики событий из InteractionSystems 
 
-  onScene3DInteractionChanged() {
+  // 3D-сцена
+
+  onScene3DStateChanged() {
+    this.hoverAndSelectObjectsScene3D()
+  }
+
+  onScene3DSettingsChanged() {
+    this.interactionSystem3D.resetInteraction()
+    this.hoverAndSelectObjectsScene3D()
+  }
+
+
+  hoverAndSelectObjectsScene3D() {
     const { pointeredThing, selectedThing } = this.store.getScene3DState()
     if (pointeredThing) {
       this.sceneSystem3D.setHightlightForHoveredObject(pointeredThing)
@@ -269,11 +282,16 @@ export class Engine {
     }
   }
 
-  onScene2DInteractionChanged() {
+  // 2D-сцена
+
+  onScene2DStateChanged() {
 
   }
 
-  onSceneMiniInteractionChanged() {
+  // мини-сцена
+
+  onSceneMiniStateChanged() {
 
   }
+
 }
