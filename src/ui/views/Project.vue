@@ -1,32 +1,41 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, computed, onMounted, onUnmounted, reactive } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useEditorStore } from '@/stores/editorStore'
-import { useProjectsStore } from '@/stores/projectsStore';
+import { useProjectsStore } from '@/stores/projectsStore'
 import { useNotificationStore } from '@/stores/notificationsStore'
-import { storeToRefs } from 'pinia';
+import { storeToRefs } from 'pinia'
 
-const route = useRoute();
-const router = useRouter();
+const route = useRoute()
+const router = useRouter()
 const editorStore = useEditorStore()
-const projectStore = useProjectsStore();
+const projectStore = useProjectsStore()
 const notificationStore = useNotificationStore()
 
-const projectId = route.params.id;
+const projectId = route.params.id
 const container2D = ref(null)
 const container3D = ref(null)
 const containerMini = ref(null)
 
-const project = ref(null);
-const projectData = ref(null);
+const project = ref(null)
+const projectData = ref(null)
 
 const isLoading = ref(true);
 const openedEditorSection = ref('project');
 
+const materialNameMap = ref({})
+const showColorPicker = ref(null)
+const colorPickerStyle = ref({ top: '0px', left: '0px' })
+const colorPickerHSV = reactive({ h: 0, s: 1, v: 1 })
+const colorPickerPoint = reactive({ x: 0, y: 0 })
+const isDraggingColorPoint = ref(false)
+const colorPickerSize = { width: 160, height: 120 }
+
 // переменные из store
-const { is_unsaved } = storeToRefs(editorStore);
-const { scene3DState, scene2DState, sceneMiniState } = storeToRefs(editorStore);
-const { details } = storeToRefs(editorStore);
+const { is_unsaved } = storeToRefs(editorStore)
+const { scene3DState, scene2DState, sceneMiniState } = storeToRefs(editorStore)
+const { details } = storeToRefs(editorStore)
+const { materials } = storeToRefs(editorStore)
 
 const scene3DSelectionType = computed({
   get() {
@@ -43,24 +52,24 @@ const scene3DSelectionType = computed({
 
 onMounted(async () => {
   try {
-    editorStore.createEngine(container2D.value, container3D.value, containerMini.value);
-    project.value = await projectStore.fetchProject(projectId);
-    let rawData = project.value.projectData;
+    editorStore.createEngine(container2D.value, container3D.value, containerMini.value)
+    project.value = await projectStore.fetchProject(projectId)
+    let rawData = project.value.projectData
     if (rawData) {
       if (typeof rawData === 'string') {
         try {
-          projectData.value = JSON.parse(rawData);
+          projectData.value = JSON.parse(rawData)
         } catch (e) {
-          console.warn('Не удалось распарсить projectData, используем пустой проект', e);
-          projectData.value = null;
+          console.warn('Не удалось распарсить projectData, используем пустой проект', e)
+          projectData.value = null
         }
       } else if (typeof rawData === 'object') {
-        projectData.value = rawData;
+        projectData.value = rawData
       }
     }
   } catch (error) {
     notificationStore.show({type: 'error', message: 'Ошибка загрузки проекта'})
-    router.push('/app');
+    router.push('/app')
   } finally {
     editorStore.deserializeProject({
       id: project.value.id,
@@ -71,15 +80,15 @@ onMounted(async () => {
       updated_at: project.value.updated_at,
       category_id: project.value.category_id,
       user_id: project.value.user_id
-    });
-    isLoading.value = false;
+    })
+    isLoading.value = false
   }
-});
+})
 
 
 onUnmounted(() => {
   editorStore.disposeEngine()
-});
+})
 
 
 const saveProject = async () => {
@@ -93,12 +102,160 @@ const saveProject = async () => {
     notificationStore.show({type: 'error', message: 'Ошибка сохранения проекта: ' + error})
     throw error
   }
-};
+}
 
 
 const goBack = () => {
   router.push('/app');
-};
+}
+
+
+// создать материал
+const createMaterial = () => {
+  editorStore.createMaterial()
+}
+
+const setMaterialName = (id, value) => {
+  materialNameMap.value[id] = value
+}
+
+const onMaterialNameBlur = (material) => {
+  const newName = materialNameMap.value[material.id]?.trim()
+  if (newName && newName !== material.name) {
+    renameMaterial(material.id, newName)
+  }
+}
+
+// переименовать материал
+const renameMaterial = (id, name) => {
+  editorStore.renameMaterial(id, name)
+}
+
+const hexToRgb = (hex) => {
+  const normalized = hex.replace(/^#/, '').padStart(6, '0').slice(0, 6)
+  const num = parseInt(normalized, 16)
+  return {
+    r: (num >> 16) & 255,
+    g: (num >> 8) & 255,
+    b: num & 255
+  }
+}
+
+const rgbToHex = (r, g, b) => {
+  const toHex = (v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')
+  return `${toHex(r)}${toHex(g)}${toHex(b)}`
+}
+
+const rgbToHsv = (r, g, b) => {
+  r /= 255; g /= 255; b /= 255
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  const d = max - min
+  let h = 0
+  if (d !== 0) {
+    if (max === r) h = ((g - b) / d) % 6
+    else if (max === g) h = (b - r) / d + 2
+    else h = (r - g) / d + 4
+    h = Math.round(h * 60)
+    if (h < 0) h += 360
+  }
+  const s = max === 0 ? 0 : d / max
+  const v = max
+  return { h, s, v }
+}
+
+const hsvToRgb = (h, s, v) => {
+  const c = v * s
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1))
+  const m = v - c
+  let r1 = 0, g1 = 0, b1 = 0
+  if (h < 60) [r1, g1, b1] = [c, x, 0]
+  else if (h < 120) [r1, g1, b1] = [x, c, 0]
+  else if (h < 180) [r1, g1, b1] = [0, c, x]
+  else if (h < 240) [r1, g1, b1] = [0, x, c]
+  else if (h < 300) [r1, g1, b1] = [x, 0, c]
+  else [r1, g1, b1] = [c, 0, x]
+  return {
+    r: Math.round((r1 + m) * 255),
+    g: Math.round((g1 + m) * 255),
+    b: Math.round((b1 + m) * 255)
+  }
+}
+
+const updateColorFromHSV = (materialId) => {
+  if (!materialId) return
+  const { r, g, b } = hsvToRgb(colorPickerHSV.h, colorPickerHSV.s, colorPickerHSV.v)
+  changeMaterialColor(materialId, rgbToHex(r, g, b))
+}
+
+const openColorPicker = (material, event) => {
+  showColorPicker.value = material.id
+  const rect = event.currentTarget.getBoundingClientRect()
+  const parentRect = event.currentTarget.offsetParent?.getBoundingClientRect() || { left: 0, top: 0 }
+  colorPickerStyle.value = {
+    left: `${rect.right - parentRect.left + 6}px`,
+    top: `${rect.top - parentRect.top}px`
+  }
+  const rgb = hexToRgb(material.color)
+  const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b)
+  colorPickerHSV.h = hsv.h
+  colorPickerHSV.s = hsv.s
+  colorPickerHSV.v = hsv.v
+  colorPickerPoint.x = hsv.s * colorPickerSize.width
+  colorPickerPoint.y = (1 - hsv.v) * colorPickerSize.height
+  isDraggingColorPoint.value = false
+  setColorFromPicker(material.id)
+}
+
+const setColorFromPicker = (materialId) => {
+  if (!materialId) return
+  updateColorFromHSV(materialId)
+}
+
+const setColorFromPoint = (event, materialId) => {
+  const target = event.currentTarget
+  const rect = target.getBoundingClientRect()
+  const x = Math.max(0, Math.min(colorPickerSize.width, event.clientX - rect.left))
+  const y = Math.max(0, Math.min(colorPickerSize.height, event.clientY - rect.top))
+  colorPickerPoint.x = x
+  colorPickerPoint.y = y
+  colorPickerHSV.s = x / colorPickerSize.width
+  colorPickerHSV.v = 1 - y / colorPickerSize.height
+  updateColorFromHSV(materialId)
+}
+
+const onColorMapMouseDown = (event, materialId) => {
+  isDraggingColorPoint.value = true
+  setColorFromPoint(event, materialId)
+}
+
+const onColorMapMouseMove = (event, materialId) => {
+  if (!isDraggingColorPoint.value || showColorPicker.value !== materialId) return
+  setColorFromPoint(event, materialId)
+}
+
+const onColorMapMouseUp = () => {
+  isDraggingColorPoint.value = false
+}
+
+const closeColorPicker = () => {
+  showColorPicker.value = null
+  isDraggingColorPoint.value = false
+}
+
+// изменить цвет материала
+const changeMaterialColor = (id, color) => {
+  editorStore.changeMaterialColor(id, color)
+}
+
+// удалить материал
+const deleteMaterial = (id) => {
+  editorStore.deleteMaterial(id)
+  if (materialNameMap.value[id]) delete materialNameMap.value[id]
+  if (showColorPicker.value === id) showColorPicker.value = null
+}
+
+
 
 </script>
 
@@ -187,7 +344,10 @@ const goBack = () => {
             <div class="scene-layer">
               <div ref="containerMini" class="viewport"></div>
             </div>
-          </div>        
+          </div> 
+          <div class="wrapper">
+
+          </div>       
         </div>
       </div>
 
@@ -196,11 +356,76 @@ const goBack = () => {
       </div>
 
       <div class="section -about" v-show="openedEditorSection === 'about'">
-          о проекте
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <span>о проекте</span>
+          <button @click="createMaterial()">Создать материал</button>
+        </div>
+
+        <div class="materials-wrapper" style="position: relative; margin-top: 12px;">
+          <div v-for="material of materials" :key="material.id" class="material-item" style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <input
+              type="text"
+              :value="materialNameMap[material.id] || material.name"
+              @input="event => setMaterialName(material.id, event.target.value)"
+              @blur="() => onMaterialNameBlur(material)"
+              style="padding: 4px 6px; border: 1px solid #ccc; border-radius: 3px; min-width: 140px;"
+            />
+            <button
+              class="color-btn"
+              :style="{ width: '24px', height: '24px', padding: 0, border: '1px solid #888', backgroundColor: '#' + material.color, cursor: 'pointer' }"
+              @click="event => openColorPicker(material, event)"
+              title="Цвет материала"
+            >
+            </button>
+            <span style="font-size: 12px; color: #444;">#{{ material.color }}</span>
+            <button @click="() => deleteMaterial(material.id)" style="padding: 4px 8px;">Удалить</button>
+
+            <div v-if="showColorPicker === material.id" :style="{ position: 'absolute', top: colorPickerStyle.top, left: colorPickerStyle.left, zIndex: 50, padding: '10px', border: '1px solid #bbb', borderRadius: '5px', background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,.25)' }">
+              <div
+                class="color-map"
+                :style="{
+                  width: colorPickerSize.width + 'px',
+                  height: colorPickerSize.height + 'px',
+                  position: 'relative',
+                  cursor: 'crosshair',
+                  background: `linear-gradient(to right, #fff, hsl(${colorPickerHSV.h}, 100%, 50%)), linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0))`
+                }"
+                @mousedown="event => onColorMapMouseDown(event, material.id)"
+                @mousemove="event => onColorMapMouseMove(event, material.id)"
+                @mouseup="onColorMapMouseUp"
+                @mouseleave="onColorMapMouseUp"
+              >
+                <div
+                  :style="{
+                    position: 'absolute',
+                    left: colorPickerPoint.x + 'px',
+                    top: colorPickerPoint.y + 'px',
+                    width: '14px',
+                    height: '14px',
+                    transform: 'translate(-50%, -50%)',
+                    border: '2px solid #fff',
+                    borderRadius: '50%',
+                    boxShadow: '0 0 2px rgba(0,0,0,.7)',
+                    backgroundColor: 'transparent'
+                  }"
+                ></div>
+              </div>
+              <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+                <input type="range" min="0" max="360" v-model.number="colorPickerHSV.h" @input="() => setColorFromPicker(material.id)" style="width: 140px" />
+                <span style="font-size: 12px; width: 32px;">{{ Math.round(colorPickerHSV.h) }}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
+                <div :style="{ width: '26px', height: '26px', border: '1px solid #aaa', backgroundColor: '#' + rgbToHex(...Object.values(hsvToRgb(colorPickerHSV.h, colorPickerHSV.s, colorPickerHSV.v))) }"></div>
+                <span style="font-size: 12px;">#{{ rgbToHex(...Object.values(hsvToRgb(colorPickerHSV.h, colorPickerHSV.s, colorPickerHSV.v))) }}</span>
+                <button @click="closeColorPicker" style="margin-left: auto; padding: 2px 6px; font-size: 12px;">Закрыть</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="section -help" v-show="openedEditorSection === 'help'">
-          помощь
+        помощь
       </div>
 
     </div>
@@ -326,5 +551,12 @@ const goBack = () => {
   background-color: #ffffff;
   border-radius: 5px;
 }
+
+
+/* материалы */
+
+
+
+
 
 </style>

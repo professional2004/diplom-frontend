@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 // поверхности
 import { ConicalSurface } from '@/editor_core/models/surfaces/ConicalSurface'
 import { CylindricalSurface } from '@/editor_core/models/surfaces/CylindricalSurface'
@@ -67,6 +68,7 @@ export class Project {
 
 
 
+
   // ---------------- методы ----------------
 
 
@@ -125,5 +127,39 @@ export class Project {
     return { surfaceMeshes, unfoldingMeshes }
   }
 
+
+
+
+  // операции над материалами
+
+  createMaterial() { 
+    // Генерируем случайное число от 0 до 16777215 (0xFFFFFF)
+    const randomColor = Math.floor(Math.random() * 16777215)
+    // Преобразуем в шестнадцатеричную строку и дополняем нулями слева до 6 символов
+    const randomColorHex = randomColor.toString(16).padStart(6, '0')
+    const material = {
+      id: uuidv4(),
+      name: 'new material',
+      color: randomColorHex
+    }
+    if (!this.project_data.materials) {
+      this.project_data.materials = []
+    }
+    this.project_data.materials.push(material)
+  }
+
+  renameMaterial(id, name) {
+    const material = this.project_data.materials.find(item => item.id === id)
+    material.name = name ?? material.name
+  }
+
+  changeMaterialColor(id, color) {
+    const material = this.project_data.materials.find(item => item.id === id)
+    material.color = (typeof color === 'string' ? color.replace(/^#/, '') : material.color)
+  }
+
+  deleteMaterial(id) {
+    this.project_data.materials = this.project_data.materials.filter(item => item.id !== id)
+  }
 
 }

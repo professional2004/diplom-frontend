@@ -141,7 +141,7 @@ export class Engine {
   // развернуть проект
   deserializeProject(project) {
     this.project.setProjectData(project)
-    this.buildProject()
+    this.buildDetails()
   }
 
   // запаковать проект
@@ -150,7 +150,7 @@ export class Engine {
   }
 
   // построить все детали
-  buildProject() {
+  buildDetails() {
     const details = this.project.getDetails()
     if (details) {
       for (const detail of details) {
@@ -164,7 +164,9 @@ export class Engine {
       }      
     }
     this.restoreStoreDetails()
+    this.restoreStoreMaterials()
   }
+
 
   // сгенерировать превью
   generateProjectPreview() {
@@ -179,7 +181,7 @@ export class Engine {
     this.sceneSystem3D.clearObjects()
     this.sceneSystem2D.clearObjects()
     this.restoreStoreDetails()
-    this.store.getIsUnsaved(true)
+    this.store.setIsUnsaved(true)
   }
 
   // экспортировать в SVG
@@ -223,8 +225,40 @@ export class Engine {
       this.sceneSystem2D.add(unfoldingMesh)
     }
     this.restoreStoreDetails()
-    this.store.getIsUnsaved(true)
+    this.restoreStoreMaterials()
+    this.store.setIsUnsaved(true)
   }
+
+
+
+  // ------- функции над материалами -------
+
+  createMaterial() {
+    this.project.createMaterial()
+    this.restoreStoreMaterials()
+    this.store.setIsUnsaved(true)
+  }
+
+  renameMaterial(id, name) {
+    this.project.renameMaterial(id, name)
+    this.restoreStoreMaterials()
+    this.store.setIsUnsaved(true)
+  }
+
+  changeMaterialColor(id, color) {
+    this.project.changeMaterialColor(id, color)
+    this.restoreStoreMaterials()
+    this.store.setIsUnsaved(true)
+  }
+
+  deleteMaterial(id) {
+    this.project.deleteMaterial(id)
+    this.restoreStoreMaterials()
+    this.store.setIsUnsaved(true)
+  }
+
+
+
 
 
 
@@ -234,8 +268,8 @@ export class Engine {
   
   // ----------- обработчики изменения состояний store -----------
 
+  // обновить details в store
   restoreStoreDetails() {
-    // обновить details в store
     const detailsToStore = []
     const details = this.project.getDetails()
     if (!details) { return }
@@ -250,6 +284,11 @@ export class Engine {
       detailsToStore.push(detailToStore)
     }
     this.store.setDetails(detailsToStore)
+  }
+
+  // обновить materials в store
+  restoreStoreMaterials() {
+    this.store.setMaterials(this.project.getMaterials())
   }
 
 

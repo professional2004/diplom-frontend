@@ -23,7 +23,8 @@ export const useEditorStore = defineStore('editor', {
       pointeredThing: null,
       selectedThing: null
     },
-    details: []
+    details: [],
+    materials: []
   }),
 
   actions: {
@@ -34,6 +35,7 @@ export const useEditorStore = defineStore('editor', {
     getScene2DState() { return this.scene2DState },
     getSceneMiniState() { return this.sceneMiniState },
     getDetails() { return this.details },
+    getMaterials() { return this.materials },
     // ----------- сеттеры -----------
     setIsUnsaved(is_unsaved) { this.is_unsaved = is_unsaved },
     setScene3DState(scene3DState) { this.scene3DState = scene3DState },
@@ -41,6 +43,7 @@ export const useEditorStore = defineStore('editor', {
     setScene2DState(scene2DState) { this.scene2DState = scene2DState },
     setSceneMiniState(sceneMiniState) { this.sceneMiniState = sceneMiniState },
     setDetails(details) { this.details = details },
+    setMaterials(materials) { this.materials = materials },
 
     
 
@@ -99,8 +102,26 @@ export const useEditorStore = defineStore('editor', {
 
     addDetail(type) {
       this.engine.addDetail(type)
-    }
+    },
 
+
+    // функции с материалами
+
+    createMaterial() {
+      this.engine.createMaterial()
+    },
+
+    renameMaterial(id, name) {
+      this.engine.renameMaterial(id, name)
+    },
+
+    changeMaterialColor(id, color) {
+      this.engine.changeMaterialColor(id, color)
+    },
+
+    deleteMaterial(id) {
+      this.engine.deleteMaterial(id)
+    }
 
   }
 })

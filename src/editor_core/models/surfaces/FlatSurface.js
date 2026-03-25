@@ -21,19 +21,6 @@ export class FlatSurface {
     meshGeom.computeVertexNormals();
 
     const material = CreateMeshMaterialHelper.help(materials, unfolding.material_id, 'surface')
-    
-    // // Подготовка цвета (превращаем "cccccc" в 0xcccccc)
-    // const materialData = materials.find(m => m.id === unfolding.material_id)
-    // const materialColor = parseInt(materialData.color, 16);
-
-    // // Применяем материал
-    // const material = new THREE.MeshStandardMaterial({
-    //   color: materialColor,
-    //   side: THREE.DoubleSide,
-    //   metalness: 0.1,
-    //   roughness: 0.5
-    // });
-
     const mesh = new THREE.Mesh(meshGeom, material);
 
     // Применение трансформаций (позиция и поворот)
