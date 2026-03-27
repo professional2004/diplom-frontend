@@ -286,16 +286,20 @@ const deleteMaterial = (id) => {
         <label><input type="radio" value="help" name="radio-project-menu" v-model="openedEditorSection"/> Помощь</label>
       </div>
 
-
-
-      <div class="section -project" v-show="openedEditorSection === 'project'">
-        <div class="editor-menu">
+      <div class="editor-menu">
+        <div v-show="openedEditorSection === 'project'">
           <button @click="editorStore.addDetail('straight_random')">Добавить деталь "прямая произвольная"</button>
-          <button @click="editorStore.clearProject()">Очистить проект</button>
+          <button @click="editorStore.clearProject()">Очистить проект</button>            
         </div>
+        <div v-show="openedEditorSection === 'unfoldings'"></div>
+        <div v-show="openedEditorSection === 'about'"></div>
+        <div v-show="openedEditorSection === 'help'"></div>
+      </div>
+
+      <div class="section -project" v-show="openedEditorSection === 'project' || openedEditorSection === 'unfoldings'">
         <div class="wrapper -horizontal-layout">
-          <div class="wrapper">
-            <!-- 3D-сцена -->
+          <!-- 3D-сцена -->
+          <div class="wrapper" v-show="openedEditorSection === 'project'">
             <div class="scene-layer">
               <div ref="container3D" class="viewport"></div>
             </div>
@@ -329,7 +333,7 @@ const deleteMaterial = (id) => {
             </div>
           </div>
           <!-- 2D-сцена -->
-          <div class="wrapper">
+          <div class="wrapper" v-show="openedEditorSection === 'unfoldings'">
             <div class="scene-layer">
               <div ref="container2D" class="viewport"></div>
             </div>
@@ -341,18 +345,19 @@ const deleteMaterial = (id) => {
           </div>
           <!-- мини-сцена -->
           <div class="wrapper">
-            <div class="scene-layer">
-              <div ref="containerMini" class="viewport"></div>
+            <div class="detail-editing-toolbar-panel editing-toolbar-panel" v-show="scene3DState?.selectedThing?.id && scene3DState.selectedThing.class === 'detail'">
+              <div>Редактирование детали</div>
+              <div class="scene-mini-wrapper">
+                <div class="scene-layer">
+                  <div ref="containerMini" class="viewport"></div>
+                </div>                
+              </div>
             </div>
-          </div> 
-          <div class="wrapper">
-
-          </div>       
+            <div class="surface-editing-toolbar-panel editing-toolbar-panel" v-show="scene3DState?.selectedThing?.id && scene3DState.selectedThing.class === 'surface'">
+              <div>Редактирование поверхности</div>
+            </div>
+          </div>   
         </div>
-      </div>
-
-      <div class="section -unfoldings" v-show="openedEditorSection === 'unfoldings'">
-        
       </div>
 
       <div class="section -about" v-show="openedEditorSection === 'about'">
@@ -484,7 +489,7 @@ const deleteMaterial = (id) => {
 .section {
   position: relative;
   width: 100%;
-  height: calc(100vh - 60px - 80px);
+  height: calc(100vh - 60px - 80px - 80px);
   display: flex;
   flex-direction: column;
 }
@@ -507,7 +512,7 @@ const deleteMaterial = (id) => {
 }
 
 
-.section.-project .editor-menu {
+.editor-menu {
   height: 80px;
 }
 
@@ -553,9 +558,16 @@ const deleteMaterial = (id) => {
 }
 
 
-/* материалы */
+.editing-toolbar-panel {
+  display: flex;
+  flex-direction: column;
+}
 
-
+.scene-mini-wrapper {
+  position: relative;
+  width: 300px;
+  height: 300px;
+}
 
 
 
