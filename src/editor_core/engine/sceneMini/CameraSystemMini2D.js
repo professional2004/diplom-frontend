@@ -63,6 +63,19 @@ export class CameraSystemMini2D {
     this.controls.update()
   }
 
+  getControls() {
+    return this.controls
+  }
+
+  enableControls() {
+    this.controls.enabled = true
+  }
+
+  disableControls() {
+    this.controls.enabled = false
+  }
+
+
   dispose() {
     this.controls.dispose()
   }

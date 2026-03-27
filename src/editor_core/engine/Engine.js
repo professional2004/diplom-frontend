@@ -16,9 +16,11 @@ import { InteractionSystemMini2D } from '@/editor_core/engine/sceneMini/Interact
 import { RenderSystemMini2D } from '@/editor_core/engine/sceneMini/RenderSystemMini2D'
 import { SceneSystemMini2D } from '@/editor_core/engine/sceneMini/SceneSystemMini2D'
 // Хелперы
+import { MiniPolylineEditor } from '@/editor_core/utils/editor_helpers/MiniPolylineEditor'
 import { GeneratePreviewHelper } from '@/editor_core/utils/project_helpers/GeneratePreviewHelper'
 import { ExportUnfoldingsSVGHelper } from '@/editor_core/utils/project_helpers/ExportUnfoldingsSVGHelper'
 import { ExportUnfoldingsPDFHelper } from '@/editor_core/utils/project_helpers/ExportUnfoldingsPDFHelper'
+import * as THREE from 'three'
 
 export class Engine {
   constructor(store, container2D, container3D, containerMini) {
@@ -103,6 +105,10 @@ export class Engine {
 
     // создает модель данных проекта
     this.project = new Project()
+
+    // мини-редактор полилинии
+    this.miniPolylineEditor = new MiniPolylineEditor()
+    this.miniSelectedDetailId = null
 
     // подписываемся на изменения в editorStore
     watch(() => this.store.scene3DState, () => { this.onScene3DStateChanged()})
@@ -299,11 +305,17 @@ export class Engine {
 
   onScene3DStateChanged() {
     this.hoverAndSelectObjectsScene3D()
+    const { selectedThing } = this.store.getScene3DState()
+    if (selectedThing && selectedThing.class === 'detail') {
+      this.setMiniPolylineFromDetail(selectedThing.id)
+    } else {
+      this.clearMiniPolyline()
+    }
   }
 
   onScene3DSettingsChanged() {
     this.interactionSystem3D.resetInteraction()
-    this.hoverAndSelectObjectsScene3D()
+    this.onScene3DStateChanged()
   }
 
 
@@ -319,6 +331,96 @@ export class Engine {
     } else {
       this.sceneSystem3D.clearHightlightForSelectedObject()
     }
+  }
+
+  setMiniPolylineFromDetail(detailId) {
+    const details = this.project.getDetails() || []
+    const detail = details.find(d => d.id === detailId)
+    if (!detail || !detail.parameters || !detail.parameters.shape_polyline) {
+      this.clearMiniPolyline()
+      return
+    }
+
+    this.miniSelectedDetailId = detailId
+    this.miniPolylineEditor.setPoints(detail.parameters.shape_polyline.points)
+    this.updateMiniSceneFromPolyline()
+  }
+
+  clearMiniPolyline() {
+    this.miniSelectedDetailId = null
+    this.miniPolylineEditor.clear()
+    this.sceneSystemMini2D.clearObjects()
+  }
+
+  updateMiniSceneFromPolyline() {
+    this.sceneSystemMini2D.clearObjects()
+
+    const points = this.miniPolylineEditor.getPoints()
+    if (!points.length) return
+
+    // рисуем линию
+    if (points.length >= 2) {
+      const linePoints = points.map(p => new THREE.Vector3(p.x, p.y, 0))
+      const lineGeometry = new THREE.BufferGeometry().setFromPoints(linePoints)
+      const lineMaterial = new THREE.LineBasicMaterial({ color: 0x00aa00 })
+      const line = new THREE.Line(lineGeometry, lineMaterial)
+      line.userData = { id: 'mini-polyline', class: 'mini-polyline', selectable: false }
+      this.sceneSystemMini2D.add(line)
+    }
+
+    // рисуем контролы для точек
+    for (let i = 0; i < points.length; i++) {
+      const p = points[i]
+      const sphereGeometry = new THREE.SphereGeometry(0.2, 12, 8)
+      const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff })
+      const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial)
+      sphere.position.set(p.x, p.y, 0)
+      sphere.userData = { id: i, class: 'mini-control-point', selectable: true }
+      this.sceneSystemMini2D.add(sphere)
+    }
+  }
+
+  applyMiniPolylineChanges() {
+    if (!this.miniSelectedDetailId) return
+    const details = this.project.getDetails() || []
+    const detail = details.find(d => d.id === this.miniSelectedDetailId)
+    if (!detail) return
+
+    const points = this.miniPolylineEditor.getPoints().map(p => ({ x: p.x, y: p.y }))
+    detail.parameters = detail.parameters || {}
+    detail.parameters.shape_polyline = detail.parameters.shape_polyline || {}
+    detail.parameters.shape_polyline.points = points
+
+    const detailClass = this.project.detailClasses[detail.type]
+    if (detailClass && typeof detailClass.calculateSurfaces === 'function') {
+      detail.surfaces = detailClass.calculateSurfaces(detail.parameters)
+    }
+
+    this.sceneSystem3D.clearObjects()
+    this.sceneSystem2D.clearObjects()
+    this.buildDetails()
+    this.store.setIsUnsaved(true)
+
+    this.onScene3DStateChanged()
+  }
+
+  onMiniPointDragged(index, worldPos) {
+    this.miniPolylineEditor.movePoint(index, worldPos)
+    this.updateMiniSceneFromPolyline()
+    this.applyMiniPolylineChanges()
+  }
+
+  onMiniPointRemoved(index) {
+    const removed = this.miniPolylineEditor.removePoint(index)
+    if (!removed) return
+    this.updateMiniSceneFromPolyline()
+    this.applyMiniPolylineChanges()
+  }
+
+  onMiniPointAdded(worldPos) {
+    this.miniPolylineEditor.addPointAtNearestSegment(worldPos)
+    this.updateMiniSceneFromPolyline()
+    this.applyMiniPolylineChanges()
   }
 
   // 2D-сцена

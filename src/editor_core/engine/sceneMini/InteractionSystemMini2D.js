@@ -12,14 +12,18 @@ export class InteractionSystemMini2D {
     this.selectedThing = null
     // вспомогательные временные переменные
     this.pointeredAtPointerDownThing = null
+    this.draggingPointIndex = null
+    this.isDraggingPoint = false
 
     this.onPointerDown = this.onPointerDown.bind(this)
     this.onPointerMove = this.onPointerMove.bind(this)
     this.onPointerUp = this.onPointerUp.bind(this)
+    this.onDoubleClick = this.onDoubleClick.bind(this)
 
     container.addEventListener('pointerdown', this.onPointerDown)
     container.addEventListener('pointermove', this.onPointerMove)
     container.addEventListener('pointerup', this.onPointerUp)
+    container.addEventListener('dblclick', this.onDoubleClick)
   }
 
   setEngine(engine, store) { 
@@ -50,15 +54,43 @@ export class InteractionSystemMini2D {
     }
   }
 
+  getWorldPointFromMouse() {
+    this.raycaster.setFromCamera(this.mouse, this.engine.cameraSystemMini2D.getCamera())
+    const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0)
+    const point = new THREE.Vector3()
+    this.raycaster.ray.intersectPlane(plane, point)
+    return point
+  }
+
   onPointerDown(event) {
     this.updateMouse(event)
     this.pointeredThing = this.getIntersectedObject()
     this.pointeredAtPointerDownThing = this.pointeredThing
     this.selectedThing = this.pointeredThing
+
+    if (this.pointeredThing?.class === 'mini-control-point') {
+      this.draggingPointIndex = this.pointeredThing.id
+      this.isDraggingPoint = false
+      this.engine.cameraSystemMini2D.disableControls()
+    } else {
+      this.draggingPointIndex = null
+      this.isDraggingPoint = false
+      this.engine.cameraSystemMini2D.enableControls()
+    }
+
     this.updateStore()
   }
 
   onPointerMove(event) {
+    if (this.draggingPointIndex !== null) {
+      this.updateMouse(event)
+      const worldPos = this.getWorldPointFromMouse()
+      if (worldPos && this.engine?.onMiniPointDragged) {
+        this.engine.onMiniPointDragged(this.draggingPointIndex, { x: worldPos.x, y: worldPos.y })
+      }
+      this.isDraggingPoint = true
+      return
+    }
     this.updateMouse(event)
     this.pointeredThing = this.getIntersectedObject()
     this.updateStore()
@@ -66,10 +98,36 @@ export class InteractionSystemMini2D {
 
   onPointerUp(event) {
     this.updateMouse(event)
-    this.pointeredThing = this.getIntersectedObject()
-    if (this.pointeredAtPointerDownThing != this.pointeredThing) { this.selectedThing = null }
+    const currentThing = this.getIntersectedObject()
+
+    if (this.draggingPointIndex !== null) {
+      if (!this.isDraggingPoint && this.pointeredAtPointerDownThing?.class === 'mini-control-point' && currentThing?.id === this.pointeredAtPointerDownThing.id) {
+        if (this.engine?.onMiniPointRemoved) {
+          this.engine.onMiniPointRemoved(this.draggingPointIndex)
+        }
+      }
+      this.draggingPointIndex = null
+      this.isDraggingPoint = false
+    }
+
+    this.engine.cameraSystemMini2D.enableControls()
+
+    this.pointeredThing = currentThing
+    this.selectedThing = this.pointeredThing
+    if (this.pointeredAtPointerDownThing && currentThing && this.pointeredAtPointerDownThing.id !== currentThing.id) {
+      this.selectedThing = null
+    }
     this.pointeredAtPointerDownThing = null
     this.updateStore()
+  }
+
+  onDoubleClick(event) {
+    this.updateMouse(event)
+    const worldPos = this.getWorldPointFromMouse()
+    if (!worldPos) return
+    if (this.engine?.onMiniPointAdded) {
+      this.engine.onMiniPointAdded({ x: worldPos.x, y: worldPos.y })
+    }
   }
 
   // обновить состояние store
