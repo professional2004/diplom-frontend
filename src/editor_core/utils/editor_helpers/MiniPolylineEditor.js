@@ -1,18 +1,25 @@
 export class MiniPolylineEditor {
   constructor() {
     this.points = []
+    this.type = 'open' // 'only_closed', 'only_open', 'open', 'closed'
   }
 
-  setPoints(points = []) {
+  setPoints(points = [], type = 'open') {
     this.points = points.map(p => ({ x: p.x, y: p.y }))
+    this.type = type
   }
 
   getPoints() {
     return this.points.map(p => ({ x: p.x, y: p.y }))
   }
 
+  getType() {
+    return this.type
+  }
+
   clear() {
     this.points = []
+    this.type = 'open'
   }
 
   movePoint(index, position) {
@@ -50,6 +57,30 @@ export class MiniPolylineEditor {
     }
 
     this.points.splice(insertAfterIndex + 1, 0, { x: position.x, y: position.y })
+  }
+
+  canClose() {
+    return this.type === 'open' && this.points.length >= 3
+  }
+
+  canOpen() {
+    return this.type === 'closed' && this.points.length >= 3
+  }
+
+  closePolyline() {
+    if (!this.canClose()) return false
+    this.type = 'closed'
+    return true
+  }
+
+  openPolyline() {
+    if (!this.canOpen()) return false
+    this.type = 'open'
+    return true
+  }
+
+  isClosed() {
+    return this.type === 'closed' || this.type === 'only_closed'
   }
 
   static getClosestPointOnSegment(p, a, b) {

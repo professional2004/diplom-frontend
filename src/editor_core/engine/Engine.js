@@ -356,11 +356,15 @@ export class Engine {
     this.sceneSystemMini2D.clearObjects()
 
     const points = this.miniPolylineEditor.getPoints()
+    const isClosed = this.miniPolylineEditor.isClosed()
     if (!points.length) return
 
     // рисуем линию
     if (points.length >= 2) {
       const linePoints = points.map(p => new THREE.Vector3(p.x, p.y, 0))
+      if (isClosed && points.length > 2) {
+        linePoints.push(new THREE.Vector3(points[0].x, points[0].y, 0))
+      }
       const lineGeometry = new THREE.BufferGeometry().setFromPoints(linePoints)
       const lineMaterial = new THREE.LineBasicMaterial({ color: 0x00aa00 })
       const line = new THREE.Line(lineGeometry, lineMaterial)
@@ -387,9 +391,11 @@ export class Engine {
     if (!detail) return
 
     const points = this.miniPolylineEditor.getPoints().map(p => ({ x: p.x, y: p.y }))
+    const type = this.miniPolylineEditor.getType()
     detail.parameters = detail.parameters || {}
     detail.parameters.shape_polyline = detail.parameters.shape_polyline || {}
     detail.parameters.shape_polyline.points = points
+    detail.parameters.shape_polyline.type = type
 
     const detailClass = this.project.detailClasses[detail.type]
     if (detailClass && typeof detailClass.calculateSurfaces === 'function') {
